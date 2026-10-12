@@ -1,0 +1,18 @@
+name: docs-check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  links-and-json:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Links relativos do Markdown
+        run: python3 scripts/check_links.py
+      - name: JSON público válido
+        run: python3 -m json.tool public-metrics.json > /dev/null

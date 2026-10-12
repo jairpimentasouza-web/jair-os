@@ -46,6 +46,19 @@ flowchart LR
 | RAG — correção de resposta | **0,9208** |
 | Alucinações de alto risco nos casos avaliados | **0** |
 
+## Auditoria técnica — 12/10/2026
+
+Comparação de cada componente com o padrão de empresas grandes (NIST CSF 2.0, ISO/IEC 27001, NIST AI RMF, SRE/DORA, COBIT, LGPD), ponderando desenho **e** execução comprovada.
+
+| Indicador | Resultado |
+|---|---:|
+| Nota global ponderada | **5,8 / 10** |
+| Nível de maturidade (CMMI/COBIT) | **2 — Gerenciado** |
+| Maiores notas | FinOps 8,5 · Arquitetura 7,0 · Segurança de dados 7,0 |
+| Maiores lacunas | Continuidade 3,5 · DevOps 4,0 · APIs serverless 4,5 |
+
+Notas por componente e plano de correções em [Maturidade e evidências](docs/maturity.md).
+
 ## Pontos fortes atuais
 
 Arquitetura modular, memória contextual, RAG, governança de identidade, contratos automatizados, rastreabilidade e integração entre decisão e execução.
@@ -53,6 +66,7 @@ Arquitetura modular, memória contextual, RAG, governança de identidade, contra
 ## Áreas em evolução
 
 Certificação empírica de agentes, execução ponta a ponta com maior taxa de sucesso, escalabilidade horizontal, cobertura de evidência e redução de dependências legadas.
+
 ## Segurança
 
 Este repositório é uma versão **sanitizada para portfólio**. Não contém credenciais, tokens, dumps de banco, dados pessoais, endpoints administrativos nem código operacional sensível.
