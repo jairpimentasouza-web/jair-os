@@ -54,6 +54,17 @@ h1,h2,h3{font-family:Georgia,"Times New Roman",serif;line-height:1.12}h1{font-si
 footer{background:#071d15;color:#efe1c5;padding:35px 0;font-size:14px}footer p{margin:5px 0}
 .sticky{display:none}
 @media(max-width:800px){body{font-size:17px}.grid,.split{grid-template-columns:1fr;gap:31px}.grid{padding:12px 0 53px}.cover{max-width:300px;min-height:340px;margin-top:10px}.book .symbol{font-size:65px}.book .ttl{font-size:32px}.book:before{inset:26px}.cards{grid-template-columns:1fr}.section{padding:57px 0}.wrap{padding:0 19px}.offer-box{padding:30px 19px}.sticky{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:50;gap:12px;align-items:center;justify-content:space-between;background:#fffdf6;box-shadow:0 -5px 19px #0002;padding:10px 16px}.sticky strong{font-size:21px;color:#234133}.sticky .cta{min-height:47px;font-size:15px;padding:9px 16px}body{padding-bottom:71px}nav .wordmark{font-size:17px}nav a:not(.wordmark){font-size:13px}}
+
+/* Amostra visual fiel da campanha anterior e controle de rastreamento */
+.visual-preview{border-radius:13px;background:#122b23;padding:17px;box-shadow:0 15px 45px #15231e25}
+.visual-preview img{width:100%;height:auto;max-height:650px;object-fit:contain;display:block;border-radius:8px}
+.visual-preview figcaption{font-size:13px;color:#dcd0b9;padding-top:10px;text-align:center}
+.consent{position:fixed;left:16px;bottom:90px;z-index:100;max-width:430px;display:none;background:#fdfaf3;color:#1d3329;border:2px solid #cba76e;box-shadow:0 7px 32px #0003;border-radius:12px;padding:18px;font:14px system-ui,sans-serif}
+.consent p{margin:0 0 11px}.consent .buttons{display:flex;gap:12px}
+.consent button{border:1px solid #274438;border-radius:6px;padding:10px 14px;cursor:pointer;font-weight:700}
+.consent .accept{background:#274438;color:#fff}.consent .reject{background:transparent;color:#274438}
+@media(max-width:800px){.consent{left:10px;right:10px;max-width:none;bottom:80px}.visual-preview img{max-height:530px}}
+
 </style>
 </head>
 <body>
@@ -73,6 +84,11 @@ footer{background:#071d15;color:#efe1c5;padding:35px 0;font-size:14px}footer p{m
 <div class="book"><div class="line">Arte · Literatura · Simbolismo</div><div class="symbol" aria-hidden="true">✥</div><div class="ttl">CÓDEX<br>DOS DOZE<br>PORTAIS</div><div class="line">Uma travessia visual em 12 capítulos</div></div></div>
 <p class="footnote">Representação gráfica conceitual. As páginas reais do produto são entregues após a compra.</p></div></div></div></header>
 <main>
+<section class="section band" id="amostra-visual"><div class="wrap split">
+<figure class="visual-preview" aria-label="Arte promocional publicada no site oficial da obra"><img src="https://codex-dos-doze-portais.stormysmile8.chatgpt.site/assets/portais-post.png" alt="Arte promocional original Códex dos Doze Portais" loading="lazy" decoding="async"><figcaption>Arte promocional do Códex, utilizada na página oficial da obra.</figcaption></figure>
+<div><div class="kicker">Conheça o universo visual</div><h2>Uma amostra da linguagem artística do Códex</h2><p>As imagens são parte fundamental desta experiência. Explore o simbolismo dos portais, as composições gráficas e a proposta literária antes de decidir.</p>
+<p><strong>O que você encontra:</strong> 12 Portais ilustrados, leitura autoral, caderno reflexivo, cartas e pôsteres digitais.</p><a class="cta white" href="#comprar">Ver edição digital • R$ 39,90 ↓</a></div>
+</div></section>
 <section class="section" id="conteudo"><div class="wrap">
 <div class="kicker">O que faz parte da edição</div><h2>Uma obra. Quatro maneiras de explorar.</h2>
 <p class="lead">Mais do que uma sequência de páginas, o Códex reúne leitura, imagens e materiais complementares para uma experiência que continua depois do último Portal.</p>
@@ -107,5 +123,16 @@ footer{background:#071d15;color:#efe1c5;padding:35px 0;font-size:14px}footer p{m
 /* Encaminha somente os parâmetros de origem da visita ao checkout Kiwify.
    Nunca envia dados pessoais nem simula eventos de compra. */
 (()=>{const input=new URLSearchParams(location.search);const allowed=['utm_source','utm_medium','utm_campaign','utm_content','utm_term','sck'];document.querySelectorAll('a[data-cta]').forEach(anchor=>{try{const u=new URL(anchor.href);if(u.hostname!=='pay.kiwify.com.br')return;u.searchParams.set('src','codex_lp_v5');for(const key of allowed){const value=input.get(key);if(value&&value.length<=180)u.searchParams.set(key,value)}anchor.href=u.toString()}catch(e){}})})();
+</script>
+<div class="consent" id="marketing-consent" data-pixel-consent role="dialog" aria-label="Preferência de medição de anúncios">
+<p><strong>Privacidade e anúncios.</strong> Podemos medir visitas a esta página com o Meta Pixel para entender o desempenho da campanha. O rastreamento opcional só será ativado se você aceitar. A compra pode ser realizada mesmo recusando.</p>
+<div class="buttons"><button class="accept" id="marketing-accept" type="button">Aceitar medição</button><button class="reject" id="marketing-reject" type="button">Recusar</button></div></div>
+<script>
+(()=>{const k='codex-v5-measurement-consent',pane=document.getElementById('marketing-consent');
+function enablePixel(){if(window.fbq)return;!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=true;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=true;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1456411796414878');fbq('track','PageView');fbq('track','ViewContent',{content_name:'Códex dos Doze Portais',content_type:'product',currency:'BRL',value:39.90})}
+let v='';try{v=localStorage.getItem(k)||''}catch(e){}
+if(v==='yes')enablePixel();else if(v!=='no'){pane.style.display='block'}
+document.getElementById('marketing-accept').onclick=()=>{try{localStorage.setItem(k,'yes')}catch(e){}pane.style.display='none';enablePixel()};
+document.getElementById('marketing-reject').onclick=()=>{try{localStorage.setItem(k,'no')}catch(e){}pane.style.display='none'};})();
 </script>
 </body></html>
