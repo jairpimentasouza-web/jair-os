@@ -28,6 +28,14 @@ Legenda usada no registro interno: VERIFICADO, RELATADO, PENDENTE, BLOQUEADO.
 - Registros de credenciais conciliados com o cofre, sem leitura de valores.
 - Relatório de auditoria operacional enviado ao fluxo oficial, aguardando aprovação humana.
 
+## Execução das recomendações (mesmo dia, após aprovação)
+
+- Primeiro relatório de auditoria operacional persistido pelo fluxo oficial, com aprovação humana.
+- Filas de rotinas sem consumidor higienizadas sem apagar nada: nenhuma tarefa antiga aponta mais para o notebook de aula.
+- CEJA: calendário oficial do semestre e avaliações já produzidas cadastrados; o radar diário passou a mostrar pendências reais.
+- Notebook de aula: script local de "modo aula" entregue ao professor, com inventário antes, desativação reversível e rollback.
+- Runtime em nuvem: sonda somente leitura pronta, aguardando o token de acesso restrito ao ambiente de staging.
+
 ## O que ainda não está pronto
 
 - Runtime de workflows na nuvem (n8n em staging) sem auditoria direta nesta etapa.
