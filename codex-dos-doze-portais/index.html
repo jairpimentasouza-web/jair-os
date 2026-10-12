@@ -103,4 +103,9 @@ footer{background:#071d15;color:#efe1c5;padding:35px 0;font-size:14px}footer p{m
 </main>
 <footer><div class="wrap"><p><strong>Códex dos Doze Portais</strong> · Edição digital</p><p>Produto cultural e literário. Representações visuais desta página são conceituais e não substituem a visualização dos arquivos originais.</p><p>O pagamento é processado por uma plataforma externa (Kiwify). Esta página não solicita dados de cartão.</p></div></footer>
 <div class="sticky"><strong>R$ 39,90</strong><a class="cta small" href="https://pay.kiwify.com.br/jZbx4t0" target="_blank" rel="noopener noreferrer" data-cta="sticky">Conhecer e comprar ↗</a></div>
+<script>
+/* Encaminha somente os parâmetros de origem da visita ao checkout Kiwify.
+   Nunca envia dados pessoais nem simula eventos de compra. */
+(()=>{const input=new URLSearchParams(location.search);const allowed=['utm_source','utm_medium','utm_campaign','utm_content','utm_term','sck'];document.querySelectorAll('a[data-cta]').forEach(anchor=>{try{const u=new URL(anchor.href);if(u.hostname!=='pay.kiwify.com.br')return;u.searchParams.set('src','codex_lp_v5');for(const key of allowed){const value=input.get(key);if(value&&value.length<=180)u.searchParams.set(key,value)}anchor.href=u.toString()}catch(e){}})})();
+</script>
 </body></html>
