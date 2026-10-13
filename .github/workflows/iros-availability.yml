@@ -1,0 +1,22 @@
+name: IROS Availability Probe Tests
+on:
+  pull_request:
+    paths:
+      - 'ops/availability/**'
+      - '.github/workflows/iros-availability.yml'
+  push:
+    branches:
+      - 'iros/security-availability-20261013'
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check ops/availability/probe.mjs
+      - run: node --test ops/availability/probe.test.mjs
