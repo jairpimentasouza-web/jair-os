@@ -32,7 +32,12 @@ As landing pages publicadas via GitHub Pages:
 
 - não coletam dados de cartão (pagamento ocorre na plataforma de checkout externa);
 - só ativam pixel de medição de anúncios **após consentimento explícito** do visitante;
-- repassam ao checkout apenas parâmetros de origem permitidos (UTM), com limite de tamanho.
+- repassam ao checkout apenas parâmetros de origem permitidos (UTM), com limite de tamanho;
+- trazem link para a [Política de Privacidade](docs/privacidade.html), que descreve dados, bases legais da LGPD e direitos do titular.
+
+## Continuidade
+
+O ambiente operacional tem backup lógico diário fora da plataforma principal, com verificação de integridade por SHA-256, teste automático de restaurabilidade, retenção de 14 cópias e alerta quando o último backup verificado passa de 26 horas.
 
 ## Referências adotadas
 

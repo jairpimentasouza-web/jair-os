@@ -46,18 +46,20 @@ flowchart LR
 | RAG — correção de resposta | **0,9208** |
 | Alucinações de alto risco nos casos avaliados | **0** |
 
-## Auditoria técnica — 12/10/2026
+## Auditoria técnica — 12 e 13/10/2026
 
-Comparação de cada componente com o padrão de empresas grandes (NIST CSF 2.0, ISO/IEC 27001, NIST AI RMF, SRE/DORA, COBIT, LGPD), ponderando desenho **e** execução comprovada.
+Comparação de cada componente com o padrão de empresas grandes (NIST CSF 2.0, ISO/IEC 27001, NIST AI RMF, SRE/DORA, COBIT, LGPD), ponderando desenho **e** execução comprovada. A auditoria foi seguida de um ciclo de correções de custo zero.
 
-| Indicador | Resultado |
-|---|---:|
-| Nota global ponderada | **5,8 / 10** |
-| Nível de maturidade (CMMI/COBIT) | **2 — Gerenciado** |
-| Maiores notas | FinOps 8,5 · Arquitetura 7,0 · Segurança de dados 7,0 |
-| Maiores lacunas | Continuidade 3,5 · DevOps 4,0 · APIs serverless 4,5 |
+| Indicador | 12/10 | 13/10 |
+|---|---:|---:|
+| Nota global ponderada | 5,8 | **6,8 / 10** |
+| Continuidade (backup e recuperação) | 3,5 | **6,5** |
+| APIs serverless | 4,5 | **6,5** |
+| Segurança de dados e identidade | 7,0 | **8,0** |
+| Contratos de agentes · gate de finalização | 74/76 · 8/12 | **75/75 · 12/12** |
+| Nível de maturidade (CMMI/COBIT) | 2 | **2**, com 1 de 4 requisitos do nível 3 cumprido |
 
-Notas por componente e plano de correções em [Maturidade e evidências](docs/maturity.md).
+Maior lacuna restante: DevOps (4,5), sem staging nem CI do código operacional. Notas por componente, pesos e plano em [Maturidade e evidências](docs/maturity.md).
 
 ## Pontos fortes atuais
 
@@ -71,7 +73,7 @@ Certificação empírica de agentes, execução ponta a ponta com maior taxa de 
 
 Este repositório é uma versão **sanitizada para portfólio**. Não contém credenciais, tokens, dumps de banco, dados pessoais, endpoints administrativos nem código operacional sensível.
 
-Consulte [SECURITY.md](SECURITY.md).
+Consulte [SECURITY.md](SECURITY.md) e a [Política de Privacidade](docs/privacidade.html) das páginas de produto.
 
 ## Documentação
 

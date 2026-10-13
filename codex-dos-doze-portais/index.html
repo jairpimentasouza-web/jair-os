@@ -117,7 +117,7 @@ footer{background:#071d15;color:#efe1c5;padding:35px 0;font-size:14px}footer p{m
 <details><summary>Como funciona a compra?</summary><p>Ao tocar em “Comprar”, você será direcionado ao checkout externo da Kiwify. Consulte na própria página de pagamento as condições atuais de acesso, suporte e reembolso.</p></details>
 </div></section>
 </main>
-<footer><div class="wrap"><p><strong>Códex dos Doze Portais</strong> · Edição digital</p><p>Produto cultural e literário. Representações visuais desta página são conceituais e não substituem a visualização dos arquivos originais.</p><p>O pagamento é processado por uma plataforma externa (Kiwify). Esta página não solicita dados de cartão.</p></div></footer>
+<footer><div class="wrap"><p><strong>Códex dos Doze Portais</strong> · Edição digital</p><p>Produto cultural e literário. Representações visuais desta página são conceituais e não substituem a visualização dos arquivos originais.</p><p>O pagamento é processado por uma plataforma externa (Kiwify). Esta página não solicita dados de cartão.</p><p><a href="../docs/privacidade.html" style="color:inherit">Política de Privacidade</a></p></div></footer>
 <div class="sticky"><strong>R$ 39,90</strong><a class="cta small" href="https://pay.kiwify.com.br/jZbx4t0" target="_blank" rel="noopener noreferrer" data-cta="sticky">Conhecer e comprar ↗</a></div>
 <script>
 /* Encaminha somente os parâmetros de origem da visita ao checkout Kiwify.
@@ -125,7 +125,7 @@ footer{background:#071d15;color:#efe1c5;padding:35px 0;font-size:14px}footer p{m
 (()=>{const input=new URLSearchParams(location.search);const allowed=['utm_source','utm_medium','utm_campaign','utm_content','utm_term','sck'];document.querySelectorAll('a[data-cta]').forEach(anchor=>{try{const u=new URL(anchor.href);if(u.hostname!=='pay.kiwify.com.br')return;u.searchParams.set('src','codex_lp_v5');for(const key of allowed){const value=input.get(key);if(value&&value.length<=180)u.searchParams.set(key,value)}anchor.href=u.toString()}catch(e){}})})();
 </script>
 <div class="consent" id="marketing-consent" data-pixel-consent role="dialog" aria-label="Preferência de medição de anúncios">
-<p><strong>Privacidade e anúncios.</strong> Podemos medir visitas a esta página com o Meta Pixel para entender o desempenho da campanha. O rastreamento opcional só será ativado se você aceitar. A compra pode ser realizada mesmo recusando.</p>
+<p><strong>Privacidade e anúncios.</strong> Podemos medir visitas a esta página com o Meta Pixel para entender o desempenho da campanha. O rastreamento opcional só será ativado se você aceitar. A compra pode ser realizada mesmo recusando. <a href="../docs/privacidade.html">Política de Privacidade</a>.</p>
 <div class="buttons"><button class="accept" id="marketing-accept" type="button">Aceitar medição</button><button class="reject" id="marketing-reject" type="button">Recusar</button></div></div>
 <script>
 (()=>{const k='codex-v5-measurement-consent',pane=document.getElementById('marketing-consent');

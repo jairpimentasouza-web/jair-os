@@ -5,8 +5,14 @@
   "internal_self_assessment": {
     "date": "2026-09-14",
     "enterprise_maturity_score": 7.49,
-    "agentops_audit": { "score": 92, "max": 100 },
-    "agent_contracts": { "passed": 72, "total": 72 },
+    "agentops_audit": {
+      "score": 92,
+      "max": 100
+    },
+    "agent_contracts": {
+      "passed": 72,
+      "total": 72
+    },
     "rag": {
       "mrr": 0.9556,
       "hit_at_5": 0.9704,
@@ -18,28 +24,128 @@
   },
   "technical_audit": {
     "date": "2026-10-12",
+    "remediation_date": "2026-10-13",
     "scale": "0-10, comparado ao padrão de empresas grandes",
-    "weighted_overall_score": 5.8,
+    "weighted_overall_score": {
+      "before": 5.8,
+      "after": 6.8
+    },
+    "weights": {
+      "arquitetura_e_modelo_de_dados": 1,
+      "seguranca_de_dados_e_identidade": 2,
+      "apis_e_funcoes_serverless": 2,
+      "orquestracao_agentes_e_workflows": 1.5,
+      "rag_e_memoria": 1,
+      "observabilidade_e_sre": 1.5,
+      "runtime_local_e_agentes_de_desktop": 1,
+      "integracoes_externas": 1,
+      "governanca_risco_e_conformidade": 1.5,
+      "engenharia_de_software_e_devops": 1.5,
+      "continuidade_e_recuperacao": 1.5,
+      "finops_e_custo": 0.5,
+      "portfolio_publico": 0.5,
+      "landing_pages_e_funil": 0.5,
+      "produtos_internos": 1
+    },
     "maturity_level": {
-      "cmmi_cobit_capability": "2 - Gerenciado",
-      "nist_csf_tier": "Tier 2 - Risk Informed"
+      "cmmi_cobit_capability": "2 - Gerenciado (governança, agentes e continuidade no padrão de nível 3)",
+      "nist_csf_tier": "Tier 2 - Risk Informed (Recover e Govern próximos do Tier 3)",
+      "level_3_requirements_met": {
+        "met": 1,
+        "total": 4
+      }
     },
     "component_scores": {
-      "arquitetura_e_modelo_de_dados": 7.0,
-      "seguranca_de_dados_e_identidade": 7.0,
-      "apis_e_funcoes_serverless": 4.5,
-      "orquestracao_agentes_e_workflows": 5.0,
-      "rag_e_memoria": 6.5,
-      "observabilidade_e_sre": 6.5,
-      "runtime_local_e_agentes_de_desktop": 5.5,
-      "integracoes_externas": 6.5,
-      "governanca_risco_e_conformidade": 6.0,
-      "engenharia_de_software_e_devops": 4.0,
-      "continuidade_e_recuperacao": 3.5,
-      "finops_e_custo": 8.5,
-      "portfolio_publico": 7.0,
-      "landing_pages_e_funil": 7.0,
-      "produtos_internos": 6.5
+      "arquitetura_e_modelo_de_dados": {
+        "before": 7.0,
+        "after": 7.5
+      },
+      "seguranca_de_dados_e_identidade": {
+        "before": 7.0,
+        "after": 8.0
+      },
+      "apis_e_funcoes_serverless": {
+        "before": 4.5,
+        "after": 6.5
+      },
+      "orquestracao_agentes_e_workflows": {
+        "before": 5.0,
+        "after": 6.0
+      },
+      "rag_e_memoria": {
+        "before": 6.5,
+        "after": 7.0
+      },
+      "observabilidade_e_sre": {
+        "before": 6.5,
+        "after": 7.5
+      },
+      "runtime_local_e_agentes_de_desktop": {
+        "before": 5.5,
+        "after": 5.5
+      },
+      "integracoes_externas": {
+        "before": 6.5,
+        "after": 6.5
+      },
+      "governanca_risco_e_conformidade": {
+        "before": 6.0,
+        "after": 7.5
+      },
+      "engenharia_de_software_e_devops": {
+        "before": 4.0,
+        "after": 4.5
+      },
+      "continuidade_e_recuperacao": {
+        "before": 3.5,
+        "after": 6.5
+      },
+      "finops_e_custo": {
+        "before": 8.5,
+        "after": 8.5
+      },
+      "portfolio_publico": {
+        "before": 7.0,
+        "after": 7.5
+      },
+      "landing_pages_e_funil": {
+        "before": 7.0,
+        "after": 8.0
+      },
+      "produtos_internos": {
+        "before": 6.5,
+        "after": 7.5
+      }
+    },
+    "contract_suites": {
+      "agent_contracts": {
+        "before": "74/76",
+        "after": "75/75"
+      },
+      "agentic_os_finalization": {
+        "before": "8/12",
+        "after": "12/12"
+      },
+      "rag": {
+        "before": "10/11",
+        "after": "11/11"
+      },
+      "security_hardening_v1": {
+        "before": "7/9",
+        "after": "9/9"
+      },
+      "security_hardening_v2": {
+        "before": "2/5",
+        "after": "4/5"
+      },
+      "edge_security": {
+        "before": "4/5",
+        "after": "5/5"
+      },
+      "production_invariants": {
+        "before": "5/11",
+        "after": "9/11"
+      }
     },
     "details": "docs/maturity.md"
   }
