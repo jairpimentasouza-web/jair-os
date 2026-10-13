@@ -1,0 +1,7 @@
+#!/usr/bin/with-contenv bash
+set -Eeuo pipefail
+if [ "${IROS_READ_TOKEN:-}" = "" ]; then
+  echo "IROS_READ: token_missing_adapter_disabled"
+  exec sleep infinity
+fi
+exec s6-setuidgid abc /usr/local/bin/node /opt/iros/active-read.mjs
