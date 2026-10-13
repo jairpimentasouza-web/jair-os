@@ -188,7 +188,16 @@ export function start() {
   const server = http.createServer(handler);
   server.requestTimeout = REQUEST_TIMEOUT_MS;
   server.headersTimeout = 10000;
-  server.listen(port,'::',()=>console.log(JSON.stringify({event:'iros_read_adapter_ready',port,enabled,schoolWrites:false})));
+  
+server.listen(port, '127.0.0.1', () => {
+  console.log(JSON.stringify({
+    event: 'iros_read_adapter_ready',
+    port,
+    enabled,
+    schoolWrites: false
+  }));
+});
+
   return server;
 }
 
