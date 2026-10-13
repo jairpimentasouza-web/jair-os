@@ -1,14 +1,24 @@
 #!/usr/bin/with-contenv bash
 set -Eeuo pipefail
 
-# Dedicated tailnet state lives in the existing Railway /config volume.
-# Never print credentials or browser cookies.
+# IROS CLOUD BROWSER - TAILSCALE
+# Acesso privado pela rede Tailscale.
+# Nunca imprimir credenciais ou cookies.
+
+# ==========================================
+# 1. DIRETORIOS E ESTADO PERSISTENTE
+# ==========================================
+
 STATE_DIR="/config/.iros-tailscale"
 SOCKET="$STATE_DIR/tailscaled.sock"
 STATE="$STATE_DIR/tailscaled.state"
 
 mkdir -p "$STATE_DIR"
 chmod 700 "$STATE_DIR"
+
+# ==========================================
+# 2. INICIAR TAILSCALE
+# ==========================================
 
 echo "IROS_TAILSCALE: starting private userspace network"
 
@@ -21,6 +31,10 @@ echo "IROS_TAILSCALE: starting private userspace network"
 
 DAEMON_PID=$!
 
+# ==========================================
+# 3. ENCERRAMENTO SEGURO
+# ==========================================
+
 shutdown() {
   kill "$DAEMON_PID" 2>/dev/null || true
   wait "$DAEMON_PID" 2>/dev/null || true
@@ -28,13 +42,21 @@ shutdown() {
 
 trap shutdown EXIT INT TERM
 
+# ==========================================
+# 4. AGUARDAR INICIALIZACAO
+# ==========================================
+
 ready=false
 
 for i in $(seq 1 35); do
-  if /usr/local/bin/tailscale --socket="$SOCKET" status --json >/dev/null 2>&1; then
+  if /usr/local/bin/tailscale \
+    --socket="$SOCKET" status --json \
+    >/dev/null 2>&1; then
+
     ready=true
     break
   fi
+
   sleep 1
 done
 
@@ -43,38 +65,57 @@ if [ "$ready" != "true" ]; then
   exit 1
 fi
 
-# A first-time login prints an official Tailscale approval URL
-# to Railway logs.
-# The owner approves it in their own Tailscale account.
-# No key is sent to chat.
+# ==========================================
+# 5. VALIDAR AUTENTICACAO
+# ==========================================
 
-if ! /usr/local/bin/tailscale --socket="$SOCKET" status --json \
+if ! /usr/local/bin/tailscale \
+  --socket="$SOCKET" status --json \
   | grep -Eq '"BackendState"[[:space:]]*:[[:space:]]*"Running"'; then
 
   echo "IROS_TAILSCALE: official_owner_approval_required"
 
-  /usr/local/bin/tailscale --socket="$SOCKET" up \
+  /usr/local/bin/tailscale \
+    --socket="$SOCKET" up \
     --hostname=iros-activesoft-cloud \
     --accept-dns=false
+
 fi
 
 echo "IROS_TAILSCALE: tailnet_connected"
 
-# Kasm/Selkies GUI and Tailscale are on localhost
-# in the SAME container.
-# HTTPS is ONLY available inside the tailnet.
-# Do not enable Funnel.
+# ==========================================
+# 6. CORRECAO EXPERIMENTAL DE TRANSPORTE
+# ==========================================
 
-if /usr/local/bin/tailscale --socket="$SOCKET" serve --bg \
-  --https=443 http://127.0.0.1:3000; then
+# Desabilitar somente o encaminhamento HTTPS
+# anterior do Tailscale Serve.
+# Nao habilitar Tailscale Funnel.
 
-  echo "IROS_TAILSCALE: private_https_serve_configured"
+/usr/local/bin/tailscale \
+  --socket="$SOCKET" \
+  serve --https=443 off || true
+
+# Encaminhar HTTPS para o nginx local usando
+# TLS-terminated TCP, sem o proxy HTTP do Serve.
+# O endereco permanece privado na tailnet.
+
+if /usr/local/bin/tailscale \
+  --socket="$SOCKET" \
+  serve --bg \
+  --tls-terminated-tcp=443 \
+  tcp://127.0.0.1:3000; then
+
+  echo "IROS_TAILSCALE: private_tcp_https_configured"
 
 else
-  echo "IROS_TAILSCALE: serve_setup_requires_tailnet_https_approval_or_review"
+
+  echo "IROS_TAILSCALE: private_tcp_https_failed"
+
 fi
 
-# Keep the WireGuard userspace endpoint
-# and its session continuously available.
+# ==========================================
+# 7. MANTER O SERVICO ATIVO
+# ==========================================
 
 wait "$DAEMON_PID"
