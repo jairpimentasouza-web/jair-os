@@ -53,6 +53,27 @@ mudou o modelo: pare e avise. `avisos` = confira `referencia/padrao-modelo-ofici
 - Figura: `pdftoppm -r 300 -f P -l P -png fonte.pdf pag`, recorte só a figura (PIL) e declare
   `origem` (ex.: `recorte do PDF da fonte, 300 dpi`).
 
+### 3a. Livro digital da Poliedro → acervo do Jair OS
+Credenciais nos segredos do ambiente cloud: `POLIEDRO_LOGIN` e `POLIEDRO_SENHA`. O professor
+cadastra no menu do ambiente; nunca peça a senha na conversa nem imprima essas variáveis.
+1. Baixar o livro (o id é o `b=` do link `livro-digital.p4ed.com/visualizador/pdf?b=<id>`):
+   `node .claude/skills/mater-provas/scripts/poliedro_livro.js <id> saidas/poliedro`.
+   Gera `saidas/poliedro/poliedro_<id>.pdf` e guarda a sessão em `.sessao-poliedro.json` para
+   reaproveitar. Saídas 2 (sem credenciais), 3 (login recusado), 4 (código/captcha) e 5 (PDF não
+   carregou): relate ao professor e pare, sem tentar contornar.
+2. Localizar o capítulo: `python3 $MP livro <pdf> --buscar 'ímã|bússola|polo magnético'`, depois
+   `--paginas A-B --saida saidas/poliedro/paginas` (texto + PNG 150 dpi por página).
+3. Transcrever conferindo com o PNG (o texto extraído ajuda, mas erra símbolos e expoentes):
+   enunciado e alternativas sem alterar, com `pagina`, `numero` e `banca` quando o livro citar.
+   Formato: `referencia/exemplo-acervo-poliedro.yaml`.
+4. Guardar no Jair OS: `python3 $MP acervo-sql acervo.yaml --saida acervo.sql` e rode o SQL com o
+   `execute_sql` do MCP Supabase (projeto ativo com o schema `jair_os`), em lotes de até ~20
+   questões. Grava em `jair_os.questions` ligado à fonte "Poliedro P+ Conteudos", sem duplicar
+   (impressão digital) e com `audit_status: pending`.
+5. Montar a prova com as questões do acervo e `fonte: "Poliedro, <livro>, p. N, exercício M"`.
+
+Livro já informado: `69ef5f10ef177fd8764a397e` (pedido do teste de magnetismo da 2ª série, 14/10/2026).
+
 ### 3b. Ilustrações em alta definição (quando o professor pedir)
 Desenhe a figura em SVG e renderize com `python3 $MP figura fig.svg --largura-cm 10` (PNG a 400 dpi,
 16 tons de cinza; `--cores` mantém cor). Regras:
@@ -99,7 +120,7 @@ existem no Windows, macOS e Google Docs).
 
 Dependências: `python-docx`, `PyYAML`, `lxml`, LibreOffice (`soffice`), `poppler-utils`; para
 `\( \)` também `pandoc` e `libreoffice-math` (`sudo apt-get install -y libreoffice-math`); para
-`figura`, Node com `playwright` e Pillow.
+`figura` e para o robô da Poliedro, Node com `playwright` e Pillow.
 
 ### 7. Inspeção visual (obrigatória)
 Abra **todas** as `previa/pagina-N.png` com Read e confira: cabeçalho preenchido e só na

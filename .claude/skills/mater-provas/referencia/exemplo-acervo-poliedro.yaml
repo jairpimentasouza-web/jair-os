@@ -1,0 +1,26 @@
+# Acervo transcrito de um capítulo do livro digital da Poliedro, pronto para o banco do Jair OS
+# (python3 $MP acervo-sql este.yaml --saida acervo.sql) e para compor testes (copie as questões
+# para a especificação). A questão abaixo é só um EXEMPLO de formato: não é do livro.
+livro_id: 69ef5f10ef177fd8764a397e
+livro: Poliedro — Física (livro digital P+)
+capitulo: "EXEMPLO — Ímãs e campo magnético"
+disciplina: Física
+assunto: Magnetismo
+series: ["2ª série"]
+tags: ["2a-serie", "magnetismo"]
+questoes:
+  - pagina: 999
+    numero: 1
+    subassunto: Inseparabilidade dos polos
+    banca: null            # ex.: Fuvest, UERJ — quando o livro cita a origem
+    ano: null
+    fidelidade: verified_text_only   # conferida com a imagem da página
+    enunciado: |
+      EXEMPLO DE FORMATO. Um ímã em forma de barra é partido ao meio. O que se observa com os dois pedaços?
+    alternativas:
+      - Um pedaço fica só com o polo norte e o outro só com o polo sul.
+      - Cada pedaço passa a ter um polo norte e um polo sul.
+      - Os dois pedaços perdem a imantação.
+      - Os dois pedaços passam a ter apenas polos sul.
+    gabarito: b
+    resolucao: Os polos de um ímã são inseparáveis; cada parte forma um novo ímã completo.

@@ -9,6 +9,8 @@ Subcomandos:
   modelo  decodifica o modelo baixado pelo MCP do Google Drive e confere a geometria oficial
   gerar   monta DOCX + PDF do aluno, gabarito do professor, prévias PNG e manifesto, com gate de entrega
   figura  renderiza uma ilustração SVG em PNG de alta resolução, em tons de cinza para impressão P&B
+  livro   localiza páginas de um assunto no PDF do livro e exporta texto + PNG de cada página
+  acervo-sql  gera o SQL que grava questões transcritas no banco de questões do Jair OS
 """
 import argparse
 import base64
@@ -702,6 +704,102 @@ def comando_figura(args):
     return 0
 
 
+def comando_livro(args):
+    pdf = Path(args.pdf)
+    info = subprocess.run(["pdfinfo", str(pdf)], capture_output=True, text=True, check=True).stdout
+    total = int(re.search(r"Pages:\s+(\d+)", info).group(1))
+    if args.buscar:
+        texto = subprocess.run(["pdftotext", "-layout", str(pdf), "-"], capture_output=True, text=True, check=True).stdout
+        padrao = re.compile(args.buscar, re.I)
+        achados = []
+        for n, pagina in enumerate(texto.split("\f"), 1):
+            hits = padrao.findall(pagina)
+            if hits:
+                linha = next((l.strip() for l in pagina.splitlines() if padrao.search(l)), "")
+                achados.append({"pagina": n, "ocorrencias": len(hits), "trecho": linha[:120]})
+        print(json.dumps({"paginas_no_livro": total, "achados": achados}, ensure_ascii=False, indent=2))
+        return 0
+    if not args.paginas or not args.saida:
+        raise ErroModelo("use --buscar REGEX ou --paginas A-B --saida PASTA")
+    inicio, _, fim = args.paginas.partition("-")
+    inicio, fim = int(inicio), int(fim or inicio)
+    saida = Path(args.saida)
+    saida.mkdir(parents=True, exist_ok=True)
+    for n in range(inicio, min(fim, total) + 1):
+        texto = subprocess.run(["pdftotext", "-layout", "-f", str(n), "-l", str(n), str(pdf), "-"],
+                               capture_output=True, text=True, check=True).stdout
+        (saida / f"pagina-{n:03d}.txt").write_text(texto, encoding="utf-8")
+        subprocess.run(["pdftoppm", "-r", str(args.dpi), "-png", "-singlefile", "-f", str(n), "-l", str(n),
+                        str(pdf), str(saida / f"pagina-{n:03d}")], check=True)
+    print(json.dumps({"saida": str(saida), "paginas": list(range(inicio, min(fim, total) + 1))}, ensure_ascii=False))
+    return 0
+
+
+def impressao_digital(q):
+    texto = " ".join(paragrafos_de(q.get("enunciado")) + [str(a) for a in q.get("alternativas") or []])
+    texto = re.sub(r"[*^_{}\\]", "", texto)
+    return hashlib.sha256(re.sub(r"\s+", " ", texto).strip().lower().encode("utf-8")).hexdigest()
+
+
+def comando_acervo_sql(args):
+    acervo = carregar_spec(args.acervo)
+    fonte = acervo.get("fonte_jair_os", "Poliedro P+ Conteudos")
+    linhas = []
+    for q in acervo["questoes"]:
+        if not paragrafos_de(q.get("enunciado")) or q.get("pagina") is None:
+            raise ErroModelo(f"questão sem enunciado ou página: {q.get('numero')}")
+        alternativas = [{"label": LETRAS[i].upper(), "text": str(a)} for i, a in enumerate(q.get("alternativas") or [])]
+        metadados = {"livro_id": acervo.get("livro_id"), "livro": acervo.get("livro"), "pagina": q["pagina"],
+                     "numero": q.get("numero"), "capitulo": acervo.get("capitulo"),
+                     "transcrito_por": "claude-code mater-provas", "transcrito_em": dt.date.today().isoformat()}
+        valores = {
+            "ref": f"POLIEDRO-{str(acervo.get('livro_id', 'livro'))[:8]}-p{q['pagina']}-ex{q.get('numero', '?')}",
+            "banca": q.get("banca") or "POLIEDRO",
+            "ano": str(int(q["ano"])) if q.get("ano") else "null",
+            "materia": acervo.get("disciplina", "Física"),
+            "assunto": q.get("assunto") or acervo.get("assunto", ""),
+            "subassunto": q.get("subassunto", ""),
+            "series": "{" + ",".join(f'"{x}"' for x in acervo.get("series", [])) + "}",
+            "tipo": "multiple_choice" if alternativas else "open",
+            "enunciado": "\n\n".join(paragrafos_de(q["enunciado"])),
+            "opcoes": json.dumps(alternativas, ensure_ascii=False),
+            "gabarito": (str(q.get("gabarito") or "").strip().rstrip(")").upper() if alternativas
+                         else str(q.get("resposta_esperada") or q.get("gabarito") or "")),
+            "resolucao": str(q.get("resolucao") or ""),
+            "imagem": "true" if q.get("imagem") or q.get("imagens") else "false",
+            "oficial": "official" if q.get("banca") else "unknown",
+            "fidelidade": q.get("fidelidade", "verified_text_only"),
+            "tags": "{" + ",".join(f'"{t}"' for t in ["mater", "poliedro", *acervo.get("tags", [])]) + "}",
+            "fp": impressao_digital(q),
+            "meta": json.dumps(metadados, ensure_ascii=False),
+        }
+        for chave in ("enunciado", "opcoes", "gabarito", "resolucao", "meta", "assunto", "subassunto", "materia", "banca", "ref"):
+            if "$mp$" in valores[chave]:
+                raise ErroModelo("o texto contém a sequência reservada $mp$")
+        linhas.append(
+            "($mp${ref}$mp$, $mp${banca}$mp$, {ano}::int, $mp${materia}$mp$, $mp${assunto}$mp$, $mp${subassunto}$mp$, "
+            "'{series}'::text[], '{tipo}', $mp${enunciado}$mp$, $mp${opcoes}$mp$::jsonb, $mp${gabarito}$mp$, "
+            "$mp${resolucao}$mp$, {imagem}, '{oficial}', '{fidelidade}', '{tags}'::text[], '{fp}', $mp${meta}$mp$::jsonb)"
+            .format(**valores))
+    sql = (
+        "insert into jair_os.questions (owner_id, source_id, source_question_ref, exam_board, exam_year, subject, topic, "
+        "subtopic, series_suggested, question_type, statement, options, answer_key, solution, has_image, official_status, "
+        "fidelity_status, audit_status, tags, fingerprint, metadata)\n"
+        "select s.owner_id, s.id, v.ref, v.banca, v.ano, v.materia, v.assunto, v.subassunto, v.series, v.tipo, v.enunciado, "
+        "v.opcoes, nullif(v.gabarito, ''), nullif(v.resolucao, ''), v.imagem, v.oficial, v.fidelidade, 'pending', v.tags, "
+        "v.fp, v.meta\nfrom jair_os.question_sources s cross join (values\n" + ",\n".join(linhas) +
+        "\n) as v(ref, banca, ano, materia, assunto, subassunto, series, tipo, enunciado, opcoes, gabarito, resolucao, "
+        "imagem, oficial, fidelidade, tags, fp, meta)\n"
+        f"where s.title = $mp${fonte}$mp$\non conflict (owner_id, fingerprint) do nothing\nreturning source_question_ref;"
+    )
+    if args.saida:
+        Path(args.saida).write_text(sql, encoding="utf-8")
+        print(json.dumps({"sql": args.saida, "questoes": len(linhas)}, ensure_ascii=False))
+    else:
+        print(sql)
+    return 0
+
+
 def comando_modelo(args):
     destino = Path(args.saida)
     decodificar_modelo(args.origem, destino)
@@ -815,6 +913,17 @@ def main():
     f.add_argument("--dpi", type=int, default=400)
     f.add_argument("--cores", action="store_true", help="mantém cores (padrão: 16 tons de cinza)")
     f.set_defaults(func=comando_figura)
+    lv = sub.add_parser("livro", help="localiza páginas no PDF do livro e exporta texto + PNG")
+    lv.add_argument("pdf")
+    lv.add_argument("--buscar", help="expressão regular, ex.: 'ímã|bússola|polo magnético'")
+    lv.add_argument("--paginas", help="intervalo, ex.: 120-128")
+    lv.add_argument("--saida", help="pasta para pagina-NNN.txt/.png")
+    lv.add_argument("--dpi", type=int, default=150)
+    lv.set_defaults(func=comando_livro)
+    ac = sub.add_parser("acervo-sql", help="gera o SQL de gravação no banco de questões do Jair OS")
+    ac.add_argument("acervo", help="YAML/JSON com as questões transcritas (livro_id, pagina, numero…)")
+    ac.add_argument("--saida", help="arquivo .sql (padrão: imprime)")
+    ac.set_defaults(func=comando_acervo_sql)
     args = parser.parse_args()
     try:
         sys.exit(args.func(args))
