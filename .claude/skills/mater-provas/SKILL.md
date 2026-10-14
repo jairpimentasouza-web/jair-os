@@ -53,6 +53,16 @@ mudou o modelo: pare e avise. `avisos` = confira `referencia/padrao-modelo-ofici
 - Figura: `pdftoppm -r 300 -f P -l P -png fonte.pdf pag`, recorte só a figura (PIL) e declare
   `origem` (ex.: `recorte do PDF da fonte, 300 dpi`).
 
+### 3b. Ilustrações em alta definição (quando o professor pedir)
+Desenhe a figura em SVG e renderize com `python3 $MP figura fig.svg --largura-cm 10` (PNG a 400 dpi,
+16 tons de cinza; `--cores` mantém cor). Regras:
+- tons chapados de cinza (traço `#111`, preenchimentos `#6b6b6b`/`#bdbdbd`/`#ececec`), sem degradê:
+  imprime limpo em P&B e o arquivo fica leve (~15–30 KB);
+- traço ≥ 2 px e legendas com ~9 pt impressos — o comando informa o `fonte_minima_px_para_9pt`;
+- a figura ilustra, não muda dados do enunciado e não entrega a resposta;
+- declare na especificação `origem: ilustração original vetorial (SVG)` e a mesma `largura_cm`;
+- abra o PNG com Read e corrija sobreposições de legenda antes de gerar a prova.
+
 ### 4. Auditoria científica (antes de montar)
 Resolva cada questão do zero: cálculo completo, unidades, ordem de grandeza, coerência dos dados.
 Confirme que exatamente uma alternativa está correta e que o gabarito confere com o da fonte.
@@ -88,7 +98,8 @@ corrija a especificação e rode de novo. Opções: `--cabecalho-preto`, `--docx
 existem no Windows, macOS e Google Docs).
 
 Dependências: `python-docx`, `PyYAML`, `lxml`, LibreOffice (`soffice`), `poppler-utils`; para
-`\( \)` também `pandoc` e `libreoffice-math` (`sudo apt-get install -y libreoffice-math`).
+`\( \)` também `pandoc` e `libreoffice-math` (`sudo apt-get install -y libreoffice-math`); para
+`figura`, Node com `playwright` e Pillow.
 
 ### 7. Inspeção visual (obrigatória)
 Abra **todas** as `previa/pagina-N.png` com Read e confira: cabeçalho preenchido e só na
@@ -98,9 +109,10 @@ Corrija e gere de novo até passar.
 
 ### 8. Entrega
 - Envie com `SendUserFile` o PDF e o DOCX do aluno e, em mensagem separada, o gabarito.
+- E-mail: os conectores do Gmail e do Drive recebem o arquivo em base64 dentro da chamada
+  (~1 token por caractere). A prova (DOCX ~80 KB, PDF ~200 KB) não cabe: não tente anexar.
+  Ofereça um link que o professor autorizar, ou o encaminhamento pelo app.
 - Resuma: nº de questões, soma, páginas, distribuição do gabarito, fontes usadas e avisos do gate.
-- Drive só se pedido: pasta `Colégio São Conrado/Avaliações <N>º Bimestre <ano>/<Série> — <Disciplina>/`,
-  gabarito em `Gabaritos — Professor/`. O upload pelo MCP passa o arquivo em base64
-  (`create_file` com `base64Content`, `contentMimeType` e `disableConversionToGoogleType: true`),
-  então faça só com os arquivos enxutos e confirme antes.
+- Drive (pasta `Colégio São Conrado/Avaliações <N>º Bimestre <ano>/<Série> — <Disciplina>/`, gabarito
+  em `Gabaritos — Professor/`): mesma limitação do base64; só arquivos pequenos.
 - Registrar no Jair OS (`jair_os_salvar_memoria`) só quando o Jair pedir.

@@ -8,6 +8,7 @@ as questões com a formatação do corpo do modelo (Tahoma 11, entrelinha 1,15).
 Subcomandos:
   modelo  decodifica o modelo baixado pelo MCP do Google Drive e confere a geometria oficial
   gerar   monta DOCX + PDF do aluno, gabarito do professor, prévias PNG e manifesto, com gate de entrega
+  figura  renderiza uma ilustração SVG em PNG de alta resolução, em tons de cinza para impressão P&B
 """
 import argparse
 import base64
@@ -660,6 +661,47 @@ def gerar_gabarito(spec, formulas, destino):
     doc.save(destino)
 
 
+RENDER_SVG_JS = """
+const { chromium } = require('playwright');
+const fs = require('fs');
+(async () => {
+  const [svg, png, w, h, escala] = process.argv.slice(1);
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: +w, height: +h }, deviceScaleFactor: +escala });
+  await page.setContent('<html><body style="margin:0;background:#fff">' + fs.readFileSync(svg, 'utf8') + '</body></html>');
+  await page.screenshot({ path: png, clip: { x: 0, y: 0, width: +w, height: +h } });
+  await browser.close();
+})().catch(e => { console.error(e.message); process.exit(1); });
+"""
+
+
+def comando_figura(args):
+    from PIL import Image
+
+    svg = Path(args.svg)
+    tag = re.search(r"<svg\b[^>]*>", svg.read_text(encoding="utf-8"))
+    medidas = {k: re.search(rf'\b{k}="([\d.]+)', tag.group(0)) if tag else None for k in ("width", "height")}
+    if not all(medidas.values()):
+        raise ErroModelo("o <svg> precisa de width e height em px")
+    largura, altura = (float(medidas[k].group(1)) for k in ("width", "height"))
+    escala = args.largura_cm / 2.54 * args.dpi / largura
+    png = svg.with_suffix(".png")
+    try:
+        subprocess.run(["node", "-e", RENDER_SVG_JS, str(svg), str(png), str(largura), str(altura), f"{escala:.4f}"],
+                       check=True, capture_output=True, text=True, timeout=120)
+    except (FileNotFoundError, subprocess.CalledProcessError) as e:
+        raise ErroModelo(f"falha ao renderizar com Node + Playwright (npm i -g playwright): {getattr(e, 'stderr', e)}")
+    imagem = Image.open(png)
+    imagem = imagem.convert("RGB").quantize(64) if args.cores else imagem.convert("L").quantize(16, dither=Image.Dither.NONE)
+    imagem.save(png, optimize=True, dpi=(args.dpi, args.dpi))
+    largura_px = imagem.size[0]
+    print(json.dumps({"png": str(png), "px": list(imagem.size), "bytes": png.stat().st_size,
+                      "dpi_efetivo": round(largura_px / (args.largura_cm / 2.54)),
+                      "fonte_minima_px_para_9pt": round(0.3175 * largura / args.largura_cm)},
+                     ensure_ascii=False, indent=2))
+    return 0
+
+
 def comando_modelo(args):
     destino = Path(args.saida)
     decodificar_modelo(args.origem, destino)
@@ -767,6 +809,12 @@ def main():
     g.add_argument("--cabecalho-preto", action="store_true", help="campos preenchidos em preto (padrão: cor do modelo)")
     g.add_argument("--docx-com-fontes", action="store_true", help="mantém as fontes embutidas do modelo (~3 MB)")
     g.set_defaults(func=comando_gerar)
+    f = sub.add_parser("figura", help="renderiza uma ilustração SVG em PNG de alta resolução")
+    f.add_argument("svg", help="arquivo .svg com width/height em px; o PNG sai ao lado")
+    f.add_argument("--largura-cm", type=float, required=True, help="largura que a figura terá na prova")
+    f.add_argument("--dpi", type=int, default=400)
+    f.add_argument("--cores", action="store_true", help="mantém cores (padrão: 16 tons de cinza)")
+    f.set_defaults(func=comando_figura)
     args = parser.parse_args()
     try:
         sys.exit(args.func(args))
