@@ -1,0 +1,4 @@
+# Mater provas: modelo oficial baixado do Drive e avaliações geradas (nunca versionar)
+saidas/
+*.modelo.docx
+__pycache__/
