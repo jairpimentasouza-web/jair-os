@@ -431,8 +431,10 @@ class Corpo:
             escrever_texto(p, texto, self.formulas)
             if i == len(paragrafos) - 1:
                 adicionar_run(p, valor)
-        for img in imagens:
-            self.imagem(img)
+            # a figura entra depois do parágrafo indicado (padrão: depois do enunciado inteiro)
+            for img in imagens:
+                if int(img.get("apos_paragrafo", len(paragrafos))) == i + 1:
+                    self.imagem(img)
         if q.get("alternativas"):
             lista = self.nova_lista()
             for alt in q["alternativas"]:
@@ -517,6 +519,9 @@ def validar_spec(spec, base):
             if not caminho.is_file():
                 erros.append(f"{rot}: imagem não encontrada: {caminho}")
                 continue
+            n_par = len(paragrafos_de(q.get("enunciado")))
+            if not 1 <= int(img.get("apos_paragrafo", n_par)) <= max(n_par, 1):
+                erros.append(f"{rot}: apos_paragrafo deve estar entre 1 e {n_par}")
             largura = float(img.get("largura_cm", 8))
             px = DocxImage.from_file(str(caminho)).px_width
             dpi = px / (largura / 2.54)
@@ -528,7 +533,7 @@ def validar_spec(spec, base):
             origem = str(img.get("origem", "")).lower()
             if not origem:
                 avisos.append(f"{rot}: imagem sem 'origem' declarada")
-            elif "foto" in origem:
+            elif re.search(r"\bfoto", origem) and not re.search(r"\bsem\s+fotos?\b", origem):
                 erros.append(f"{rot}: o modelo não aceita fotos de documentos/livros")
     total = decimal_br(spec["total_pontos"], "total_pontos")
     if soma != total:
@@ -765,7 +770,7 @@ def comando_acervo_sql(args):
             "opcoes": json.dumps(alternativas, ensure_ascii=False),
             "gabarito": (str(q.get("gabarito") or "").strip().rstrip(")").upper() if alternativas
                          else str(q.get("resposta_esperada") or q.get("gabarito") or "")),
-            "resolucao": str(q.get("resolucao") or ""),
+            "resolucao": "\n\n".join(paragrafos_de(q.get("resolucao"))),
             "imagem": "true" if q.get("imagem") or q.get("imagens") else "false",
             "oficial": "official" if q.get("banca") else "unknown",
             "fidelidade": q.get("fidelidade", "verified_text_only"),

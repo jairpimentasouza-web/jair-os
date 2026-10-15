@@ -108,7 +108,7 @@ Valores com vírgula, entre aspas (`"0,25"`). Marcação nos textos:
 
 Por questão: `tipo` (objetiva/discursiva), `fonte`, `valor`, `enunciado`, `alternativas` +
 `gabarito` (letra) ou `itens` (texto/valor/espaco_linhas) + `resposta_esperada`, `imagem`
-(`arquivo`, `largura_cm`, `origem`), `espaco_linhas` (padrão 3 objetiva / 7 discursiva),
+(`arquivo`, `largura_cm`, `origem`, `apos_paragrafo` para pôr a figura no meio do enunciado), `espaco_linhas` (padrão 3 objetiva / 7 discursiva),
 `situacao_problema`, `rotulo`, `resolucao`.
 
 ### 6. Gerar
