@@ -52,15 +52,17 @@ Fonte: `/api/v1/fields/select/formula_nota` (fórmula **238 — "3 COMPS - GERAL
 
 ## 3. Matriz canônica — classificação por turma
 
-| Turma | Confirmado p/ lançar AV2 | Validar grafia | Pendente identificação (fora do lote) | Aluno IROS não achado no AS | Sem nota comprovada no IROS |
+> Privacidade: contagens apenas. Nomes de alunos e notas individuais ficam só no IROS (Supabase, acesso controlado), nunca no repositório.
+
+| Turma | Confirmado p/ lançar AV2 | Validar grafia | Pendente identificação | Ausente da lista ativa | Sem nota comprovada |
 |------|:-:|:-:|:-:|:-:|:-:|
-| 2101 | **10** | 2 (Laura Brum, Sophie Pélico) | 0 | 1 (Isabela Gomes 7,3) | 1 (Emmanuella) |
-| 2201 | **9** | 0 | 0 | 0 | 1 (Pietra) |
-| 2301 | **8** | 0 | 1 (Thiago/“Iago ou Rodrigo” 8,2) | 0 | 2 (Ana Clara dos Santos, Isabela Amaral) |
+| 2101 | **10** | 2 | 0 | 1 | 1 |
+| 2201 | **9** | 0 | 0 | 0 | 1 |
+| 2301 | **8** | 0 | 1 | 0 | 2 |
 | **Total** | **27** | 2 | 1 | 1 | 4 |
 
-- Total de registros AV2 no IROS = **31** (27 prontos + 2 grafia + 1 pendente id + 1 não-encontrado), coerente com o histórico (“~31 registros, ≥1 identificação pendente”).
-- Nenhuma nota foi inventada; médias parciais e `nota_01` do ActiveSoft **não** foram tratadas como AV2.
+- Total de registros AV2 no IROS ≈ **31** na 1ª consolidação, coerente com o histórico (“~31 registros, ≥1 identificação pendente”). Ver Parte 2 para o estado atual (30 confirmados após segunda chamada).
+- Nenhuma nota foi inventada; médias parciais e o componente AV1 lido do ActiveSoft **não** foram tratados como AV2.
 
 ---
 
@@ -69,7 +71,7 @@ Fonte: `/api/v1/fields/select/formula_nota` (fórmula **238 — "3 COMPS - GERAL
 1. **Estrutura de avaliação do 3º bim inexistente** (`existe_avaliacao=false`): lançar a AV2 exige **gerar a composição AV1/AV2/EO** nas turmas antes do primeiro `salvar_nota`. Isso cria também os campos AV1 e EO (afeta além da AV2), portanto não é um write isolado de 1 registro — precisa de decisão explícita.
 2. **Teste controlado de 1 registro** + releitura de persistência (exigência da missão) ainda não executado.
 3. **Aprovação humana / Policy Engine** para `grades.write` (regra ativa `requires_approval`).
-4. **4 registros fora do lote** até resolução: grafia de Laura Brum e Sophie Pélico; identificação de Thiago Montedo (nota 8,2 ditada como “Iago ou Rodrigo”); e Isabela Gomes (7,3) presente no cadastro mas ausente da lista ativa lida no ActiveSoft.
+4. **Registros fora do lote** até resolução: 2 com grafia de nome divergente; 1 com identificação pendente (nota ditada sem nome único); e alunos presentes no cadastro mas ausentes da lista ativa lida no ActiveSoft. Detalhe nominativo apenas no IROS.
 
 ## 5. FALHOU
 - Nenhuma operação de escrita foi tentada (portanto sem falha de escrita). Desktop Commander do iMac indisponível no mês (cota) — não usado; a execução ocorreu 100% pela nuvem.
@@ -88,4 +90,34 @@ Fonte: `/api/v1/fields/select/formula_nota` (fórmula **238 — "3 COMPS - GERAL
 | 7 | Divergências/pendências identificadas | ✔ (seção 3/4) |
 | 8 | Repetível com segurança | ✔ executor + contratos + política |
 
-**Próximo passo proposto:** gerar a estrutura de avaliação do 3º bim em **uma** turma, lançar a AV2 de **um** aluno inequívoco como teste, reler e confirmar no ActiveSoft; só então liberar os lotes por turma (27 confirmados).
+**Próximo passo proposto:** lançar a AV2 de **um** aluno inequívoco como teste, reler e confirmar no ActiveSoft; só então liberar os lotes por turma.
+
+---
+
+# PARTE 2 — Mecanismo de escrita mapeado + estado final (2026-10-15)
+
+> Privacidade: este documento não contém nomes de alunos nem notas individuais. Esses dados ficam apenas no IROS (Supabase, com controle de acesso) — nunca no repositório.
+
+## Rota real da grade de notas
+A digitação AV1/AV2/EO é a rota SPA `/portal_eb_professor/planilha_notas_faltas/{turma}/{disciplina}`, servida pelo módulo **`/api/v1/avaliacao_nota`**:
+- **Carregar:** `GET /api/v1/avaliacao_nota?periodo=8&curso=3&serie=<serie>&turma=<t>&fase_nota=<f>&disciplina=11&situacao=A`
+- **Validar célula:** `POST /api/v1/avaliacao_nota/validar/?fase_nota=&turma=&aluno=&disciplina=` · body `{"valor":<n>,"campo":"NC02"}`
+- **Salvar AV2:** `PATCH /api/v1/avaliacao_nota/?fase_nota=&turma=&aluno=&disciplina=` · body `{"NC02":<n>}`
+- **Confirmar turma:** `POST /api/v1/avaliacao_nota/confirmar_notas_turma/`
+
+**AV2 = `NC02`** (fórmula 238: NC01=AV1≤8, NC02=AV2≤10, NC03=EO≤2; média=(AV1+AV2+EO)/2). Fases 3º bim: 2101→508, 2201→521, 2301→534 (curso=3; serie 15/16/17).
+
+## Bloqueio (do ActiveSoft, não de permissão do usuário)
+A sessão por login server-side (mesmo professor, credenciais do Vault) recebe **HTTP 403 em todo o módulo `avaliacao_nota`**, apesar de `portal_professor/turmas`=200 e do `recuperar_notas` antigo=200. Finalizar unidade não destrava; a SPA não envia header além de `X-CSRFToken`. Logo, a grade nova exige a **sessão do navegador do professor**. Superfícies de escrita alternativas indisponíveis agora: Desktop Commander **0% de cota**; conector do iMac **somente leitura**; navegador cloud do Railway fora de alcance (e a missão proíbe reinstalar adaptador no contêiner gráfico estável).
+
+## Preparado para disparo imediato
+- `jair_os.iros_as_av2_write(cookie, turma, fase, serie, aluno, valor, dry_run)` — roda **com o cookie da sessão do navegador**; dry-run lê a grade + `validar` (sem salvar); execução faz `validar` → `PATCH {"NC02":valor}` → releitura de verificação, com auditoria antes/depois. Escopo travado (AV2/NC02, fases {508,521,534}, disciplina 11, turmas Legacy, valor 0–10).
+- Lote de lançamento e matriz canônica persistidos no IROS (`school_ops`).
+
+## Estado canônico atual (contagens, sem PII)
+- **Confirmados e lançáveis: 30** (1ª série 11, 2ª 10, 3ª 9) — todos com matrícula ativa e id de aluno resolvido.
+- **Fora do lote: 6** — 2 grafias a confirmar, 1 identificação pendente, 2 ausentes da lista ativa, 1 sem nota comprovada.
+- **Concorrência:** os registros canônicos foram atualizados em 2026-10-14 22:53 por **outro canal** (sessão ChatGPT-work), que adicionou notas de **segunda chamada** e criou a chave `..._segunda_chamada_20261014`. Coordenar para não lançar em duplicidade.
+
+## Para concluir (1 insumo)
+Capturar **1 requisição `avaliacao_nota`** da sessão do navegador do professor (DevTools → Network → Copy as cURL) e fornecê-la ao IROS. Com esse cookie, o `iros_as_av2_write` lança os 30 confirmados (teste de 1 registro → verificação → lotes por turma), mantendo as pendências fora. **Nenhuma nota foi escrita no ActiveSoft até aqui.**
