@@ -54,8 +54,10 @@ mudou o modelo: pare e avise. `avisos` = confira `referencia/padrao-modelo-ofici
   `origem` (ex.: `recorte do PDF da fonte, 300 dpi`).
 
 ### 3a. Livro digital da Poliedro → acervo do Jair OS
-Credenciais nos segredos do ambiente cloud: `POLIEDRO_LOGIN` e `POLIEDRO_SENHA`. O professor
-cadastra no menu do ambiente; nunca peça a senha na conversa nem imprima essas variáveis.
+Credenciais numa variável de ambiente do ambiente cloud: `POLIEDRO_ACESSO` = `usuário:senha`
+(ou `POLIEDRO_LOGIN` + `POLIEDRO_SENHA`). Use variável comum, não "segredo de rede": o robô digita a
+senha no formulário. O professor cadastra no menu do ambiente; nunca peça a senha na conversa nem
+imprima essas variáveis. O gancho de início de sessão informa se estão configuradas.
 1. Baixar o livro (o id é o `b=` do link `livro-digital.p4ed.com/visualizador/pdf?b=<id>`):
    `node .claude/skills/mater-provas/scripts/poliedro_livro.js <id> saidas/poliedro`.
    Gera `saidas/poliedro/poliedro_<id>.pdf` e guarda a sessão em `.sessao-poliedro.json` para

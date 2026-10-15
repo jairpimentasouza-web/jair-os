@@ -4,8 +4,8 @@
 // Uso: node poliedro_livro.js <id-do-livro> <pasta-de-saída>
 //   id-do-livro: o parâmetro b= do link do visualizador (…/visualizador/pdf?b=<id>)
 //
-// Credenciais: variáveis de ambiente POLIEDRO_LOGIN e POLIEDRO_SENHA (segredos do ambiente cloud).
-// Os valores nunca são impressos nem gravados; só a sessão do navegador (cookies) fica em
+// Credenciais: variável de ambiente POLIEDRO_ACESSO="usuário:senha" (ou POLIEDRO_LOGIN e POLIEDRO_SENHA),
+// cadastrada nas variáveis do ambiente cloud. Os valores nunca são impressos nem gravados; só a sessão do navegador (cookies) fica em
 // <pasta-de-saída>/.sessao-poliedro.json para reaproveitar o login nas próximas execuções.
 //
 // Saída (stdout, JSON): {ok, pdf, bytes, sha256} ou {ok:false, codigo, erro}.
@@ -25,10 +25,17 @@ function sair(codigo, erro, extra = {}) {
   process.exit(codigo);
 }
 
+function credenciais() {
+  // Uma variável só (POLIEDRO_ACESSO="usuário:senha") ou as duas separadas.
+  const acesso = process.env.POLIEDRO_ACESSO || '';
+  const corte = acesso.indexOf(':');
+  if (corte > 0) return [acesso.slice(0, corte).trim(), acesso.slice(corte + 1)];
+  return [process.env.POLIEDRO_LOGIN, process.env.POLIEDRO_SENHA];
+}
+
 async function entrar(page) {
-  const login = process.env.POLIEDRO_LOGIN;
-  const senha = process.env.POLIEDRO_SENHA;
-  if (!login || !senha) sair(2, 'defina POLIEDRO_LOGIN e POLIEDRO_SENHA nos segredos do ambiente');
+  const [login, senha] = credenciais();
+  if (!login || !senha) sair(2, 'defina POLIEDRO_ACESSO="usuário:senha" nas variáveis do ambiente cloud');
 
   await page.waitForSelector('#kc-form-login', { timeout: 30000 });
   // Etapa 1: usuário. O tema "poliedro-password-only" só mostra a senha; o usuário vem do portal P+

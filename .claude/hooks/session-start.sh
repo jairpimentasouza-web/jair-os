@@ -37,4 +37,8 @@ if command -v node >/dev/null 2>&1 && ! node -e "require('playwright')" >/dev/nu
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install -g --silent playwright >/dev/null
 fi
 
-echo "mater-provas: dependências prontas"
+if [ -n "${POLIEDRO_ACESSO:-}" ] || { [ -n "${POLIEDRO_LOGIN:-}" ] && [ -n "${POLIEDRO_SENHA:-}" ]; }; then
+  echo "mater-provas: dependências prontas; credenciais da Poliedro configuradas"
+else
+  echo "mater-provas: dependências prontas; credenciais da Poliedro ausentes (POLIEDRO_ACESSO)"
+fi
