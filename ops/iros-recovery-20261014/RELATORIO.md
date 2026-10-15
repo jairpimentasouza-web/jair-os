@@ -138,3 +138,34 @@ A meta de 99,5% **não é demonstrável** com o volume atual: pela regra de trê
 8. Agentes: decidir entre manter a certificação por volume de produção ou criar uma trilha de avaliação offline; corrigir a atribuição de cancelamentos administrativos no *canary*; incluir ou arquivar os 12 `legal.*` desatualizados.
 9. RAG: 45 fontes sem chunks (39 páginas web nunca buscadas, 4 itens do Drive, 1 coleção autenticada, 1 "indexed" sem chunks); trocar o resumo de qualidade para `passed_v2`; ampliar o conjunto de avaliação para material didático.
 10. Higiene de dispositivos: registro duplicado do Lenovo e CEJA nunca visto.
+
+---
+
+## Adendo — 15/10/2026: execução das aprovações ("Aprovo tudo")
+
+| Item | Resultado | Estado |
+|---|---|---|
+| ActiveSoft: não relogar em 403 (`migrations/03_…`) | As 2 condições trocadas; leitura de teste com 403 sem novo login; uso real depois: 30 leituras / 3 logins (22:29–00:07 UTC); md5 preservado em 15/10 | **CORRIGIDO E TESTADO** |
+| `e5_plan_of` sem acesso direto (`migrations/04_…`) | `authenticated` → `permission denied`; os 6 chamadores `SECURITY DEFINER` do `postgres` não foram afetados | **CORRIGIDO E TESTADO** |
+| Resumo de qualidade do RAG no critério v2 (`migrations/05_…`) | 186/202 aprovadas; legado (0/202) mantido em coluna própria; `security_invoker` preservado | **CORRIGIDO E TESTADO** |
+| pg_net | Canal de migração também roda como `postgres` (sonda abortou sem registro) | **BLOQUEADO** (suporte Supabase) |
+| Desativar `pg_graphql` | 0 chamadas a `graphql.resolve` desde 31/08; sem dependências; o comando ficou retido aguardando confirmação interativa (2 tentativas, nada aplicado); revogar `graphql.resolve` não é possível (dono `supabase_admin`) | **BLOQUEADO** (sua confirmação) |
+| Higiene de dispositivos | `UPDATE` retido pela ferramenta antes de chegar ao banco (nada aplicado) | **BLOQUEADO** (sua confirmação) |
+| Finalização da execução `cb2c244f` | Aprovação `9a5ef0b6` registrada (`approved`); o `UPDATE` de status ficou retido pela ferramenta (o observador não viu a instrução no banco) | **EM HOMOLOGAÇÃO** (sua confirmação) |
+| Senha vazada / E2E n8n / `manual_bridge` | Plano Pro; identidade do proprietário; condicionado ao fim da migração Railway | **BLOQUEADO** / **NÃO EXECUTADO** |
+
+**Novo alerta crítico (`aaba79d1`).** A função `jair_os.iros_as_grade_write`, criada pela sessão ChatGPT em 14/10 às 22:33, escolhe a coluna da AV2 por `nome ILIKE '%AV2%' OR valor_maximo = 10`. Sem coluna AV2, qualquer avaliação com máximo 10 (por exemplo AV1/`nota_01`) seria usada, ficando com a última correspondência. A função também não exige aprovação registrada. Exposição atual baixa: só o `postgres` executa, o módulo de notas retorna 403 e **nenhuma escrita foi feita** (`write_executed=false`). Não alterei a função porque estava em desenvolvimento ativo por outra sessão. Correção necessária antes de qualquer lançamento real: casar só o nome explícito da AV2, abortar se houver mais de uma correspondência, exigir `approval_request` aprovado quando `p_dry_run=false` e fazer *readback* valor a valor.
+
+**SQL pronto para você rodar no SQL Editor:**
+```sql
+-- 1) finalizar a execução (aprovação 9a5ef0b6 já registrada)
+update jair_os.executions set status='succeeded', finished_at=now()
+ where id='cb2c244f-3085-4272-aea6-4d3151712937' and status='running';
+-- 2) higiene de dispositivos (registros nunca conectados)
+update public.jairo_desktop_devices set enabled=false
+ where id in ('b0307ed0-5d10-4986-b96f-ddd194127ce7','592ff3a5-de99-4f84-b9e6-93631b3f9799') and last_seen_at is null;
+-- 3) GraphQL sem uso (reverter: create extension pg_graphql with schema graphql;)
+drop extension pg_graphql;
+```
+
+Evidências no ledger: `947685bc`/`34dc524b` (ActiveSoft), `64d976f5`/`89c5cf74` (GraphQL), `723e6acb` (consolidado de 15/10).
