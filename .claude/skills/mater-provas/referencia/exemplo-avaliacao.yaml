@@ -1,0 +1,73 @@
+# Especificação de exemplo. As questões são ilustrativas: troque "fonte" pela
+# proveniência real (livro/capítulo/página, caderno, banca/ano) antes de usar.
+tipo: TESTE                 # TESTE | PROVA | RECUPERAÇÃO ...
+bimestre: 4
+ano: 2026
+serie: 3ª Série             # vai para TURMA e para o nome do arquivo
+disciplina: Física 2        # cabeçalho em maiúsculas; arquivo "3ª Série – Avaliação – Física 2"
+professor: Jair Pimenta
+data: ___/___/2026          # opcional; ou a data de aplicação, ex. 21/10/2026
+total_pontos: "1,5"
+segmento: medio             # fundamental2 | medio -> exige ao menos uma situação-problema
+politica_questoes: fonte    # fonte (padrão) | autoral_autorizado (só com pedido explícito do professor)
+
+questoes:
+  - tipo: objetiva
+    fonte: EXEMPLO — substituir pela fonte real
+    situacao_problema: true
+    valor: "0,25"
+    enunciado: |
+      Um apontador laser verde emite luz de frequência 5,6 × 10^{14} Hz. Considerando a constante de Planck h = 6,6 × 10^{-34} J·s, a energia de cada fóton emitido vale, aproximadamente:
+    alternativas:
+      - 1,2 × 10^{-48} J
+      - 3,7 × 10^{-20} J
+      - 3,7 × 10^{-19} J
+      - 8,5 × 10^{47} J
+      - 5,6 × 10^{-14} J
+    gabarito: c
+    resolucao: |
+      E = h·f = 6,6 × 10^{-34} · 5,6 × 10^{14} ≈ 3,7 × 10^{-19} J.
+
+  - tipo: objetiva
+    fonte: EXEMPLO — substituir pela fonte real
+    valor: "0,25"
+    enunciado: |
+      No efeito fotoelétrico, ao aumentar a intensidade da luz que incide sobre um metal, mantendo-se a frequência acima da frequência de corte, observa-se que:
+    alternativas:
+      - a energia cinética máxima dos elétrons emitidos aumenta.
+      - o número de elétrons emitidos por unidade de tempo aumenta.
+      - a função trabalho do metal diminui.
+      - a frequência de corte do metal aumenta.
+      - os elétrons deixam de ser emitidos.
+    gabarito: b
+    resolucao: |
+      A intensidade aumenta o número de fótons por segundo, e não a energia de cada fóton: cresce a quantidade de fotoelétrons, enquanto a energia cinética máxima depende só da frequência.
+
+  - tipo: discursiva
+    fonte: EXEMPLO — substituir pela fonte real
+    situacao_problema: true
+    valor: "0,5"
+    enunciado: |
+      Uma placa de sódio, cuja função trabalho é \(\phi = 2{,}3\ \text{eV}\), é iluminada por radiação cujos fótons têm energia de 3,1 eV.
+    itens:
+      - texto: Determine a energia cinética máxima dos elétrons emitidos.
+        valor: "0,25"
+        espaco_linhas: 5
+      - texto: Explique o que aconteceria se fosse usada radiação com fótons de 2,0 eV, ainda que muito intensa.
+        valor: "0,25"
+        espaco_linhas: 4
+    resposta_esperada: a) 0,8 eV; b) não há emissão, pois a energia do fóton é menor que a função trabalho.
+    resolucao: |
+      a) \(E_{c,\text{máx}} = E_{\text{fóton}} - \phi = 3{,}1 - 2{,}3 = 0{,}8\ \text{eV}\).
+      b) Cada fóton de 2,0 eV tem energia menor que 2,3 eV; nenhum elétron é arrancado, qualquer que seja a intensidade.
+
+  - tipo: discursiva
+    fonte: EXEMPLO — questão do caderno
+    rotulo: "Questão do caderno."
+    valor: "0,5"
+    enunciado: |
+      Explique, com base no modelo de fótons proposto por Einstein, por que a luz de baixa frequência não arranca elétrons de um metal, mesmo quando é muito intensa.
+    espaco_linhas: 7
+    resposta_esperada: A energia de cada fóton (h·f) é menor que a função trabalho; aumentar a intensidade só aumenta o número de fótons.
+    resolucao: |
+      Cada elétron absorve um único fóton. Se h·f for menor que a função trabalho, nenhum fóton isolado fornece energia suficiente, e mais fótons (maior intensidade) não somam energia num mesmo elétron.
