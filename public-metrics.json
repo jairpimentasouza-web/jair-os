@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "measured_at": "2026-09-14",
+  "disclaimer": "Métricas internas de engenharia; não equivalem a certificação independente.",
+  "methodology": "docs/maturity.md",
+  "metrics": {
+    "enterprise_maturity_score": { "value": 7.49, "scale_max": 10 },
+    "agentops_audit_score": { "value": 92, "scale_max": 100 },
+    "agent_contracts": { "passed": 72, "total": 72 },
+    "rag": {
+      "mrr": 0.9556,
+      "hit_at_5": 0.9704,
+      "groundedness": 1.0,
+      "faithfulness": 1.0,
+      "answer_correctness": 0.9208,
+      "high_risk_hallucinations": 0
+    }
+  }
+}

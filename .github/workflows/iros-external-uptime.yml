@@ -6,8 +6,11 @@ on:
   push:
     branches: [main]
     paths: ['.github/workflows/iros-external-uptime.yml']
-permissions:
-  contents: read
+# O job só faz uma requisição HTTPS pública; não precisa de token do repositório.
+# Observação: o GitHub não garante a cadência de cron em workflows agendados
+# (as execuções reais ocorrem a cada ~3–5 h). O SLO de 5 min é medido pelo
+# probe interno do JOS; este workflow é a sonda externa independente.
+permissions: {}
 jobs:
   public-entrypoint:
     runs-on: ubuntu-latest

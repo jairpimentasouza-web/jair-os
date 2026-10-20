@@ -46,7 +46,7 @@
     try {
       if (head === 'app' || head === 'admin') {
         if (!A.session) { location.hash = '#/entrar?next=' + encodeURIComponent(r.parts.join('/')); return; }
-        if (!A.overview) { $('#view').innerHTML = '<div class="auth"><p class="muted">Carregando...</p></div>'; JA.afterLogin().then(JA.render, function (e) { $('#view').innerHTML = '<div class="auth"><div class="alert bad">' + esc(JA.errMsg(e)) + ' <button class="btn" onclick="location.reload()">Recarregar</button></div></div>'; }); return; }
+        if (!A.overview) { $('#view').innerHTML = '<div class="auth"><p class="muted">Carregando...</p></div>'; JA.afterLogin().then(JA.render, function (e) { $('#view').innerHTML = '<div class="auth"><div class="alert bad">' + esc(JA.errMsg(e)) + ' <button class="btn" type="button" data-reload>Recarregar</button></div></div>'; $('[data-reload]').addEventListener('click', function () { location.reload(); }); }); return; }
         if (head === 'app') return V.app(r.parts[1] || 'impacto');
         return V.admin(r.parts[1] || 'resumo');
       }

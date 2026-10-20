@@ -53,6 +53,7 @@ Arquitetura modular, memória contextual, RAG, governança de identidade, contra
 ## Áreas em evolução
 
 Certificação empírica de agentes, execução ponta a ponta com maior taxa de sucesso, escalabilidade horizontal, cobertura de evidência e redução de dependências legadas.
+
 ## Segurança
 
 Este repositório é uma versão **sanitizada para portfólio**. Não contém credenciais, tokens, dumps de banco, dados pessoais, endpoints administrativos nem código operacional sensível.
@@ -72,6 +73,15 @@ Consulte [SECURITY.md](SECURITY.md).
 - [Agentic RAG e Governança](docs/case-studies/02-agentic-rag.md)
 - [Operações Assistidas no Desktop](docs/case-studies/03-operacoes-desktop.md)
 - [Runtime Local e Resiliência](docs/case-studies/04-runtime-local.md)
+
+## Aplicações publicadas neste repositório
+
+| Pasta | O que é |
+|---|---|
+| [`escala5x2/`](escala5x2/) | Escala 5x2 Inteligente: SaaS de planejamento de jornada (login, planos, admin e webhook de pagamento) |
+| [`codex-dos-doze-portais/`](codex-dos-doze-portais/) | Landing page do Códex dos Doze Portais |
+| [`ia-segura-escola-2026/`](ia-segura-escola-2026/) e [`docs/ia-segura-escola-2026/`](docs/ia-segura-escola-2026/) | Landing page IA Segura na Escola 2026 |
+| [`docs/index.html`](docs/index.html) | Página de entrada do GitHub Pages (Le Stratège A1) |
 
 ## Autor
 
