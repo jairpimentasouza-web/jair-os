@@ -474,17 +474,40 @@ gabarito = f'''
 
 CSS = (HERE / "style.css").read_text()
 PB = '<div class="pb"></div>'
-parts = [cover, passo1, passo2, passo3, passo4, passo5, exercises, gabarito]
-body = "".join(f'<div class="sec">{p.replace(PB, "")}</div>' for p in parts)
-html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-<title>Força magnética sobre um fio com corrente — guia ilustrado e 20 exercícios</title>
-<style>{CSS}</style></head><body>
+chrome = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
+FOOT = "Força magnética sobre um fio com corrente  ·  página "
+
+
+def render(parts, stem, foot):
+    body = "".join(f'<div class="sec">{p.replace(PB, "")}</div>' for p in parts)
+    css = CSS.replace(FOOT, foot)
+    html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<title>Força magnética sobre um fio com corrente — {stem}</title>
+<style>{css}</style></head><body>
 {body}
 </body></html>'''
-out_html = HERE / "forca-magnetica-fio.html"
-out_html.write_text(html)
-pdf = HERE / "forca-magnetica-fio.pdf"
-chrome = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
-subprocess.run([chrome, "--headless", "--no-sandbox", "--disable-gpu", "--no-pdf-header-footer",
-                f"--print-to-pdf={pdf}", f"file://{out_html}"], check=True, capture_output=True)
-print("ok", pdf)
+    out_html = HERE / f"{stem}.html"
+    out_html.write_text(html)
+    pdf = HERE / f"{stem}.pdf"
+    subprocess.run([chrome, "--headless", "--no-sandbox", "--disable-gpu", "--no-pdf-header-footer",
+                    f"--print-to-pdf={pdf}", f"file://{out_html}"], check=True, capture_output=True)
+    print("ok", pdf)
+
+
+list_head = f'''
+<section class="cover mini">
+ <div class="kicker">FÍSICA · ENSINO MÉDIO · ELETROMAGNETISMO</div>
+ <h1>Força magnética sobre um fio — 20 exercícios</h1>
+ <div class="idline"><span>Aluna: ________________________________</span><span>Data: ____ / ____ / ________</span></div>
+</section>
+<div class="box key quick"><b>Lembrete rápido</b>
+ <div class="qgrid">
+  <div><b>Quanto?</b> F = {I_} · L · {B_} · sen θ &nbsp;(θ = ângulo entre o fio e as linhas de {B_}; perpendicular ⇒ sen θ = 1; paralelo ⇒ F = 0)</div>
+  <div><b>Unidades (SI):</b> {F_} em N · {I_} em A · L em m · {B_} em T · cm ÷ 100 · g ÷ 1000 · g = 10 m/s²</div>
+  <div><b>Para onde?</b> Mão direita: dedos em {I_}, feche em direção a {B_}, polegar = {F_}. Na folha: giro de {I_} até {B_}, anti-horário ⇒ {F_} sai {OUT}, horário ⇒ {F_} entra {IN}.</div>
+ </div>
+</div>
+'''
+render([cover, passo1, passo2, passo3, passo4, passo5, exercises, gabarito], "forca-magnetica-fio", FOOT)
+render([list_head + exercises.replace(exercises[exercises.index('<div class="part-title">'):exercises.index('</div></div>', exercises.index('lvlbar')) + len('</div></div>')], '')], "forca-magnetica-fio-lista-20-exercicios", "Força magnética sobre um fio · 20 exercícios  ·  página ")
+render([gabarito], "forca-magnetica-fio-gabarito-comentado", "Força magnética sobre um fio · Gabarito comentado  ·  página ")
