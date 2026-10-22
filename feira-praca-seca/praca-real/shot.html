@@ -1,0 +1,178 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  html,body{margin:0;padding:0;background:#000;overflow:hidden;width:1280px;height:720px;font-family:Inter,"DejaVu Sans",sans-serif}
+  canvas{position:absolute;left:0;top:0}
+  .ov{position:absolute;left:0;right:0;text-align:center;color:#fff;opacity:0;text-shadow:0 3px 14px rgba(0,0,0,.8);z-index:5}
+  .top{top:52px}
+  .top h1{margin:0;font-size:64px;font-weight:800;letter-spacing:2px}
+  .top p{margin:8px 0 0;font-size:28px;font-weight:600}
+  .bottom{bottom:40px}
+  .bottom span{display:inline-block;background:rgba(20,20,20,.62);padding:12px 26px;border-radius:12px;font-size:27px;font-weight:700}
+</style></head>
+<body>
+<canvas id="bg" width="1280" height="720"></canvas>
+<div id="gl"></div>
+<canvas id="fg" width="1280" height="720" style="z-index:3"></canvas>
+<div id="texts"></div>
+<script src="node_modules/three/build/three.min.js"></script>
+<script>
+const SHOT = new URLSearchParams(location.search).get('shot');
+const scene = new THREE.Scene();
+</script>
+<script src="lib.js"></script>
+<script>
+// ---------- shot configs (camera calibrated against each photo) ----------
+const SHOTS = {
+  A: { // vista do alto (foto 1, céu nublado)
+    img: 'foto1.jpg', W: 1000, H: 750, fov: 51, h: 5, pitch: 6,
+    light: {hemi: 2.1, sun: 0.9, sunPos: [-10, 40, 10], shadow: 0.28},
+    crop: [ {t: 0, cx: 500, cy: 330, z: 1.0}, {t: 8, cx: 430, cy: 380, z: 1.3}, {t: 15, cx: 400, cy: 390, z: 1.35}, {t: 24, cx: 700, cy: 375, z: 1.45} ],
+    texts: [
+      {cls: 'top', html: '<h1>FEIRA DA PRAÇA SECA</h1><p>20 barracas · palco com show ao vivo</p>', a: 0.5, b: 8.0},
+    ],
+  },
+  B: { // nível da rua (foto 3, sol)
+    img: 'foto3.jpg', W: 1280, H: 960, fov: 53, h: 1.6, pitch: -11,
+    light: {hemi: 1.1, sun: 3.0, sunPos: [-30, 35, -40], shadow: 0.42},
+    crop: [ {t: 0, cx: 640, cy: 520, z: 1.0}, {t: 6, cx: 640, cy: 590, z: 1.05}, {t: 9.5, cx: 380, cy: 610, z: 1.4}, {t: 20, cx: 900, cy: 610, z: 1.4}, {t: 24, cx: 640, cy: 570, z: 1.0} ],
+    texts: [
+      {cls: 'bottom', html: '<span>Acarajé · Artesanato · Churrasco · Caldos · Bebidas · Bolo de fatia · Feijoada</span>', a: 1.0, b: 8.0},
+    ],
+  },
+  C: { // palco com show (render)
+    img: 'foto2.jpg', W: 932, H: 582, fov: 42, h: 3.5, pitch: -0.7,
+    light: {hemi: 1.5, sun: 2.2, sunPos: [-25, 30, 15], shadow: 0.35},
+    crop: [ {t: 0, cx: 466, cy: 291, z: 1.0}, {t: 9, cx: 330, cy: 330, z: 1.4}, {t: 16, cx: 330, cy: 330, z: 1.45}, {t: 24, cx: 466, cy: 300, z: 1.05} ],
+    texts: [
+      {cls: 'bottom', html: '<span>Palco simples, sem telão · Show ao vivo</span>', a: 2.0, b: 10.0},
+      {cls: 'top', html: '<h1>FEIRA DA PRAÇA SECA</h1><p>Comida, artesanato e música para a comunidade</p>', a: 17.5, b: 40},
+    ],
+  },
+};
+const S = SHOTS[SHOT];
+const OW = 1280, OH = 720;
+
+// ---------- renderer / camera ----------
+const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true, preserveDrawingBuffer: true});
+renderer.setSize(OW, OH);
+renderer.setClearColor(0x000000, 0);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+document.getElementById('gl').appendChild(renderer.domElement);
+renderer.domElement.style.zIndex = 2;
+const camera = new THREE.PerspectiveCamera(S.fov, S.W / S.H, 0.1, 500);
+camera.position.set(0, S.h, 0);
+camera.rotation.order = 'YXZ';
+camera.rotation.x = -S.pitch * Math.PI / 180;
+
+// ---------- lights + shadow catcher on the real ground ----------
+scene.add(new THREE.HemisphereLight(0xe8f0ff, 0x8a8070, S.light.hemi));
+const sun = new THREE.DirectionalLight(0xfff1dd, S.light.sun);
+sun.position.set(...S.light.sunPos); sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096);
+Object.assign(sun.shadow.camera, {left: -40, right: 40, top: 40, bottom: -40, near: 1, far: 200});
+sun.shadow.bias = -0.0004; sun.shadow.radius = 4;
+scene.add(sun);
+const catcher = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.ShadowMaterial({opacity: S.light.shadow}));
+catcher.rotation.x = -Math.PI / 2; catcher.receiveShadow = true; scene.add(catcher);
+function setSunTarget(x, z) { sun.target.position.set(x, 0, z); sun.position.set(x + S.light.sunPos[0], S.light.sunPos[1], z + S.light.sunPos[2]); scene.add(sun.target); }
+
+// ---------- bunting ----------
+function bunting(p0, p1, y, sag, n) {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute([-0.16, 0, 0, 0.16, 0, 0, 0, -0.32, 0], 3));
+  geo.computeVertexNormals();
+  const inst = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({side: THREE.DoubleSide, roughness: .8}), n);
+  const fc = [0xe63946, 0xffbe0b, 0x2a9d8f, 0x3a86ff, 0xff006e, 0x06d6a0, 0xf77f00];
+  const ang = Math.atan2(p1[0] - p0[0], p1[1] - p0[1]);
+  const m4 = new THREE.Matrix4();
+  for (let j = 0; j < n; j++) {
+    const t = j / (n - 1);
+    m4.makeRotationY(ang + Math.PI / 2);
+    m4.setPosition(p0[0] + (p1[0] - p0[0]) * t, y - Math.sin(t * Math.PI) * sag, p0[1] + (p1[1] - p0[1]) * t);
+    inst.setMatrixAt(j, m4); inst.setColorAt(j, new THREE.Color(fc[j % fc.length]));
+  }
+  scene.add(inst);
+}
+
+// ---------- layouts ----------
+const NAMES = ['ACARAJÉ', 'ARTESANATO', 'CHURRASCO', 'CALDOS', 'BEBIDAS', 'BOLO DE FATIA', 'FEIJOADA'];
+let k = 0;
+const nextName = () => NAMES[(k++) % NAMES.length];
+const nextColor = () => palette[(k * 3) % palette.length];
+
+if (SHOT === 'A') {
+  setSunTarget(0, -28);
+  const zs = [-16, -20, -24, -28, -32, -36];
+  zs.forEach(z => { stall(-10, z, Math.PI / 2, nextName(), nextColor()); });
+  zs.forEach(z => { stall(-3, z, -Math.PI / 2, nextName(), nextColor()); });
+  for (let x = -14; x <= 14; x += 4) stall(x, -41, 0, nextName(), nextColor());
+  zs.forEach(z => bunting([-8.5, z - 2], [-4.5, z - 2], 3.9, 0.4, 12));
+  makeStage(11, -35, 0.785);
+  makeCrowd(55, [4.5, 10, -33.5, -27.5], [11, -35]);
+  makeWalkers(12, [-6.5, -15], [-6.5, -37], 1.6);
+  makeWalkers(8, [-12, -39], [12, -38.5], 1.2);
+  makeWalkers(5, [-2, -30], [8, -36], 1.0);
+  zs.forEach((z, i) => { if (i % 2 === 0) makeCustomer(-7.6, z + (rnd() - .5), -Math.PI / 2); else makeCustomer(-5.4, z + (rnd() - .5), Math.PI / 2); });
+  for (let x = -12; x <= 12; x += 6) makeCustomer(x + rnd(), -38.4, Math.PI);
+}
+if (SHOT === 'B') {
+  setSunTarget(0, -20);
+  // spacing chosen so the real tree trunk falls in the gap between two stalls
+  const xs7 = [0, 1, 2, 3, 4, 5, 6].map(i => -0.72 + 3.9 * (i - 3));
+  xs7.forEach((x, i) => stall(x, -22, 0, NAMES[i], palette[i]));
+  bunting([-14, -19.6], [13, -19.6], 4.1, 0.5, 46);
+  makeStage(-1, -46, Math.PI / 2 - 0.1);
+  makeCrowd(30, [-6, 4, -41, -37], [-1, -46]);
+  [-9.5, -6.8, -2.6, 1.6, 4.9, 8.8, 11.9].forEach(x => makeCustomer(x - 0.8, -19.7 + rnd() * 0.4, Math.PI + (rnd() - .5) * 0.6));
+  makeWalkers(6, [-12, -17.6], [12, -17.6], 1.2);
+  makeWalkers(4, [-5, -12], [8, -12], 0.8);
+}
+if (SHOT === 'C') {
+  setSunTarget(-4, -28);
+  makeStage(-6, -26, Math.PI / 2 - 0.3);
+  makeCrowd(70, [-11, -0.5, -22.5, -17.5], [-6, -26]);
+  [-30, -26, -22, -18].forEach(x => stall(x, -40, 0.15, nextName(), nextColor()));
+  [16, 20, 24].forEach(x => stall(x, -36, -0.3, nextName(), nextColor()));
+  bunting([-31, -37.5], [-16, -35], 3.9, 0.5, 30);
+  makeWalkers(6, [-14, -30], [10, -30], 2);
+}
+
+// ---------- background photo, real foreground mask ----------
+const photo = new Image(), mask = new Image();
+photo.src = S.img; mask.src = S.img.replace('.jpg', '_mask.png');
+const bg = document.getElementById('bg').getContext('2d');
+const fg = document.getElementById('fg').getContext('2d');
+bg.imageSmoothingQuality = fg.imageSmoothingQuality = 'high';
+
+// ---------- texts ----------
+const texts = S.texts.map(o => { const d = document.createElement('div'); d.className = 'ov ' + o.cls; d.innerHTML = o.html; document.getElementById('texts').appendChild(d); return {d, ...o}; });
+function fade(t, a, b, d = 0.7) { return Math.max(0, Math.min(1, (t - a) / d, (b - t) / d)); }
+
+// ---------- crop path (2D camera move over the photo) ----------
+function ease(u) { return u * u * (3 - 2 * u); }
+function cropAt(t) {
+  const K = S.crop; let i = 0; while (i < K.length - 2 && t > K[i + 1].t) i++;
+  const a = K[i], b = K[i + 1]; const u = ease(Math.min(1, Math.max(0, (t - a.t) / (b.t - a.t))));
+  const z = a.z + (b.z - a.z) * u, cx = a.cx + (b.cx - a.cx) * u, cy = a.cy + (b.cy - a.cy) * u;
+  const bw = Math.min(S.W, S.H * 16 / 9), w = bw / z, h = w * 9 / 16;
+  const x = Math.min(S.W - w, Math.max(0, cx - w / 2)), y = Math.min(S.H - h, Math.max(0, cy - h / 2));
+  return {x, y, w, h};
+}
+
+window.renderAt = function (t) {
+  animate(t);
+  const c = cropAt(t);
+  camera.setViewOffset(S.W, S.H, c.x, c.y, c.w, c.h);
+  bg.clearRect(0, 0, OW, OH); bg.drawImage(photo, c.x, c.y, c.w, c.h, 0, 0, OW, OH);
+  fg.clearRect(0, 0, OW, OH); if (mask.complete && mask.naturalWidth) fg.drawImage(mask, c.x, c.y, c.w, c.h, 0, 0, OW, OH);
+  texts.forEach(o => o.d.style.opacity = fade(t, o.a, o.b));
+  renderer.render(scene, camera);
+  return true;
+};
+window.ready = () => photo.complete && photo.naturalWidth > 0 && (mask.complete);
+</script>
+</body></html>
