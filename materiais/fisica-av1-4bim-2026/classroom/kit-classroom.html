@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kit Classroom AV1</title>
+<style>
+:root { --bg:#f6f7f9; --card:#fff; --ink:#1f2328; --muted:#5b616b; --line:#dfe2e7; --head:#4a4c55; --soft:#f1f3f6; --okb:#e7f5ec; --ok:#1f8a4c; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#16181c; --card:#1f2228; --ink:#e8eaed; --muted:#a3a9b3; --line:#343841; --head:#c9ccd3; --soft:#262a31; --okb:#173324; --ok:#5cc98a; } }
+:root[data-theme="dark"] { --bg:#16181c; --card:#1f2228; --ink:#e8eaed; --muted:#a3a9b3; --line:#343841; --head:#c9ccd3; --soft:#262a31; --okb:#173324; --ok:#5cc98a; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 Inter, "Segoe UI", Roboto, Arial, sans-serif; }
+.wrap { max-width:1000px; margin:0 auto; padding:24px 16px 60px; }
+header h1 { font-size:26px; margin:0 0 4px; } header p { margin:0; color:var(--muted); }
+.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin:16px 0; }
+.card h2 { margin:0 0 8px; font-size:18px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+.grid .card { margin:0; }
+.tabs { display:flex; flex-wrap:wrap; gap:8px; position:sticky; top:0; background:var(--bg); padding:10px 0; z-index:5; }
+.tab { border:2px solid var(--c); background:var(--card); color:var(--ink); border-radius:999px; padding:8px 16px; font-weight:700; cursor:pointer; font-size:14px; }
+.tab.on { background:var(--c); color:#fff; }
+.serie { display:none; } .serie.on { display:block; }
+.hero { display:flex; flex-direction:column; gap:10px; background:var(--card); border:1px solid var(--line); border-top:5px solid var(--c); border-radius:10px; padding:14px; }
+.hero img { width:100%; border-radius:6px; display:block; }
+.hero h2 { margin:0; font-size:20px; } .hero p { margin:2px 0 0; color:var(--muted); }
+h3 { margin:26px 0 10px; font-size:17px; border-bottom:2px solid var(--line); padding-bottom:4px; }
+ol.topics { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 12px 12px 34px; margin:0; }
+ol.topics li { padding:3px 0; font-weight:600; }
+details.post { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--c); border-radius:8px; margin:8px 0; }
+details.post summary { cursor:pointer; padding:10px 12px; display:flex; flex-wrap:wrap; gap:8px; align-items:baseline; list-style:none; }
+details.post summary::-webkit-details-marker { display:none; }
+.n { font-weight:800; color:var(--c); } .tipo { font-size:12px; font-weight:700; background:var(--soft); border-radius:4px; padding:1px 7px; }
+.tt { font-weight:700; } .top { margin-left:auto; font-size:12px; color:var(--muted); }
+.pb { padding:0 12px 12px; } .lbl { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:700; margin:10px 0 4px; }
+.cb { position:relative; } .cb pre { margin:0; white-space:pre-wrap; word-break:break-word; background:var(--soft); border:1px solid var(--line); border-radius:6px; padding:10px 12px; padding-right:84px; font:13.5px/1.5 Inter, "Segoe UI", Arial, sans-serif; color:var(--ink); }
+.copy { position:absolute; top:6px; right:6px; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:6px; padding:4px 10px; font-size:12px; font-weight:700; cursor:pointer; }
+.copy.done { background:var(--ok); color:#fff; border-color:var(--ok); }
+ul.anx { margin:0; padding-left:20px; } ul.anx li { word-break:break-all; }
+.cfg { margin-top:10px; font-size:13.5px; background:var(--okb); border-radius:6px; padding:6px 10px; }
+ol.steps li { margin:4px 0; }
+ol.quiz { padding-left:22px; } ol.quiz > li { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px 12px; margin:8px 0; }
+ol.quiz .q { font-weight:700; } ol.quiz ul { margin:4px 0; padding-left:18px; } ol.quiz li.ok { color:var(--ok); font-weight:700; }
+.fb { font-size:13px; color:var(--muted); }
+.note { font-size:14px; color:var(--muted); }
+table { width:100%; border-collapse:collapse; background:var(--card); font-size:14px; }
+th, td { border:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; }
+th { background:var(--head); color:var(--bg); }
+.vt-wrap, .tblw { overflow-x:auto; }
+code { background:var(--soft); padding:1px 5px; border-radius:4px; font-size:13px; }
+a { color:inherit; }
+@media (max-width:600px) { .top { margin-left:0; width:100%; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Kit Google Sala de Aula — Revisão AV1 de Física</h1>
+  <p>Legacy School · Barra da Tijuca · Prof. Jair Pimenta · 4º bimestre 2026 · 1ª, 2ª e 3ª séries</p>
+</header>
+
+<div class="card">
+  <h2>Como usar este kit</h2>
+  <p>Cada turma tem a estrutura completa: banner, descrição, 8 tópicos, 11 a 13 postagens com texto pronto (botão <b>Copiar</b>), vídeos do YouTube conferidos, duas listas de entrega, gabarito agendado, quiz com correção automática e avisos de mural com data de agendamento. As datas usam a contagem regressiva até a prova (<b>D-10</b> = 10 dias antes da AV1).</p>
+</div>
+
+<div class="grid">
+  <div class="card"><h2>1 · Banner e descrição</h2>Envie o banner da turma (Personalizar → Fazer upload de foto) e cole a descrição.</div>
+  <div class="card"><h2>2 · Tópicos</h2>Crie os 8 tópicos na ordem indicada. O 📌 COMECE AQUI fica no topo.</div>
+  <div class="card"><h2>3 · Postagens</h2>Publique na ordem. Use “Programar” nos itens com data (gabarito e avisos).</div>
+  <div class="card"><h2>4 · Quiz</h2>Crie o Teste no Forms a partir de Atividades → Criar → Atividade com teste.</div>
+</div>
+
+<div class="card">
+  <h2>Cronograma até a AV1</h2>
+  <div class="tblw"><table>
+    <tr><th>Quando</th><th>O que acontece no Classroom</th></tr>
+    <tr><td>D-10</td><td>Tudo publicado; aviso de abertura no mural</td></tr>
+    <tr><td>D-10 a D-6</td><td>Alunos estudam o mapa mental e assistem às videoaulas</td></tr>
+    <tr><td>D-5, 23h59</td><td>Prazo da Lista Níveis 1 e 2</td></tr>
+    <tr><td>D-3, 7h</td><td>Aviso automático de lembrete</td></tr>
+    <tr><td>D-2, 23h59</td><td>Prazo da Lista Níveis 3 e 4 · gabarito comentado liberado automaticamente</td></tr>
+    <tr><td>D-1</td><td>Quiz relâmpago · aviso de véspera às 17h</td></tr>
+  </table></div>
+</div>
+
+<nav class="tabs"><button class="tab" data-t="s1" style="--c:#1f63b5" type="button">1ª Série EM</button><button class="tab" data-t="s2" style="--c:#1f8a4c" type="button">2ª Série EM</button><button class="tab" data-t="s3" style="--c:#c46a0a" type="button">3ª Série EM</button></nav>
+<section class="serie" id="s1" style="--c:#1f63b5">
+<div class="hero"><img src="banner-1a-serie.png" alt="Banner da turma 1ª Série EM"><div><h2>1ª Série EM · Trabalho, Potência e Energia</h2><p>6 blocos de vídeo · 10 vídeos verificados · quiz de 10 questões · 16 postagens prontas</p></div></div>
+<h3>1. Configuração da turma</h3><ol class="steps">
+<li><b>Personalizar → Selecionar tema → Fazer upload de foto</b>: envie <code>banner-1a-serie.png</code> (1000 × 250 px).</li>
+<li><b>Configurações → Descrição da turma</b>:</li></ol><div class="cb"><button class="copy" type="button">Copiar</button><pre>Física · 1ª Série EM · Prof. Jair Pimenta · Legacy School — Barra da Tijuca. Revisão para a AV1 do 4º bimestre: Trabalho, Potência e Energia. Comece pelo tópico 📌 COMECE AQUI.</pre></div>
+<h3>2. Tópicos (crie nesta ordem e arraste para ficarem assim)</h3><ol class="topics"><li>📌 COMECE AQUI</li><li>🗺️ 1. Mapa mental e resumo teórico</li><li>🎬 2. Videoaulas por assunto</li><li>✍️ 3. Lista graduada — Níveis 1 e 2</li><li>🎯 4. Lista graduada — Níveis 3 e 4</li><li>✅ 5. Gabarito comentado</li><li>🧠 6. Quiz de autoavaliação</li><li>❓ Plantão de dúvidas</li></ol>
+<h3>3. Postagens — na ordem de publicação</h3>
+<details class="post" open><summary><span class="n">01</span><span class="tipo">Aviso (mural)</span><span class="tt">Abertura da revisão</span><span class="top">—</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Abertura da revisão</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>📣 REVISÃO PARA A AV1 DE FÍSICA ESTÁ NO AR!
+
+Turma, preparei um percurso completo para vocês chegarem à AV1 do 4º bimestre seguros e confiantes.
+Tema: Trabalho, Potência e Energia.
+
+Na aba Atividades vocês vão encontrar, nesta ordem:
+📌 Comece aqui — o roteiro de estudos
+🗺️ Mapa mental + resumo teórico com as pegadinhas mais comuns
+🎬 Videoaulas selecionadas por assunto (curtas e diretas)
+✍️ Lista graduada em 4 níveis (do aquecimento ao desafio)
+🧠 Quiz de autoavaliação com correção automática
+✅ Gabarito comentado passo a passo (liberado após o prazo da lista)
+
+Dica de ouro: estudar um pouco por dia rende muito mais do que estudar tudo na véspera.
+Qualquer dúvida, use o tópico &quot;Plantão de dúvidas&quot;. Bons estudos! 💪
+Prof. Jair Pimenta</pre></div>
+<div class="cfg"><b>Configurar:</b> Publicar no início da revisão (D-10).</div></div></details>
+<details class="post" open><summary><span class="n">02</span><span class="tipo">Material</span><span class="tt">Roteiro de estudos — AV1 1ª Série EM</span><span class="top">📌 COMECE AQUI</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Roteiro de estudos — AV1 1ª Série EM</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Este é o seu mapa até a AV1. Siga as etapas na ordem e marque o que já concluiu.
+
+O QUE CAI: trabalho de força constante e variável (gráfico F × x), trabalho do peso, da força elástica e do atrito, potência, rendimento, teorema da energia cinética e conservação da energia.
+
+ROTEIRO SUGERIDO
+1️⃣ D-10 a D-8 → Leia o mapa mental e o resumo teórico (páginas 1 a 3 do PDF). Anote dúvidas.
+2️⃣ D-8 a D-6 → Assista às videoaulas do tópico 🎬, respondendo à &quot;missão&quot; de cada vídeo.
+3️⃣ D-7 a D-5 → Resolva a Lista Níveis 1 e 2 e entregue a foto da resolução.
+4️⃣ D-5 a D-2 → Resolva a Lista Níveis 3 e 4 (padrão prova e desafio).
+5️⃣ D-2 → Corrija tudo com o Gabarito Comentado. Errou? Refaça sem olhar.
+6️⃣ D-1 → Faça o Quiz de autoavaliação e revise o checklist &quot;Eu sei...&quot; do PDF.
+
+COMO ESTUDAR MELHOR
+• Tente cada questão sozinho antes de olhar a resolução.
+• Escreva as unidades em todas as contas (cm → m, min → s, km/h → m/s).
+• Faça o desenho/diagrama da situação antes de calcular.
+• Errou? Classifique o erro: conceito, conta ou interpretação.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>PDF: Revisao-AV1-Fisica-1a-serie_trabalho-potencia-energia_lista-sem-gabarito.pdf</li></ul>
+<div class="cfg"><b>Configurar:</b> Fixar no topo do tópico.</div></div></details>
+<details class="post"><summary><span class="n">03</span><span class="tipo">Material</span><span class="tt">Mapa mental, teoria e pegadinhas — Trabalho, Potência e Energia</span><span class="top">🗺️ 1. Mapa mental e resumo teórico</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Mapa mental, teoria e pegadinhas — Trabalho, Potência e Energia</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Material-base da revisão (lista sem gabarito).
+
+Páginas 1–3: mapa mental, teoria essencial, dicas 💡 e pegadinhas ⚠ que mais tiram pontos.
+Página do checklist &quot;Eu sei...&quot;: use para conferir se está pronto para a prova.
+Páginas seguintes: lista com 20 exercícios graduados.
+
+Sugestão: imprima o mapa mental e deixe à vista na sua mesa de estudos.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>PDF: Revisao-AV1-Fisica-1a-serie_trabalho-potencia-energia_lista-sem-gabarito.pdf</li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar o PDF.</div></div></details>
+<details class="post"><summary><span class="n">04</span><span class="tipo">Material</span><span class="tt">🎬 1. Trabalho de uma força</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 1. Trabalho de uma força</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Entender τ = F·d·cos θ e quando o trabalho é motor, resistente ou nulo.
+
+VÍDEOS RECOMENDADOS
+▶ Física - Trabalho de uma força — Física em Minutos (4:25)
+   https://www.youtube.com/watch?v=HjDhps5zP9Q
+▶ Trabalho de uma força constante, da força peso e de força variável — Maurício Física (9:10)
+   https://www.youtube.com/watch?v=8OOXdgS-FsM
+
+🎯 MISSÃO DO VÍDEO: Por que a força normal não realiza trabalho quando a caixa desliza no chão?
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=HjDhps5zP9Q" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=HjDhps5zP9Q</a></li><li><a href="https://www.youtube.com/watch?v=8OOXdgS-FsM" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=8OOXdgS-FsM</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">05</span><span class="tipo">Material</span><span class="tt">🎬 2. Força variável: o gráfico F × x</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 2. Força variável: o gráfico F × x</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Calcular trabalho pela área sob o gráfico.
+
+VÍDEOS RECOMENDADOS
+▶ Trabalho de uma força variável — Matemática no Papel (6:22)
+   https://www.youtube.com/watch?v=McFqWSVPGpI
+
+🎯 MISSÃO DO VÍDEO: Como fica o sinal do trabalho quando a área está abaixo do eixo x?
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=McFqWSVPGpI" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=McFqWSVPGpI</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">06</span><span class="tipo">Material</span><span class="tt">🎬 3. Trabalho do peso e da força elástica</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 3. Trabalho do peso e da força elástica</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Usar ±m·g·h e ±k·x²/2 e ler k num gráfico.
+
+VÍDEOS RECOMENDADOS
+▶ Força elástica - Lei de Hooke — Matemática no Papel (5:29)
+   https://www.youtube.com/watch?v=yrcCqOhvSIY
+▶ Trabalho da força peso e da força elástica (Aula 19) — Professor Boaro (21:42)
+   https://www.youtube.com/watch?v=i5n0m6ui83U
+
+🎯 MISSÃO DO VÍDEO: Por que o trabalho do peso não depende da trajetória?
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=yrcCqOhvSIY" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=yrcCqOhvSIY</a></li><li><a href="https://www.youtube.com/watch?v=i5n0m6ui83U" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=i5n0m6ui83U</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">07</span><span class="tipo">Material</span><span class="tt">🎬 4. Potência e rendimento</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 4. Potência e rendimento</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Calcular P = τ/Δt, P = F·v e η = P_útil/P_total.
+
+VÍDEOS RECOMENDADOS
+▶ Potência mecânica: consumo e rendimento — Curso Enem Gratuito (6:56)
+   https://www.youtube.com/watch?v=objIr0eQIWQ
+▶ Potência mecânica e rendimento (Aula 20) — Professor Boaro (13:12)
+   https://www.youtube.com/watch?v=HX_TtKmt7Tk
+
+🎯 MISSÃO DO VÍDEO: Um motor de 1 500 W com rendimento de 60% entrega quanta potência útil?
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=objIr0eQIWQ" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=objIr0eQIWQ</a></li><li><a href="https://www.youtube.com/watch?v=HX_TtKmt7Tk" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=HX_TtKmt7Tk</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">08</span><span class="tipo">Material</span><span class="tt">🎬 5. Teorema da energia cinética</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 5. Teorema da energia cinética</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Aplicar τ_total = ΔEc, inclusive com atrito.
+
+VÍDEOS RECOMENDADOS
+▶ Teorema da energia cinética — Matemática no Papel (6:37)
+   https://www.youtube.com/watch?v=g7OfZUyiexQ
+▶ Energia cinética e teorema da energia cinética (Aula 22) — Professor Boaro (17:06)
+   https://www.youtube.com/watch?v=0sI9UBM4knQ
+
+🎯 MISSÃO DO VÍDEO: Se a velocidade é constante, quanto vale o trabalho total? E o de cada força?
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=g7OfZUyiexQ" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=g7OfZUyiexQ</a></li><li><a href="https://www.youtube.com/watch?v=0sI9UBM4knQ" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=0sI9UBM4knQ</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">09</span><span class="tipo">Material</span><span class="tt">🎬 6. Energia mecânica e conservação</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 6. Energia mecânica e conservação</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Resolver bungee jump, molas e rampas por conservação.
+
+VÍDEOS RECOMENDADOS
+▶ Energia mecânica e sua conservação (Aula 13) — Davi Oliveira - Física 2.0 (19:56)
+   https://www.youtube.com/watch?v=Xs2-gA6i_pg
+
+🎯 MISSÃO DO VÍDEO: Em que situação a energia mecânica NÃO se conserva? Para onde ela vai?
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=Xs2-gA6i_pg" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=Xs2-gA6i_pg</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">10</span><span class="tipo">Atividade</span><span class="tt">Lista de revisão — Níveis 1 e 2 (questões 1 a 10)</span><span class="top">✍️ 3. Lista graduada — Níveis 1 e 2</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Lista de revisão — Níveis 1 e 2 (questões 1 a 10)</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Resolva as questões 1 a 10 do PDF de revisão.
+
+🟢 Nível 1 (1–5): aquecimento — aplicação direta.
+🔵 Nível 2 (6–10): fixação — duas etapas, gráficos e conversões.
+
+COMO ENTREGAR
+1. Resolva no caderno, mostrando os cálculos e as unidades.
+2. Tire fotos nítidas (ou digitalize) e anexe aqui.
+3. Clique em &quot;Marcar como concluída&quot;.
+
+Critério: entrega completa e organizada. O objetivo é treinar — não tenha medo de errar!</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>PDF: Revisao-AV1-Fisica-1a-serie_trabalho-potencia-energia_lista-sem-gabarito.pdf</li></ul>
+<div class="cfg"><b>Configurar:</b> Pontos: sem nota (ou 0,5 de participação, a critério). Data de entrega: D-5, 23h59.</div></div></details>
+<details class="post"><summary><span class="n">11</span><span class="tipo">Atividade</span><span class="tt">Lista de revisão — Níveis 3 e 4 (questões 11 a 20)</span><span class="top">🎯 4. Lista graduada — Níveis 3 e 4</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Lista de revisão — Níveis 3 e 4 (questões 11 a 20)</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Resolva as questões 11 a 20 do PDF de revisão.
+
+🟠 Nível 3 (11–15): PADRÃO DA PROVA — mesmo estilo e dificuldade da AV1.
+🔴 Nível 4 (16–20): DESAFIO — acima do nível da prova. Quem domina estas, chega à prova com folga.
+
+COMO ENTREGAR
+Fotos nítidas da resolução completa (com desenho, fórmula, substituição e unidade).
+Travou numa questão? Escreva até onde chegou e onde travou — isso também conta!</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>PDF: Revisao-AV1-Fisica-1a-serie_trabalho-potencia-energia_lista-sem-gabarito.pdf</li></ul>
+<div class="cfg"><b>Configurar:</b> Pontos: sem nota (ou 0,5 de participação). Data de entrega: D-2, 23h59.</div></div></details>
+<details class="post"><summary><span class="n">12</span><span class="tipo">Teste (Formulário)</span><span class="tt">Quiz relâmpago — AV1 1ª Série EM (10 questões)</span><span class="top">🧠 6. Quiz de autoavaliação</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Quiz relâmpago — AV1 1ª Série EM (10 questões)</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Quiz com 10 questões rápidas e correção automática.
+
+• Faça sem consultar, em até 15 minutos.
+• Ao enviar, veja quais errou e leia o feedback de cada questão.
+• Meta: 8 acertos ou mais. Abaixo disso, volte ao mapa mental e aos vídeos do assunto em que errou.
+• Pode refazer quantas vezes quiser.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>Google Forms (Teste) — criar com as questões da aba “Quiz” deste kit</li></ul>
+<div class="cfg"><b>Configurar:</b> Atividade com teste · sem nota · data: D-1. Ativar ordem aleatória das opções e mostrar respostas após o envio.</div></div></details>
+<details class="post"><summary><span class="n">13</span><span class="tipo">Material (agendado)</span><span class="tt">Gabarito comentado — Lista de revisão 1ª Série EM</span><span class="top">✅ 5. Gabarito comentado</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Gabarito comentado — Lista de revisão 1ª Série EM</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Resolução passo a passo das 20 questões, com os erros mais comuns em cada uma.
+
+COMO CORRIGIR
+1. Compare só a resposta final primeiro. Marque ✔ ou ✘.
+2. Nas erradas, leia a resolução e identifique ONDE errou (conceito, conta ou interpretação).
+3. Feche o gabarito e refaça a questão sozinho.
+4. Ainda com dúvida? Poste no Plantão de dúvidas com o número da questão.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>PDF: Revisao-AV1-Fisica-1a-serie_trabalho-potencia-energia_completo.pdf</li></ul>
+<div class="cfg"><b>Configurar:</b> Agendar para D-2 às 23h59 (logo após o prazo da lista de níveis 3 e 4).</div></div></details>
+<details class="post"><summary><span class="n">14</span><span class="tipo">Pergunta</span><span class="tt">Plantão de dúvidas: em qual questão você travou?</span><span class="top">❓ Plantão de dúvidas</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Plantão de dúvidas: em qual questão você travou?</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Escreva o número da questão (ou o assunto) em que você mais travou e o que exatamente não entendeu.
+Responda e comente nas dúvidas dos colegas — explicar para alguém é uma das melhores formas de aprender!</pre></div>
+<div class="cfg"><b>Configurar:</b> Pergunta de resposta curta · permitir que os alunos vejam e respondam uns aos outros · sem nota.</div></div></details>
+<details class="post"><summary><span class="n">15</span><span class="tipo">Aviso (mural)</span><span class="tt">Lembrete D-3</span><span class="top">—</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Lembrete D-3</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>⏰ Faltam 3 dias para a AV1 de Física!
+
+Checklist rápido:
+☐ Já resolvi a Lista Níveis 1 e 2?
+☐ Já comecei a Lista Níveis 3 e 4? (prazo: D-2)
+☐ Assisti aos vídeos dos assuntos em que tenho mais dificuldade?
+
+Lembrem: o nível 3 da lista tem o mesmo estilo da prova. Prof. Jair</pre></div>
+<div class="cfg"><b>Configurar:</b> Agendar para D-3, 7h.</div></div></details>
+<details class="post"><summary><span class="n">16</span><span class="tipo">Aviso (mural)</span><span class="tt">Véspera da prova</span><span class="top">—</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Véspera da prova</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎯 AMANHÃ É DIA DE AV1!
+
+Para hoje:
+✔ Faça o Quiz relâmpago (meta: 8/10).
+✔ Revise o mapa mental e as caixas ⚠ Pegadinha do PDF.
+✔ Confira o gabarito comentado das questões que errou.
+
+Para amanhã: caneta azul ou preta, nada de corretivo, celular guardado e calma.
+Leia cada enunciado duas vezes e escreva as unidades. Vocês estão preparados. Boa prova! 🍀
+Prof. Jair Pimenta</pre></div>
+<div class="cfg"><b>Configurar:</b> Agendar para D-1, 17h.</div></div></details>
+<h3>4. Quiz de autoavaliação (Google Forms → Teste)</h3>
+<p class="note">Em Configurações do Forms: <b>Transformar em teste</b>; liberar nota <b>imediatamente após o envio</b>; mostrar respostas corretas e valores; em cada questão, ativar <b>Ordem aleatória das opções</b> (aqui a correta aparece sempre primeiro, marcada com ✔) e colar o feedback em “Feedback para respostas”.</p><ol class="quiz">
+<li><div class="q">Qual é a unidade de trabalho no SI?</div><ul><li class="ok">✔ joule (J)</li><li class="">watt (W)</li><li class="">newton (N)</li><li class="">quilowatt-hora (kWh)</li></ul><div class="fb">Feedback: Trabalho é energia: 1 J = 1 N·m. Watt é unidade de potência.</div></li>
+<li><div class="q">Uma força perpendicular ao deslocamento realiza trabalho:</div><ul><li class="ok">✔ nulo</li><li class="">máximo</li><li class="">negativo</li><li class="">positivo</li></ul><div class="fb">Feedback: cos 90° = 0 ⇒ τ = 0 (ex.: normal num piso horizontal).</div></li>
+<li><div class="q">Um corpo de 3 kg é erguido 2 m. O trabalho do PESO é (g = 10 m/s²):</div><ul><li class="ok">✔ −60 J</li><li class="">+60 J</li><li class="">−6 J</li><li class="">zero</li></ul><div class="fb">Feedback: Corpo sobe ⇒ τ_peso = −m·g·h = −3·10·2 = −60 J.</div></li>
+<li><div class="q">Num gráfico F × x, a área sob a curva representa:</div><ul><li class="ok">✔ o trabalho da força</li><li class="">a potência</li><li class="">a aceleração</li><li class="">a energia potencial do corpo</li></ul><div class="fb">Feedback: τ = área (numericamente) no gráfico força × posição.</div></li>
+<li><div class="q">Um motor realiza 600 J em 2 minutos. Sua potência média é:</div><ul><li class="ok">✔ 5 W</li><li class="">300 W</li><li class="">1 200 W</li><li class="">10 W</li></ul><div class="fb">Feedback: 2 min = 120 s ⇒ P = 600/120 = 5 W. Cuidado com minutos!</div></li>
+<li><div class="q">Um motor recebe 1 000 W e fornece 800 W úteis. O rendimento é:</div><ul><li class="ok">✔ 80%</li><li class="">20%</li><li class="">125%</li><li class="">8%</li></ul><div class="fb">Feedback: η = P_útil/P_total = 800/1000 = 0,8 = 80%.</div></li>
+<li><div class="q">Se a velocidade de um corpo dobra, sua energia cinética:</div><ul><li class="ok">✔ quadruplica</li><li class="">dobra</li><li class="">fica igual</li><li class="">cai pela metade</li></ul><div class="fb">Feedback: Ec = m·v²/2: v → 2v ⇒ Ec → 4·Ec.</div></li>
+<li><div class="q">Uma mola (k = 100 N/m) deformada 0,2 m armazena:</div><ul><li class="ok">✔ 2 J</li><li class="">20 J</li><li class="">10 J</li><li class="">4 J</li></ul><div class="fb">Feedback: Ee = k·x²/2 = 100·0,04/2 = 2 J.</div></li>
+<li><div class="q">Um bloco desliza com velocidade constante num piso com atrito. O trabalho TOTAL sobre ele é:</div><ul><li class="ok">✔ nulo</li><li class="">positivo</li><li class="">negativo</li><li class="">igual ao trabalho do atrito</li></ul><div class="fb">Feedback: v constante ⇒ ΔEc = 0 ⇒ τ_total = 0 (força aplicada e atrito se compensam).</div></li>
+<li><div class="q">Um corpo cai do repouso de 5 m de altura, sem resistência do ar. Ao chegar ao chão, v vale:</div><ul><li class="ok">✔ 10 m/s</li><li class="">5 m/s</li><li class="">50 m/s</li><li class="">100 m/s</li></ul><div class="fb">Feedback: m·g·h = m·v²/2 ⇒ v² = 2·10·5 = 100 ⇒ v = 10 m/s.</div></li>
+</ol>
+<h3>5. Videoteca da turma</h3><table class="vt"><tr><th>Assunto</th><th>Vídeo</th><th>Canal</th><th>Duração</th></tr>
+<tr><td>Trabalho de uma força</td><td><a href="https://www.youtube.com/watch?v=HjDhps5zP9Q" target="_blank" rel="noopener">Física - Trabalho de uma força</a></td><td>Física em Minutos</td><td>4:25</td></tr>
+<tr><td>Trabalho de uma força</td><td><a href="https://www.youtube.com/watch?v=8OOXdgS-FsM" target="_blank" rel="noopener">Trabalho de uma força constante, da força peso e de força variável</a></td><td>Maurício Física</td><td>9:10</td></tr>
+<tr><td>Força variável: o gráfico F × x</td><td><a href="https://www.youtube.com/watch?v=McFqWSVPGpI" target="_blank" rel="noopener">Trabalho de uma força variável</a></td><td>Matemática no Papel</td><td>6:22</td></tr>
+<tr><td>Trabalho do peso e da força elástica</td><td><a href="https://www.youtube.com/watch?v=yrcCqOhvSIY" target="_blank" rel="noopener">Força elástica - Lei de Hooke</a></td><td>Matemática no Papel</td><td>5:29</td></tr>
+<tr><td>Trabalho do peso e da força elástica</td><td><a href="https://www.youtube.com/watch?v=i5n0m6ui83U" target="_blank" rel="noopener">Trabalho da força peso e da força elástica (Aula 19)</a></td><td>Professor Boaro</td><td>21:42</td></tr>
+<tr><td>Potência e rendimento</td><td><a href="https://www.youtube.com/watch?v=objIr0eQIWQ" target="_blank" rel="noopener">Potência mecânica: consumo e rendimento</a></td><td>Curso Enem Gratuito</td><td>6:56</td></tr>
+<tr><td>Potência e rendimento</td><td><a href="https://www.youtube.com/watch?v=HX_TtKmt7Tk" target="_blank" rel="noopener">Potência mecânica e rendimento (Aula 20)</a></td><td>Professor Boaro</td><td>13:12</td></tr>
+<tr><td>Teorema da energia cinética</td><td><a href="https://www.youtube.com/watch?v=g7OfZUyiexQ" target="_blank" rel="noopener">Teorema da energia cinética</a></td><td>Matemática no Papel</td><td>6:37</td></tr>
+<tr><td>Teorema da energia cinética</td><td><a href="https://www.youtube.com/watch?v=0sI9UBM4knQ" target="_blank" rel="noopener">Energia cinética e teorema da energia cinética (Aula 22)</a></td><td>Professor Boaro</td><td>17:06</td></tr>
+<tr><td>Energia mecânica e conservação</td><td><a href="https://www.youtube.com/watch?v=Xs2-gA6i_pg" target="_blank" rel="noopener">Energia mecânica e sua conservação (Aula 13)</a></td><td>Davi Oliveira - Física 2.0</td><td>19:56</td></tr>
+</table></section>
+<section class="serie" id="s2" style="--c:#1f8a4c">
+<div class="hero"><img src="banner-2a-serie.png" alt="Banner da turma 2ª Série EM"><div><h2>2ª Série EM · Espelhos Planos e Esféricos</h2><p>5 blocos de vídeo · 10 vídeos verificados · quiz de 10 questões · 15 postagens prontas</p></div></div>
+<h3>1. Configuração da turma</h3><ol class="steps">
+<li><b>Personalizar → Selecionar tema → Fazer upload de foto</b>: envie <code>banner-2a-serie.png</code> (1000 × 250 px).</li>
+<li><b>Configurações → Descrição da turma</b>:</li></ol><div class="cb"><button class="copy" type="button">Copiar</button><pre>Física · 2ª Série EM · Prof. Jair Pimenta · Legacy School — Barra da Tijuca. Revisão para a AV1 do 4º bimestre: Espelhos Planos e Esféricos. Comece pelo tópico 📌 COMECE AQUI.</pre></div>
+<h3>2. Tópicos (crie nesta ordem e arraste para ficarem assim)</h3><ol class="topics"><li>📌 COMECE AQUI</li><li>🗺️ 1. Mapa mental e resumo teórico</li><li>🎬 2. Videoaulas por assunto</li><li>✍️ 3. Lista graduada — Níveis 1 e 2</li><li>🎯 4. Lista graduada — Níveis 3 e 4</li><li>✅ 5. Gabarito comentado</li><li>🧠 6. Quiz de autoavaliação</li><li>❓ Plantão de dúvidas</li></ol>
+<h3>3. Postagens — na ordem de publicação</h3>
+<details class="post" open><summary><span class="n">01</span><span class="tipo">Aviso (mural)</span><span class="tt">Abertura da revisão</span><span class="top">—</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Abertura da revisão</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>📣 REVISÃO PARA A AV1 DE FÍSICA ESTÁ NO AR!
+
+Turma, preparei um percurso completo para vocês chegarem à AV1 do 4º bimestre seguros e confiantes.
+Tema: Espelhos Planos e Esféricos.
+
+Na aba Atividades vocês vão encontrar, nesta ordem:
+📌 Comece aqui — o roteiro de estudos
+🗺️ Mapa mental + resumo teórico com as pegadinhas mais comuns
+🎬 Videoaulas selecionadas por assunto (curtas e diretas)
+✍️ Lista graduada em 4 níveis (do aquecimento ao desafio)
+🧠 Quiz de autoavaliação com correção automática
+✅ Gabarito comentado passo a passo (liberado após o prazo da lista)
+
+Dica de ouro: estudar um pouco por dia rende muito mais do que estudar tudo na véspera.
+Qualquer dúvida, use o tópico &quot;Plantão de dúvidas&quot;. Bons estudos! 💪
+Prof. Jair Pimenta</pre></div>
+<div class="cfg"><b>Configurar:</b> Publicar no início da revisão (D-10).</div></div></details>
+<details class="post" open><summary><span class="n">02</span><span class="tipo">Material</span><span class="tt">Roteiro de estudos — AV1 2ª Série EM</span><span class="top">📌 COMECE AQUI</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Roteiro de estudos — AV1 2ª Série EM</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Este é o seu mapa até a AV1. Siga as etapas na ordem e marque o que já concluiu.
+
+O QUE CAI: leis da reflexão, espelho plano (imagem, reversão, translação, rotação, associação, campo visual), espelhos esféricos (elementos, raios notáveis, casos de imagem), equação de Gauss, aumento linear e aplicações.
+
+ROTEIRO SUGERIDO
+1️⃣ D-10 a D-8 → Leia o mapa mental e o resumo teórico (páginas 1 a 3 do PDF). Anote dúvidas.
+2️⃣ D-8 a D-6 → Assista às videoaulas do tópico 🎬, respondendo à &quot;missão&quot; de cada vídeo.
+3️⃣ D-7 a D-5 → Resolva a Lista Níveis 1 e 2 e entregue a foto da resolução.
+4️⃣ D-5 a D-2 → Resolva a Lista Níveis 3 e 4 (padrão prova e desafio).
+5️⃣ D-2 → Corrija tudo com o Gabarito Comentado. Errou? Refaça sem olhar.
+6️⃣ D-1 → Faça o Quiz de autoavaliação e revise o checklist &quot;Eu sei...&quot; do PDF.
+
+COMO ESTUDAR MELHOR
+• Tente cada questão sozinho antes de olhar a resolução.
+• Escreva as unidades em todas as contas (cm → m, min → s, km/h → m/s).
+• Faça o desenho/diagrama da situação antes de calcular.
+• Errou? Classifique o erro: conceito, conta ou interpretação.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>PDF: Revisao-AV1-Fisica-2a-serie_espelhos-planos-e-esfericos_lista-sem-gabarito.pdf</li></ul>
+<div class="cfg"><b>Configurar:</b> Fixar no topo do tópico.</div></div></details>
+<details class="post"><summary><span class="n">03</span><span class="tipo">Material</span><span class="tt">Mapa mental, teoria e pegadinhas — Espelhos Planos e Esféricos</span><span class="top">🗺️ 1. Mapa mental e resumo teórico</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Mapa mental, teoria e pegadinhas — Espelhos Planos e Esféricos</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Material-base da revisão (lista sem gabarito).
+
+Páginas 1–3: mapa mental, teoria essencial, dicas 💡 e pegadinhas ⚠ que mais tiram pontos.
+Página do checklist &quot;Eu sei...&quot;: use para conferir se está pronto para a prova.
+Páginas seguintes: lista com 20 exercícios graduados.
+
+Sugestão: imprima o mapa mental e deixe à vista na sua mesa de estudos.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>PDF: Revisao-AV1-Fisica-2a-serie_espelhos-planos-e-esfericos_lista-sem-gabarito.pdf</li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar o PDF.</div></div></details>
+<details class="post"><summary><span class="n">04</span><span class="tipo">Material</span><span class="tt">🎬 1. Leis da reflexão e espelho plano</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 1. Leis da reflexão e espelho plano</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Medir ângulos com a normal e descrever a imagem do espelho plano.
+
+VÍDEOS RECOMENDADOS
+▶ Reflexão em espelhos planos: leis da reflexão e características de imagens — Curso Enem Gratuito (4:31)
+   https://www.youtube.com/watch?v=U1EjY7pNgzk
+▶ Aula 04 - Espelhos planos — Davi Oliveira - Física 2.0 (15:36)
+   https://www.youtube.com/watch?v=aIt5OVeAI1w
+
+🎯 MISSÃO DO VÍDEO: Por que a palavra AMBULÂNCIA é escrita invertida no capô?
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=U1EjY7pNgzk" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=U1EjY7pNgzk</a></li><li><a href="https://www.youtube.com/watch?v=aIt5OVeAI1w" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=aIt5OVeAI1w</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">05</span><span class="tipo">Material</span><span class="tt">🎬 2. Espelho plano e campo visual</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 2. Espelho plano e campo visual</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Distância objeto–imagem, campo visual e tamanho mínimo do espelho.
+
+VÍDEOS RECOMENDADOS
+▶ Espelho plano (I) e campo visual - Aula 3 — Professor Boaro (31:26)
+   https://www.youtube.com/watch?v=WDDJsiN-_aY
+
+🎯 MISSÃO DO VÍDEO: Para se ver por inteiro, o espelho precisa ter que fração da sua altura?
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=WDDJsiN-_aY" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=WDDJsiN-_aY</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">06</span><span class="tipo">Material</span><span class="tt">🎬 3. Rotação, translação e associação</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 3. Rotação, translação e associação</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Usar 2d, 2v, 2α e N = 360°/α − 1.
+
+VÍDEOS RECOMENDADOS
+▶ Associação de espelhos planos: número de imagens — Curso Enem Gratuito (3:49)
+   https://www.youtube.com/watch?v=uxBDRU-vyuo
+▶ Espelho plano (II) - rotação, translação e associação - Aula 4 — Professor Boaro (25:46)
+   https://www.youtube.com/watch?v=0-TbKgjAGig
+
+🎯 MISSÃO DO VÍDEO: Quantas imagens se formam com dois espelhos a 90°? E a 60°?
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=uxBDRU-vyuo" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=uxBDRU-vyuo</a></li><li><a href="https://www.youtube.com/watch?v=0-TbKgjAGig" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=0-TbKgjAGig</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">07</span><span class="tipo">Material</span><span class="tt">🎬 4. Espelhos esféricos: côncavo e convexo</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 4. Espelhos esféricos: côncavo e convexo</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Elementos (V, C, F), raios notáveis e os casos de imagem.
+
+VÍDEOS RECOMENDADOS
+▶ Espelhos planos, côncavos e convexos (como as imagens se formam?) — Ciência Todo Dia (9:08)
+   https://www.youtube.com/watch?v=KPykPLP7osA
+▶ Espelhos esféricos - espelhos côncavos e convexos — Matemática no Papel (10:58)
+   https://www.youtube.com/watch?v=SYgrthl-E80
+
+🎯 MISSÃO DO VÍDEO: Em que posição do objeto o espelho côncavo forma imagem virtual e ampliada?
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=KPykPLP7osA" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=KPykPLP7osA</a></li><li><a href="https://www.youtube.com/watch?v=SYgrthl-E80" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=SYgrthl-E80</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">08</span><span class="tipo">Material</span><span class="tt">🎬 5. Equação de Gauss e aumento linear</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 5. Equação de Gauss e aumento linear</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Aplicar 1/f = 1/p + 1/p&#x27; e A = −p&#x27;/p com os sinais certos.
+
+VÍDEOS RECOMENDADOS
+▶ Equação de Gauss - espelhos esféricos — Física Up - Profa. Carina Vellosa (8:54)
+   https://www.youtube.com/watch?v=AeN0GQZwDkU
+▶ Aumento linear para espelhos esféricos — Física Up - Profa. Carina Vellosa (13:08)
+   https://www.youtube.com/watch?v=lvoqw4hA7rg
+▶ Espelhos esféricos (III) - estudo analítico - Aula 7 — Professor Boaro (25:31)
+   https://www.youtube.com/watch?v=dzOy3ypU6K0
+
+🎯 MISSÃO DO VÍDEO: Qual o sinal de f num espelho convexo? E o de p&#x27; numa imagem virtual?
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=AeN0GQZwDkU" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=AeN0GQZwDkU</a></li><li><a href="https://www.youtube.com/watch?v=lvoqw4hA7rg" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=lvoqw4hA7rg</a></li><li><a href="https://www.youtube.com/watch?v=dzOy3ypU6K0" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=dzOy3ypU6K0</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">09</span><span class="tipo">Atividade</span><span class="tt">Lista de revisão — Níveis 1 e 2 (questões 1 a 10)</span><span class="top">✍️ 3. Lista graduada — Níveis 1 e 2</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Lista de revisão — Níveis 1 e 2 (questões 1 a 10)</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Resolva as questões 1 a 10 do PDF de revisão.
+
+🟢 Nível 1 (1–5): aquecimento — aplicação direta.
+🔵 Nível 2 (6–10): fixação — duas etapas, gráficos e conversões.
+
+COMO ENTREGAR
+1. Resolva no caderno, mostrando os cálculos e as unidades.
+2. Tire fotos nítidas (ou digitalize) e anexe aqui.
+3. Clique em &quot;Marcar como concluída&quot;.
+
+Critério: entrega completa e organizada. O objetivo é treinar — não tenha medo de errar!</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>PDF: Revisao-AV1-Fisica-2a-serie_espelhos-planos-e-esfericos_lista-sem-gabarito.pdf</li></ul>
+<div class="cfg"><b>Configurar:</b> Pontos: sem nota (ou 0,5 de participação, a critério). Data de entrega: D-5, 23h59.</div></div></details>
+<details class="post"><summary><span class="n">10</span><span class="tipo">Atividade</span><span class="tt">Lista de revisão — Níveis 3 e 4 (questões 11 a 20)</span><span class="top">🎯 4. Lista graduada — Níveis 3 e 4</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Lista de revisão — Níveis 3 e 4 (questões 11 a 20)</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Resolva as questões 11 a 20 do PDF de revisão.
+
+🟠 Nível 3 (11–15): PADRÃO DA PROVA — mesmo estilo e dificuldade da AV1.
+🔴 Nível 4 (16–20): DESAFIO — acima do nível da prova. Quem domina estas, chega à prova com folga.
+
+COMO ENTREGAR
+Fotos nítidas da resolução completa (com desenho, fórmula, substituição e unidade).
+Travou numa questão? Escreva até onde chegou e onde travou — isso também conta!</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>PDF: Revisao-AV1-Fisica-2a-serie_espelhos-planos-e-esfericos_lista-sem-gabarito.pdf</li></ul>
+<div class="cfg"><b>Configurar:</b> Pontos: sem nota (ou 0,5 de participação). Data de entrega: D-2, 23h59.</div></div></details>
+<details class="post"><summary><span class="n">11</span><span class="tipo">Teste (Formulário)</span><span class="tt">Quiz relâmpago — AV1 2ª Série EM (10 questões)</span><span class="top">🧠 6. Quiz de autoavaliação</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Quiz relâmpago — AV1 2ª Série EM (10 questões)</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Quiz com 10 questões rápidas e correção automática.
+
+• Faça sem consultar, em até 15 minutos.
+• Ao enviar, veja quais errou e leia o feedback de cada questão.
+• Meta: 8 acertos ou mais. Abaixo disso, volte ao mapa mental e aos vídeos do assunto em que errou.
+• Pode refazer quantas vezes quiser.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>Google Forms (Teste) — criar com as questões da aba “Quiz” deste kit</li></ul>
+<div class="cfg"><b>Configurar:</b> Atividade com teste · sem nota · data: D-1. Ativar ordem aleatória das opções e mostrar respostas após o envio.</div></div></details>
+<details class="post"><summary><span class="n">12</span><span class="tipo">Material (agendado)</span><span class="tt">Gabarito comentado — Lista de revisão 2ª Série EM</span><span class="top">✅ 5. Gabarito comentado</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Gabarito comentado — Lista de revisão 2ª Série EM</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Resolução passo a passo das 20 questões, com os erros mais comuns em cada uma.
+
+COMO CORRIGIR
+1. Compare só a resposta final primeiro. Marque ✔ ou ✘.
+2. Nas erradas, leia a resolução e identifique ONDE errou (conceito, conta ou interpretação).
+3. Feche o gabarito e refaça a questão sozinho.
+4. Ainda com dúvida? Poste no Plantão de dúvidas com o número da questão.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>PDF: Revisao-AV1-Fisica-2a-serie_espelhos-planos-e-esfericos_completo.pdf</li></ul>
+<div class="cfg"><b>Configurar:</b> Agendar para D-2 às 23h59 (logo após o prazo da lista de níveis 3 e 4).</div></div></details>
+<details class="post"><summary><span class="n">13</span><span class="tipo">Pergunta</span><span class="tt">Plantão de dúvidas: em qual questão você travou?</span><span class="top">❓ Plantão de dúvidas</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Plantão de dúvidas: em qual questão você travou?</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Escreva o número da questão (ou o assunto) em que você mais travou e o que exatamente não entendeu.
+Responda e comente nas dúvidas dos colegas — explicar para alguém é uma das melhores formas de aprender!</pre></div>
+<div class="cfg"><b>Configurar:</b> Pergunta de resposta curta · permitir que os alunos vejam e respondam uns aos outros · sem nota.</div></div></details>
+<details class="post"><summary><span class="n">14</span><span class="tipo">Aviso (mural)</span><span class="tt">Lembrete D-3</span><span class="top">—</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Lembrete D-3</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>⏰ Faltam 3 dias para a AV1 de Física!
+
+Checklist rápido:
+☐ Já resolvi a Lista Níveis 1 e 2?
+☐ Já comecei a Lista Níveis 3 e 4? (prazo: D-2)
+☐ Assisti aos vídeos dos assuntos em que tenho mais dificuldade?
+
+Lembrem: o nível 3 da lista tem o mesmo estilo da prova. Prof. Jair</pre></div>
+<div class="cfg"><b>Configurar:</b> Agendar para D-3, 7h.</div></div></details>
+<details class="post"><summary><span class="n">15</span><span class="tipo">Aviso (mural)</span><span class="tt">Véspera da prova</span><span class="top">—</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Véspera da prova</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎯 AMANHÃ É DIA DE AV1!
+
+Para hoje:
+✔ Faça o Quiz relâmpago (meta: 8/10).
+✔ Revise o mapa mental e as caixas ⚠ Pegadinha do PDF.
+✔ Confira o gabarito comentado das questões que errou.
+
+Para amanhã: caneta azul ou preta, nada de corretivo, celular guardado e calma.
+Leia cada enunciado duas vezes e escreva as unidades. Vocês estão preparados. Boa prova! 🍀
+Prof. Jair Pimenta</pre></div>
+<div class="cfg"><b>Configurar:</b> Agendar para D-1, 17h.</div></div></details>
+<h3>4. Quiz de autoavaliação (Google Forms → Teste)</h3>
+<p class="note">Em Configurações do Forms: <b>Transformar em teste</b>; liberar nota <b>imediatamente após o envio</b>; mostrar respostas corretas e valores; em cada questão, ativar <b>Ordem aleatória das opções</b> (aqui a correta aparece sempre primeiro, marcada com ✔) e colar o feedback em “Feedback para respostas”.</p><ol class="quiz">
+<li><div class="q">Um raio incide num espelho plano com ângulo de incidência de 40°. O ângulo de reflexão é:</div><ul><li class="ok">✔ 40°</li><li class="">50°</li><li class="">80°</li><li class="">20°</li></ul><div class="fb">Feedback: 2ª lei da reflexão: i = r (ambos medidos com a normal).</div></li>
+<li><div class="q">A imagem de um objeto real num espelho plano é:</div><ul><li class="ok">✔ virtual, direita e do mesmo tamanho</li><li class="">real, invertida e do mesmo tamanho</li><li class="">virtual, invertida e menor</li><li class="">real, direita e maior</li></ul><div class="fb">Feedback: Espelho plano: virtual, direita, igual, simétrica e enantiomorfa.</div></li>
+<li><div class="q">Uma pessoa está a 1,5 m de um espelho plano. A distância entre ela e sua imagem é:</div><ul><li class="ok">✔ 3,0 m</li><li class="">1,5 m</li><li class="">0,75 m</li><li class="">4,5 m</li></ul><div class="fb">Feedback: A imagem fica 1,5 m atrás do espelho ⇒ 1,5 + 1,5 = 3,0 m.</div></li>
+<li><div class="q">Dois espelhos planos formam 120°. Quantas imagens de um objeto entre eles se formam?</div><ul><li class="ok">✔ 2</li><li class="">3</li><li class="">4</li><li class="">1</li></ul><div class="fb">Feedback: N = 360°/120° − 1 = 3 − 1 = 2.</div></li>
+<li><div class="q">Um espelho côncavo tem raio de curvatura 30 cm. Sua distância focal é:</div><ul><li class="ok">✔ 15 cm</li><li class="">30 cm</li><li class="">60 cm</li><li class="">7,5 cm</li></ul><div class="fb">Feedback: f = R/2 = 15 cm.</div></li>
+<li><div class="q">Um objeto sobre o foco de um espelho côncavo produz imagem:</div><ul><li class="ok">✔ imprópria (no infinito)</li><li class="">real e igual</li><li class="">virtual e menor</li><li class="">real e menor</li></ul><div class="fb">Feedback: Raios que saem do foco refletem paralelos: não se cruzam.</div></li>
+<li><div class="q">Para qualquer objeto real, o espelho convexo forma imagem:</div><ul><li class="ok">✔ virtual, direita e menor</li><li class="">real, invertida e menor</li><li class="">virtual, direita e maior</li><li class="">real, direita e igual</li></ul><div class="fb">Feedback: Espelho divergente: sempre virtual, direita e menor.</div></li>
+<li><div class="q">Uma imagem com aumento linear A = −2 é:</div><ul><li class="ok">✔ real, invertida e 2 vezes maior</li><li class="">virtual, direita e 2 vezes maior</li><li class="">real, direita e 2 vezes menor</li><li class="">virtual, invertida e 2 vezes maior</li></ul><div class="fb">Feedback: A &lt; 0 ⇒ invertida (real); |A| = 2 ⇒ duas vezes maior.</div></li>
+<li><div class="q">Espelho côncavo com f = 10 cm e objeto a 20 cm. A imagem está a:</div><ul><li class="ok">✔ 20 cm do espelho</li><li class="">10 cm do espelho</li><li class="">40 cm do espelho</li><li class="">no infinito</li></ul><div class="fb">Feedback: 1/p&#x27; = 1/10 − 1/20 = 1/20 ⇒ p&#x27; = 20 cm (objeto no centro C).</div></li>
+<li><div class="q">O retrovisor de uma motocicleta deve ser:</div><ul><li class="ok">✔ convexo, pelo maior campo visual</li><li class="">côncavo, para ampliar a imagem</li><li class="">plano, para a imagem ser real</li><li class="">côncavo, para a imagem ser direita</li></ul><div class="fb">Feedback: Convexo: imagem menor e direita, cabe mais coisa no campo visual.</div></li>
+</ol>
+<h3>5. Videoteca da turma</h3><table class="vt"><tr><th>Assunto</th><th>Vídeo</th><th>Canal</th><th>Duração</th></tr>
+<tr><td>Leis da reflexão e espelho plano</td><td><a href="https://www.youtube.com/watch?v=U1EjY7pNgzk" target="_blank" rel="noopener">Reflexão em espelhos planos: leis da reflexão e características de imagens</a></td><td>Curso Enem Gratuito</td><td>4:31</td></tr>
+<tr><td>Leis da reflexão e espelho plano</td><td><a href="https://www.youtube.com/watch?v=aIt5OVeAI1w" target="_blank" rel="noopener">Aula 04 - Espelhos planos</a></td><td>Davi Oliveira - Física 2.0</td><td>15:36</td></tr>
+<tr><td>Espelho plano e campo visual</td><td><a href="https://www.youtube.com/watch?v=WDDJsiN-_aY" target="_blank" rel="noopener">Espelho plano (I) e campo visual - Aula 3</a></td><td>Professor Boaro</td><td>31:26</td></tr>
+<tr><td>Rotação, translação e associação</td><td><a href="https://www.youtube.com/watch?v=uxBDRU-vyuo" target="_blank" rel="noopener">Associação de espelhos planos: número de imagens</a></td><td>Curso Enem Gratuito</td><td>3:49</td></tr>
+<tr><td>Rotação, translação e associação</td><td><a href="https://www.youtube.com/watch?v=0-TbKgjAGig" target="_blank" rel="noopener">Espelho plano (II) - rotação, translação e associação - Aula 4</a></td><td>Professor Boaro</td><td>25:46</td></tr>
+<tr><td>Espelhos esféricos: côncavo e convexo</td><td><a href="https://www.youtube.com/watch?v=KPykPLP7osA" target="_blank" rel="noopener">Espelhos planos, côncavos e convexos (como as imagens se formam?)</a></td><td>Ciência Todo Dia</td><td>9:08</td></tr>
+<tr><td>Espelhos esféricos: côncavo e convexo</td><td><a href="https://www.youtube.com/watch?v=SYgrthl-E80" target="_blank" rel="noopener">Espelhos esféricos - espelhos côncavos e convexos</a></td><td>Matemática no Papel</td><td>10:58</td></tr>
+<tr><td>Equação de Gauss e aumento linear</td><td><a href="https://www.youtube.com/watch?v=AeN0GQZwDkU" target="_blank" rel="noopener">Equação de Gauss - espelhos esféricos</a></td><td>Física Up - Profa. Carina Vellosa</td><td>8:54</td></tr>
+<tr><td>Equação de Gauss e aumento linear</td><td><a href="https://www.youtube.com/watch?v=lvoqw4hA7rg" target="_blank" rel="noopener">Aumento linear para espelhos esféricos</a></td><td>Física Up - Profa. Carina Vellosa</td><td>13:08</td></tr>
+<tr><td>Equação de Gauss e aumento linear</td><td><a href="https://www.youtube.com/watch?v=dzOy3ypU6K0" target="_blank" rel="noopener">Espelhos esféricos (III) - estudo analítico - Aula 7</a></td><td>Professor Boaro</td><td>25:31</td></tr>
+</table></section>
+<section class="serie" id="s3" style="--c:#c46a0a">
+<div class="hero"><img src="banner-3a-serie.png" alt="Banner da turma 3ª Série EM"><div><h2>3ª Série EM · Cinemática e Leis de Newton</h2><p>6 blocos de vídeo · 13 vídeos verificados · quiz de 10 questões · 16 postagens prontas</p></div></div>
+<h3>1. Configuração da turma</h3><ol class="steps">
+<li><b>Personalizar → Selecionar tema → Fazer upload de foto</b>: envie <code>banner-3a-serie.png</code> (1000 × 250 px).</li>
+<li><b>Configurações → Descrição da turma</b>:</li></ol><div class="cb"><button class="copy" type="button">Copiar</button><pre>Física · 3ª Série EM · Prof. Jair Pimenta · Legacy School — Barra da Tijuca. Revisão para a AV1 do 4º bimestre: Cinemática e Leis de Newton. Comece pelo tópico 📌 COMECE AQUI.</pre></div>
+<h3>2. Tópicos (crie nesta ordem e arraste para ficarem assim)</h3><ol class="topics"><li>📌 COMECE AQUI</li><li>🗺️ 1. Mapa mental e resumo teórico</li><li>🎬 2. Videoaulas por assunto</li><li>✍️ 3. Lista graduada — Níveis 1 e 2</li><li>🎯 4. Lista graduada — Níveis 3 e 4</li><li>✅ 5. Gabarito comentado</li><li>🧠 6. Quiz de autoavaliação</li><li>❓ Plantão de dúvidas</li></ol>
+<h3>3. Postagens — na ordem de publicação</h3>
+<details class="post" open><summary><span class="n">01</span><span class="tipo">Aviso (mural)</span><span class="tt">Abertura da revisão</span><span class="top">—</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Abertura da revisão</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>📣 REVISÃO PARA A AV1 DE FÍSICA ESTÁ NO AR!
+
+Turma, preparei um percurso completo para vocês chegarem à AV1 do 4º bimestre seguros e confiantes.
+Tema: Cinemática e Leis de Newton.
+
+Na aba Atividades vocês vão encontrar, nesta ordem:
+📌 Comece aqui — o roteiro de estudos
+🗺️ Mapa mental + resumo teórico com as pegadinhas mais comuns
+🎬 Videoaulas selecionadas por assunto (curtas e diretas)
+✍️ Lista graduada em 4 níveis (do aquecimento ao desafio)
+🧠 Quiz de autoavaliação com correção automática
+✅ Gabarito comentado passo a passo (liberado após o prazo da lista)
+
+Dica de ouro: estudar um pouco por dia rende muito mais do que estudar tudo na véspera.
+Qualquer dúvida, use o tópico &quot;Plantão de dúvidas&quot;. Bons estudos! 💪
+Prof. Jair Pimenta</pre></div>
+<div class="cfg"><b>Configurar:</b> Publicar no início da revisão (D-10).</div></div></details>
+<details class="post" open><summary><span class="n">02</span><span class="tipo">Material</span><span class="tt">Roteiro de estudos — AV1 3ª Série EM</span><span class="top">📌 COMECE AQUI</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Roteiro de estudos — AV1 3ª Série EM</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Este é o seu mapa até a AV1. Siga as etapas na ordem e marque o que já concluiu.
+
+O QUE CAI: movimento uniforme e encontro de móveis, MUV e equação de Torricelli, deslocamentos em PA, frenagem, as três leis de Newton, força normal, elevadores/guindastes, atrito e plano inclinado.
+
+ROTEIRO SUGERIDO
+1️⃣ D-10 a D-8 → Leia o mapa mental e o resumo teórico (páginas 1 a 3 do PDF). Anote dúvidas.
+2️⃣ D-8 a D-6 → Assista às videoaulas do tópico 🎬, respondendo à &quot;missão&quot; de cada vídeo.
+3️⃣ D-7 a D-5 → Resolva a Lista Níveis 1 e 2 e entregue a foto da resolução.
+4️⃣ D-5 a D-2 → Resolva a Lista Níveis 3 e 4 (padrão prova e desafio).
+5️⃣ D-2 → Corrija tudo com o Gabarito Comentado. Errou? Refaça sem olhar.
+6️⃣ D-1 → Faça o Quiz de autoavaliação e revise o checklist &quot;Eu sei...&quot; do PDF.
+
+COMO ESTUDAR MELHOR
+• Tente cada questão sozinho antes de olhar a resolução.
+• Escreva as unidades em todas as contas (cm → m, min → s, km/h → m/s).
+• Faça o desenho/diagrama da situação antes de calcular.
+• Errou? Classifique o erro: conceito, conta ou interpretação.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>PDF: Revisao-AV1-Fisica-3a-serie_cinematica-e-leis-de-newton_lista-sem-gabarito.pdf</li></ul>
+<div class="cfg"><b>Configurar:</b> Fixar no topo do tópico.</div></div></details>
+<details class="post"><summary><span class="n">03</span><span class="tipo">Material</span><span class="tt">Mapa mental, teoria e pegadinhas — Cinemática e Leis de Newton</span><span class="top">🗺️ 1. Mapa mental e resumo teórico</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Mapa mental, teoria e pegadinhas — Cinemática e Leis de Newton</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Material-base da revisão (lista sem gabarito).
+
+Páginas 1–3: mapa mental, teoria essencial, dicas 💡 e pegadinhas ⚠ que mais tiram pontos.
+Página do checklist &quot;Eu sei...&quot;: use para conferir se está pronto para a prova.
+Páginas seguintes: lista com 20 exercícios graduados.
+
+Sugestão: imprima o mapa mental e deixe à vista na sua mesa de estudos.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>PDF: Revisao-AV1-Fisica-3a-serie_cinematica-e-leis-de-newton_lista-sem-gabarito.pdf</li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar o PDF.</div></div></details>
+<details class="post"><summary><span class="n">04</span><span class="tipo">Material</span><span class="tt">🎬 1. Movimento uniforme e encontro de móveis</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 1. Movimento uniforme e encontro de móveis</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Escrever s = s₀ + v·t e igualar posições.
+
+VÍDEOS RECOMENDADOS
+▶ Movimento uniforme | Quer que desenhe? — Descomplica (4:26)
+   https://www.youtube.com/watch?v=UbRS2iHt-uo
+▶ Movimento uniforme - encontro entre móveis em sentidos opostos — Professor Franco (6:48)
+   https://www.youtube.com/watch?v=7K9M6pof7dQ
+▶ Movimento uniforme - encontro entre móveis no mesmo sentido — Professor Franco (5:17)
+   https://www.youtube.com/watch?v=q2POeIqyDvM
+
+🎯 MISSÃO DO VÍDEO: Quando os móveis vão em sentidos opostos, as velocidades se somam ou se subtraem?
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=UbRS2iHt-uo" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=UbRS2iHt-uo</a></li><li><a href="https://www.youtube.com/watch?v=7K9M6pof7dQ" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=7K9M6pof7dQ</a></li><li><a href="https://www.youtube.com/watch?v=q2POeIqyDvM" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=q2POeIqyDvM</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">05</span><span class="tipo">Material</span><span class="tt">🎬 2. MUV: funções horárias</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 2. MUV: funções horárias</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Usar s = s₀ + v₀t + at²/2 e v = v₀ + at.
+
+VÍDEOS RECOMENDADOS
+▶ Movimento uniformemente variado (MUV) - Cinemática do zero — Eureka Matemática (17:13)
+   https://www.youtube.com/watch?v=r6pKRscSTyg
+
+🎯 MISSÃO DO VÍDEO: Em s = 5t + 2t², quanto vale a aceleração? (Cuidado com o a/2!)
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=r6pKRscSTyg" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=r6pKRscSTyg</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">06</span><span class="tipo">Material</span><span class="tt">🎬 3. Equação de Torricelli e frenagem</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 3. Equação de Torricelli e frenagem</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Calcular distâncias de parada sem usar o tempo.
+
+VÍDEOS RECOMENDADOS
+▶ Cinemática 19: Equação de Torricelli — Matemática no Papel (5:14)
+   https://www.youtube.com/watch?v=ahJD6h1O1YQ
+▶ Equação de Torricelli (MUV) - Aula 9 — Professor Boaro (17:11)
+   https://www.youtube.com/watch?v=JfCmVT7hs5Q
+
+🎯 MISSÃO DO VÍDEO: Se a velocidade dobra, a distância de frenagem dobra? Por quê?
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=ahJD6h1O1YQ" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=ahJD6h1O1YQ</a></li><li><a href="https://www.youtube.com/watch?v=JfCmVT7hs5Q" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=JfCmVT7hs5Q</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">07</span><span class="tipo">Material</span><span class="tt">🎬 4. As três leis de Newton</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 4. As três leis de Newton</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Reconhecer inércia, F = m·a e pares de ação e reação.
+
+VÍDEOS RECOMENDADOS
+▶ As 3 leis de Newton: resumo em 5 minutos — Toda Matéria (5:03)
+   https://www.youtube.com/watch?v=W9fnE9NdFzo
+▶ Leis de Newton | Mapa mental | Quer que desenhe — Descomplica (4:10)
+   https://www.youtube.com/watch?v=5AEZCsEAopY
+
+🎯 MISSÃO DO VÍDEO: Por que peso e normal NÃO formam um par de ação e reação?
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=W9fnE9NdFzo" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=W9fnE9NdFzo</a></li><li><a href="https://www.youtube.com/watch?v=5AEZCsEAopY" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=5AEZCsEAopY</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">08</span><span class="tipo">Material</span><span class="tt">🎬 5. Força normal e elevadores</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 5. Força normal e elevadores</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Resolver N = m(g ± a) e problemas de guindaste.
+
+VÍDEOS RECOMENDADOS
+▶ Elevadores - Dinâmica - Aula 9 — Professor Boaro (25:32)
+   https://www.youtube.com/watch?v=poC27r1xs9M
+
+🎯 MISSÃO DO VÍDEO: Num elevador descendo e freando, a balança marca mais ou menos que o seu peso?
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=poC27r1xs9M" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=poC27r1xs9M</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">09</span><span class="tipo">Material</span><span class="tt">🎬 6. Atrito e plano inclinado</span><span class="top">🎬 2. Videoaulas por assunto</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎬 6. Atrito e plano inclinado</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>OBJETIVO: Decompor o peso e usar a = g(sen θ − μ cos θ) e μ = tg θ.
+
+VÍDEOS RECOMENDADOS
+▶ Força de atrito estático e cinético — Matemática no Papel (13:53)
+   https://www.youtube.com/watch?v=CbQNtwtjq9Y
+▶ Planos inclinados | Resumo de Física para o Enem — Curso Enem Gratuito (5:34)
+   https://www.youtube.com/watch?v=yt7b3s9NmWQ
+▶ Plano inclinado com atrito - Aula 13 — Professor Boaro (19:44)
+   https://www.youtube.com/watch?v=jggD82vw_7s
+▶ Plano inclinado com atrito - exercício resolvido passo a passo — Maurício Física (6:14)
+   https://www.youtube.com/watch?v=sj8QoYfknIY
+
+🎯 MISSÃO DO VÍDEO: Por que a aceleração no plano inclinado sem atrito não depende da massa?
+Responda no caderno — essa ideia costuma aparecer na prova.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li><a href="https://www.youtube.com/watch?v=CbQNtwtjq9Y" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=CbQNtwtjq9Y</a></li><li><a href="https://www.youtube.com/watch?v=yt7b3s9NmWQ" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=yt7b3s9NmWQ</a></li><li><a href="https://www.youtube.com/watch?v=jggD82vw_7s" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=jggD82vw_7s</a></li><li><a href="https://www.youtube.com/watch?v=sj8QoYfknIY" target="_blank" rel="noopener">YouTube: https://www.youtube.com/watch?v=sj8QoYfknIY</a></li></ul>
+<div class="cfg"><b>Configurar:</b> Anexar cada vídeo pelo botão YouTube (o Classroom mostra a miniatura).</div></div></details>
+<details class="post"><summary><span class="n">10</span><span class="tipo">Atividade</span><span class="tt">Lista de revisão — Níveis 1 e 2 (questões 1 a 10)</span><span class="top">✍️ 3. Lista graduada — Níveis 1 e 2</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Lista de revisão — Níveis 1 e 2 (questões 1 a 10)</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Resolva as questões 1 a 10 do PDF de revisão.
+
+🟢 Nível 1 (1–5): aquecimento — aplicação direta.
+🔵 Nível 2 (6–10): fixação — duas etapas, gráficos e conversões.
+
+COMO ENTREGAR
+1. Resolva no caderno, mostrando os cálculos e as unidades.
+2. Tire fotos nítidas (ou digitalize) e anexe aqui.
+3. Clique em &quot;Marcar como concluída&quot;.
+
+Critério: entrega completa e organizada. O objetivo é treinar — não tenha medo de errar!</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>PDF: Revisao-AV1-Fisica-3a-serie_cinematica-e-leis-de-newton_lista-sem-gabarito.pdf</li></ul>
+<div class="cfg"><b>Configurar:</b> Pontos: sem nota (ou 0,5 de participação, a critério). Data de entrega: D-5, 23h59.</div></div></details>
+<details class="post"><summary><span class="n">11</span><span class="tipo">Atividade</span><span class="tt">Lista de revisão — Níveis 3 e 4 (questões 11 a 20)</span><span class="top">🎯 4. Lista graduada — Níveis 3 e 4</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Lista de revisão — Níveis 3 e 4 (questões 11 a 20)</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Resolva as questões 11 a 20 do PDF de revisão.
+
+🟠 Nível 3 (11–15): PADRÃO DA PROVA — mesmo estilo e dificuldade da AV1.
+🔴 Nível 4 (16–20): DESAFIO — acima do nível da prova. Quem domina estas, chega à prova com folga.
+
+COMO ENTREGAR
+Fotos nítidas da resolução completa (com desenho, fórmula, substituição e unidade).
+Travou numa questão? Escreva até onde chegou e onde travou — isso também conta!</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>PDF: Revisao-AV1-Fisica-3a-serie_cinematica-e-leis-de-newton_lista-sem-gabarito.pdf</li></ul>
+<div class="cfg"><b>Configurar:</b> Pontos: sem nota (ou 0,5 de participação). Data de entrega: D-2, 23h59.</div></div></details>
+<details class="post"><summary><span class="n">12</span><span class="tipo">Teste (Formulário)</span><span class="tt">Quiz relâmpago — AV1 3ª Série EM (10 questões)</span><span class="top">🧠 6. Quiz de autoavaliação</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Quiz relâmpago — AV1 3ª Série EM (10 questões)</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Quiz com 10 questões rápidas e correção automática.
+
+• Faça sem consultar, em até 15 minutos.
+• Ao enviar, veja quais errou e leia o feedback de cada questão.
+• Meta: 8 acertos ou mais. Abaixo disso, volte ao mapa mental e aos vídeos do assunto em que errou.
+• Pode refazer quantas vezes quiser.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>Google Forms (Teste) — criar com as questões da aba “Quiz” deste kit</li></ul>
+<div class="cfg"><b>Configurar:</b> Atividade com teste · sem nota · data: D-1. Ativar ordem aleatória das opções e mostrar respostas após o envio.</div></div></details>
+<details class="post"><summary><span class="n">13</span><span class="tipo">Material (agendado)</span><span class="tt">Gabarito comentado — Lista de revisão 3ª Série EM</span><span class="top">✅ 5. Gabarito comentado</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Gabarito comentado — Lista de revisão 3ª Série EM</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Resolução passo a passo das 20 questões, com os erros mais comuns em cada uma.
+
+COMO CORRIGIR
+1. Compare só a resposta final primeiro. Marque ✔ ou ✘.
+2. Nas erradas, leia a resolução e identifique ONDE errou (conceito, conta ou interpretação).
+3. Feche o gabarito e refaça a questão sozinho.
+4. Ainda com dúvida? Poste no Plantão de dúvidas com o número da questão.</pre></div>
+<div class="lbl">Anexos</div><ul class="anx"><li>PDF: Revisao-AV1-Fisica-3a-serie_cinematica-e-leis-de-newton_completo.pdf</li></ul>
+<div class="cfg"><b>Configurar:</b> Agendar para D-2 às 23h59 (logo após o prazo da lista de níveis 3 e 4).</div></div></details>
+<details class="post"><summary><span class="n">14</span><span class="tipo">Pergunta</span><span class="tt">Plantão de dúvidas: em qual questão você travou?</span><span class="top">❓ Plantão de dúvidas</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Plantão de dúvidas: em qual questão você travou?</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Escreva o número da questão (ou o assunto) em que você mais travou e o que exatamente não entendeu.
+Responda e comente nas dúvidas dos colegas — explicar para alguém é uma das melhores formas de aprender!</pre></div>
+<div class="cfg"><b>Configurar:</b> Pergunta de resposta curta · permitir que os alunos vejam e respondam uns aos outros · sem nota.</div></div></details>
+<details class="post"><summary><span class="n">15</span><span class="tipo">Aviso (mural)</span><span class="tt">Lembrete D-3</span><span class="top">—</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Lembrete D-3</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>⏰ Faltam 3 dias para a AV1 de Física!
+
+Checklist rápido:
+☐ Já resolvi a Lista Níveis 1 e 2?
+☐ Já comecei a Lista Níveis 3 e 4? (prazo: D-2)
+☐ Assisti aos vídeos dos assuntos em que tenho mais dificuldade?
+
+Lembrem: o nível 3 da lista tem o mesmo estilo da prova. Prof. Jair</pre></div>
+<div class="cfg"><b>Configurar:</b> Agendar para D-3, 7h.</div></div></details>
+<details class="post"><summary><span class="n">16</span><span class="tipo">Aviso (mural)</span><span class="tt">Véspera da prova</span><span class="top">—</span></summary>
+<div class="pb"><div class="lbl">Título</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>Véspera da prova</pre></div><div class="lbl">Texto / instruções</div><div class="cb"><button class="copy" type="button">Copiar</button><pre>🎯 AMANHÃ É DIA DE AV1!
+
+Para hoje:
+✔ Faça o Quiz relâmpago (meta: 8/10).
+✔ Revise o mapa mental e as caixas ⚠ Pegadinha do PDF.
+✔ Confira o gabarito comentado das questões que errou.
+
+Para amanhã: caneta azul ou preta, nada de corretivo, celular guardado e calma.
+Leia cada enunciado duas vezes e escreva as unidades. Vocês estão preparados. Boa prova! 🍀
+Prof. Jair Pimenta</pre></div>
+<div class="cfg"><b>Configurar:</b> Agendar para D-1, 17h.</div></div></details>
+<h3>4. Quiz de autoavaliação (Google Forms → Teste)</h3>
+<p class="note">Em Configurações do Forms: <b>Transformar em teste</b>; liberar nota <b>imediatamente após o envio</b>; mostrar respostas corretas e valores; em cada questão, ativar <b>Ordem aleatória das opções</b> (aqui a correta aparece sempre primeiro, marcada com ✔) e colar o feedback em “Feedback para respostas”.</p><ol class="quiz">
+<li><div class="q">36 km/h correspondem a:</div><ul><li class="ok">✔ 10 m/s</li><li class="">36 m/s</li><li class="">3,6 m/s</li><li class="">129,6 m/s</li></ul><div class="fb">Feedback: km/h ÷ 3,6 = m/s ⇒ 36/3,6 = 10 m/s.</div></li>
+<li><div class="q">Para s = 10 + 2t (SI), a posição em t = 5 s é:</div><ul><li class="ok">✔ 20 m</li><li class="">10 m</li><li class="">12 m</li><li class="">50 m</li></ul><div class="fb">Feedback: s = 10 + 2·5 = 20 m.</div></li>
+<li><div class="q">Na função v = 4 + 3t (SI), a aceleração vale:</div><ul><li class="ok">✔ 3 m/s²</li><li class="">4 m/s²</li><li class="">7 m/s²</li><li class="">1,5 m/s²</li></ul><div class="fb">Feedback: v = v₀ + a·t ⇒ a é o coeficiente de t: 3 m/s².</div></li>
+<li><div class="q">Um carro parte do repouso com a = 2 m/s² e percorre 25 m. Sua velocidade final é:</div><ul><li class="ok">✔ 10 m/s</li><li class="">50 m/s</li><li class="">5 m/s</li><li class="">100 m/s</li></ul><div class="fb">Feedback: Torricelli: v² = 0 + 2·2·25 = 100 ⇒ v = 10 m/s.</div></li>
+<li><div class="q">O uso do cinto de segurança é justificado pela:</div><ul><li class="ok">✔ 1ª lei de Newton (inércia)</li><li class="">2ª lei de Newton</li><li class="">3ª lei de Newton</li><li class="">lei da gravitação</li></ul><div class="fb">Feedback: Na freada, o corpo tende a manter a velocidade (inércia).</div></li>
+<li><div class="q">Uma força resultante de 20 N atua num corpo de 4 kg. A aceleração é:</div><ul><li class="ok">✔ 5 m/s²</li><li class="">80 m/s²</li><li class="">0,2 m/s²</li><li class="">24 m/s²</li></ul><div class="fb">Feedback: a = F/m = 20/4 = 5 m/s².</div></li>
+<li><div class="q">Sobre as forças de ação e reação, é correto afirmar que:</div><ul><li class="ok">✔ atuam em corpos diferentes</li><li class="">se anulam</li><li class="">atuam no mesmo corpo</li><li class="">têm intensidades diferentes</li></ul><div class="fb">Feedback: Como atuam em corpos diferentes, nunca se anulam.</div></li>
+<li><div class="q">Num elevador que SOBE ACELERANDO, uma balança sob uma pessoa marca:</div><ul><li class="ok">✔ mais que o peso real</li><li class="">menos que o peso real</li><li class="">exatamente o peso real</li><li class="">zero</li></ul><div class="fb">Feedback: Aceleração para cima ⇒ N = m(g + a) &gt; m·g.</div></li>
+<li><div class="q">Num plano inclinado de 30° sem atrito (g = 10 m/s²), a aceleração de um bloco é:</div><ul><li class="ok">✔ 5 m/s²</li><li class="">10 m/s²</li><li class="">8,7 m/s²</li><li class="">3 m/s²</li></ul><div class="fb">Feedback: a = g·sen 30° = 10·0,5 = 5 m/s², qualquer que seja a massa.</div></li>
+<li><div class="q">Um bloco está em repouso numa rampa de ângulo θ. A força de atrito sobre ele vale:</div><ul><li class="ok">✔ P·sen θ</li><li class="">P·cos θ</li><li class="">μ·P</li><li class="">zero</li></ul><div class="fb">Feedback: Equilíbrio ao longo da rampa: f_at (estático) = P·sen θ.</div></li>
+</ol>
+<h3>5. Videoteca da turma</h3><table class="vt"><tr><th>Assunto</th><th>Vídeo</th><th>Canal</th><th>Duração</th></tr>
+<tr><td>Movimento uniforme e encontro de móveis</td><td><a href="https://www.youtube.com/watch?v=UbRS2iHt-uo" target="_blank" rel="noopener">Movimento uniforme | Quer que desenhe?</a></td><td>Descomplica</td><td>4:26</td></tr>
+<tr><td>Movimento uniforme e encontro de móveis</td><td><a href="https://www.youtube.com/watch?v=7K9M6pof7dQ" target="_blank" rel="noopener">Movimento uniforme - encontro entre móveis em sentidos opostos</a></td><td>Professor Franco</td><td>6:48</td></tr>
+<tr><td>Movimento uniforme e encontro de móveis</td><td><a href="https://www.youtube.com/watch?v=q2POeIqyDvM" target="_blank" rel="noopener">Movimento uniforme - encontro entre móveis no mesmo sentido</a></td><td>Professor Franco</td><td>5:17</td></tr>
+<tr><td>MUV: funções horárias</td><td><a href="https://www.youtube.com/watch?v=r6pKRscSTyg" target="_blank" rel="noopener">Movimento uniformemente variado (MUV) - Cinemática do zero</a></td><td>Eureka Matemática</td><td>17:13</td></tr>
+<tr><td>Equação de Torricelli e frenagem</td><td><a href="https://www.youtube.com/watch?v=ahJD6h1O1YQ" target="_blank" rel="noopener">Cinemática 19: Equação de Torricelli</a></td><td>Matemática no Papel</td><td>5:14</td></tr>
+<tr><td>Equação de Torricelli e frenagem</td><td><a href="https://www.youtube.com/watch?v=JfCmVT7hs5Q" target="_blank" rel="noopener">Equação de Torricelli (MUV) - Aula 9</a></td><td>Professor Boaro</td><td>17:11</td></tr>
+<tr><td>As três leis de Newton</td><td><a href="https://www.youtube.com/watch?v=W9fnE9NdFzo" target="_blank" rel="noopener">As 3 leis de Newton: resumo em 5 minutos</a></td><td>Toda Matéria</td><td>5:03</td></tr>
+<tr><td>As três leis de Newton</td><td><a href="https://www.youtube.com/watch?v=5AEZCsEAopY" target="_blank" rel="noopener">Leis de Newton | Mapa mental | Quer que desenhe</a></td><td>Descomplica</td><td>4:10</td></tr>
+<tr><td>Força normal e elevadores</td><td><a href="https://www.youtube.com/watch?v=poC27r1xs9M" target="_blank" rel="noopener">Elevadores - Dinâmica - Aula 9</a></td><td>Professor Boaro</td><td>25:32</td></tr>
+<tr><td>Atrito e plano inclinado</td><td><a href="https://www.youtube.com/watch?v=CbQNtwtjq9Y" target="_blank" rel="noopener">Força de atrito estático e cinético</a></td><td>Matemática no Papel</td><td>13:53</td></tr>
+<tr><td>Atrito e plano inclinado</td><td><a href="https://www.youtube.com/watch?v=yt7b3s9NmWQ" target="_blank" rel="noopener">Planos inclinados | Resumo de Física para o Enem</a></td><td>Curso Enem Gratuito</td><td>5:34</td></tr>
+<tr><td>Atrito e plano inclinado</td><td><a href="https://www.youtube.com/watch?v=jggD82vw_7s" target="_blank" rel="noopener">Plano inclinado com atrito - Aula 13</a></td><td>Professor Boaro</td><td>19:44</td></tr>
+<tr><td>Atrito e plano inclinado</td><td><a href="https://www.youtube.com/watch?v=sj8QoYfknIY" target="_blank" rel="noopener">Plano inclinado com atrito - exercício resolvido passo a passo</a></td><td>Maurício Física</td><td>6:14</td></tr>
+</table></section>
+</div>
+<script>
+(function () {
+  var tabs = document.querySelectorAll('.tab'), secs = document.querySelectorAll('.serie');
+  function show(id) {
+    tabs.forEach(function (t) { t.classList.toggle('on', t.dataset.t === id); });
+    secs.forEach(function (s) { s.classList.toggle('on', s.id === id); });
+    try { localStorage.setItem('kit-tab', id); } catch (e) {}
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.dataset.t); }); });
+  var saved = null; try { saved = localStorage.getItem('kit-tab'); } catch (e) {}
+  show(saved && document.getElementById(saved) ? saved : 's1');
+  document.querySelectorAll('.copy').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var txt = b.nextElementSibling.textContent;
+      var done = function () { b.textContent = 'Copiado ✓'; b.classList.add('done'); setTimeout(function () { b.textContent = 'Copiar'; b.classList.remove('done'); }, 1600); };
+      if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done, function () {});
+    });
+  });
+})();
+</script>
+</body>
+</html>

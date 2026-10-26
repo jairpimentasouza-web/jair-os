@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kit Classroom AV1</title>
+<style>
+:root { --bg:#f6f7f9; --card:#fff; --ink:#1f2328; --muted:#5b616b; --line:#dfe2e7; --head:#4a4c55; --soft:#f1f3f6; --okb:#e7f5ec; --ok:#1f8a4c; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#16181c; --card:#1f2228; --ink:#e8eaed; --muted:#a3a9b3; --line:#343841; --head:#c9ccd3; --soft:#262a31; --okb:#173324; --ok:#5cc98a; } }
+:root[data-theme="dark"] { --bg:#16181c; --card:#1f2228; --ink:#e8eaed; --muted:#a3a9b3; --line:#343841; --head:#c9ccd3; --soft:#262a31; --okb:#173324; --ok:#5cc98a; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 Inter, "Segoe UI", Roboto, Arial, sans-serif; }
+.wrap { max-width:1000px; margin:0 auto; padding:24px 16px 60px; }
+header h1 { font-size:26px; margin:0 0 4px; } header p { margin:0; color:var(--muted); }
+.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin:16px 0; }
+.card h2 { margin:0 0 8px; font-size:18px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+.grid .card { margin:0; }
+.tabs { display:flex; flex-wrap:wrap; gap:8px; position:sticky; top:0; background:var(--bg); padding:10px 0; z-index:5; }
+.tab { border:2px solid var(--c); background:var(--card); color:var(--ink); border-radius:999px; padding:8px 16px; font-weight:700; cursor:pointer; font-size:14px; }
+.tab.on { background:var(--c); color:#fff; }
+.serie { display:none; } .serie.on { display:block; }
+.hero { display:flex; flex-direction:column; gap:10px; background:var(--card); border:1px solid var(--line); border-top:5px solid var(--c); border-radius:10px; padding:14px; }
+.hero img { width:100%; border-radius:6px; display:block; }
+.hero h2 { margin:0; font-size:20px; } .hero p { margin:2px 0 0; color:var(--muted); }
+h3 { margin:26px 0 10px; font-size:17px; border-bottom:2px solid var(--line); padding-bottom:4px; }
+ol.topics { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 12px 12px 34px; margin:0; }
+ol.topics li { padding:3px 0; font-weight:600; }
+details.post { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--c); border-radius:8px; margin:8px 0; }
+details.post summary { cursor:pointer; padding:10px 12px; display:flex; flex-wrap:wrap; gap:8px; align-items:baseline; list-style:none; }
+details.post summary::-webkit-details-marker { display:none; }
+.n { font-weight:800; color:var(--c); } .tipo { font-size:12px; font-weight:700; background:var(--soft); border-radius:4px; padding:1px 7px; }
+.tt { font-weight:700; } .top { margin-left:auto; font-size:12px; color:var(--muted); }
+.pb { padding:0 12px 12px; } .lbl { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:700; margin:10px 0 4px; }
+.cb { position:relative; } .cb pre { margin:0; white-space:pre-wrap; word-break:break-word; background:var(--soft); border:1px solid var(--line); border-radius:6px; padding:10px 12px; padding-right:84px; font:13.5px/1.5 Inter, "Segoe UI", Arial, sans-serif; color:var(--ink); }
+.copy { position:absolute; top:6px; right:6px; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:6px; padding:4px 10px; font-size:12px; font-weight:700; cursor:pointer; }
+.copy.done { background:var(--ok); color:#fff; border-color:var(--ok); }
+ul.anx { margin:0; padding-left:20px; } ul.anx li { word-break:break-all; }
+.cfg { margin-top:10px; font-size:13.5px; background:var(--okb); border-radius:6px; padding:6px 10px; }
+ol.steps li { margin:4px 0; }
+ol.quiz { padding-left:22px; } ol.quiz > li { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px 12px; margin:8px 0; }
+ol.quiz .q { font-weight:700; } ol.quiz ul { margin:4px 0; padding-left:18px; } ol.quiz li.ok { color:var(--ok); font-weight:700; }
+.fb { font-size:13px; color:var(--muted); }
+.note { font-size:14px; color:var(--muted); }
+table { width:100%; border-collapse:collapse; background:var(--card); font-size:14px; }
+th, td { border:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; }
+th { background:var(--head); color:var(--bg); }
+.vt-wrap, .tblw { overflow-x:auto; }
+code { background:var(--soft); padding:1px 5px; border-radius:4px; font-size:13px; }
+a { color:inherit; }
+@media (max-width:600px) { .top { margin-left:0; width:100%; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Kit Google Sala de Aula — Revisão AV1 de Física</h1>
+  <p>Legacy School · Barra da Tijuca · Prof. Jair Pimenta · 4º bimestre 2026 · 1ª, 2ª e 3ª séries</p>
+</header>
+
+<div class="card">
+  <h2>Como usar este kit</h2>
+  <p>Cada turma tem a estrutura completa: banner, descrição, 8 tópicos, 11 a 13 postagens com texto pronto (botão <b>Copiar</b>), vídeos do YouTube conferidos, duas listas de entrega, gabarito agendado, quiz com correção automática e avisos de mural com data de agendamento. As datas usam a contagem regressiva até a prova (<b>D-10</b> = 10 dias antes da AV1).</p>
+</div>
+
+<div class="grid">
+  <div class="card"><h2>1 · Banner e descrição</h2>Envie o banner da turma (Personalizar → Fazer upload de foto) e cole a descrição.</div>
+  <div class="card"><h2>2 · Tópicos</h2>Crie os 8 tópicos na ordem indicada. O 📌 COMECE AQUI fica no topo.</div>
+  <div class="card"><h2>3 · Postagens</h2>Publique na ordem. Use “Programar” nos itens com data (gabarito e avisos).</div>
+  <div class="card"><h2>4 · Quiz</h2>Crie o Teste no Forms a partir de Atividades → Criar → Atividade com teste.</div>
+</div>
+
+<div class="card">
+  <h2>Cronograma até a AV1</h2>
+  <div class="tblw"><table>
+    <tr><th>Quando</th><th>O que acontece no Classroom</th></tr>
+    <tr><td>D-10</td><td>Tudo publicado; aviso de abertura no mural</td></tr>
+    <tr><td>D-10 a D-6</td><td>Alunos estudam o mapa mental e assistem às videoaulas</td></tr>
+    <tr><td>D-5, 23h59</td><td>Prazo da Lista Níveis 1 e 2</td></tr>
+    <tr><td>D-3, 7h</td><td>Aviso automático de lembrete</td></tr>
+    <tr><td>D-2, 23h59</td><td>Prazo da Lista Níveis 3 e 4 · gabarito comentado liberado automaticamente</td></tr>
+    <tr><td>D-1</td><td>Quiz relâmpago · aviso de véspera às 17h</td></tr>
+  </table></div>
+</div>
+
+<nav class="tabs">{{TABS}}</nav>
+{{BODY}}
+</div>
+<script>
+(function () {
+  var tabs = document.querySelectorAll('.tab'), secs = document.querySelectorAll('.serie');
+  function show(id) {
+    tabs.forEach(function (t) { t.classList.toggle('on', t.dataset.t === id); });
+    secs.forEach(function (s) { s.classList.toggle('on', s.id === id); });
+    try { localStorage.setItem('kit-tab', id); } catch (e) {}
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.dataset.t); }); });
+  var saved = null; try { saved = localStorage.getItem('kit-tab'); } catch (e) {}
+  show(saved && document.getElementById(saved) ? saved : 's1');
+  document.querySelectorAll('.copy').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var txt = b.nextElementSibling.textContent;
+      var done = function () { b.textContent = 'Copiado ✓'; b.classList.add('done'); setTimeout(function () { b.textContent = 'Copiar'; b.classList.remove('done'); }, 1600); };
+      if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done, function () {});
+    });
+  });
+})();
+</script>
+</body>
+</html>
