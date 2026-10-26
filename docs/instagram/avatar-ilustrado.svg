@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+<defs>
+<clipPath id="c"><circle cx="540" cy="540" r="500"/></clipPath>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f1ea"/><stop offset="1" stop-color="#d9e4ea"/></linearGradient>
+<linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2b48c"/><stop offset="1" stop-color="#cf9a70"/></linearGradient>
+</defs>
+<rect width="1080" height="1080" fill="#0b2a3c"/>
+<g clip-path="url(#c)">
+<rect width="1080" height="1080" fill="url(#bg)"/>
+<g font-family="'Comic Sans MS','Bradley Hand','Segoe Script',cursive" font-style="italic" fill="#d6283a" font-size="58" opacity=".9">
+<text x="70" y="250">a² − b² = (a+b)(a−b)</text>
+<text x="620" y="190" font-size="54">aᵐ · aⁿ = aᵐ⁺ⁿ</text>
+<text x="40" y="360" font-size="50">(3+√5)² − (3−√5)²</text>
+<text x="640" y="330" font-size="52">2¹⁶ − 2¹⁴</text>
+<text x="60" y="470" font-size="50">9 + 6√5 + 5 − 9 + 6√5</text>
+<text x="660" y="470" font-size="52">2²⁶ (2³+1)</text>
+<text x="70" y="620" font-size="52">= 300 · 12√5 / 24√5</text>
+</g>
+<rect x="0" y="0" width="1080" height="1080" fill="#0b2a3c" opacity=".18"/>
+<!-- body -->
+<path d="M110 1080 C120 830 270 740 540 740 C810 740 960 830 970 1080 Z" fill="#141414"/>
+<path d="M430 745 C470 800 610 800 650 745 L650 760 C610 830 470 830 430 760Z" fill="#0a0a0a"/>
+<!-- arms hint / gesture hand -->
+<!-- neck -->
+<path d="M450 640 L450 770 C490 810 590 810 630 770 L630 640 Z" fill="#c48d65"/>
+<!-- ears -->
+<ellipse cx="385" cy="470" rx="30" ry="48" fill="#cf9a70"/>
+<ellipse cx="695" cy="470" rx="30" ry="48" fill="#cf9a70"/>
+<!-- face -->
+<path d="M390 410 C390 270 470 235 540 235 C610 235 690 270 690 410 L690 520 C690 640 620 700 540 700 C460 700 390 640 390 520 Z" fill="url(#skin)"/>
+<!-- hair -->
+<path d="M386 440 C374 310 440 226 545 226 C650 226 706 310 694 440 C682 385 655 340 625 326 C585 312 495 312 455 326 C425 340 398 385 386 440 Z" fill="#17120f"/>
+<!-- beard -->
+<path d="M386 450 C386 560 400 650 470 695 C500 712 580 712 610 695 C680 650 694 560 694 450 C690 520 665 560 640 575 C610 548 470 548 440 575 C415 560 390 520 386 450 Z" fill="#17120f"/>
+<!-- mouth/lip area -->
+<path d="M488 590 C520 575 560 575 592 590 C575 612 505 612 488 590 Z" fill="#a8574a"/>
+<path d="M500 592 C525 584 555 584 580 592" stroke="#6b2f2a" stroke-width="4" fill="none" stroke-linecap="round"/>
+<!-- mustache -->
+<path d="M470 560 C500 535 530 548 540 556 C550 548 580 535 610 560 C585 575 555 566 540 570 C525 566 495 575 470 560Z" fill="#17120f"/>
+<!-- nose -->
+<path d="M525 470 C520 510 520 525 535 530 C545 534 560 530 560 525 C570 520 562 505 556 470 Z" fill="#c48d65" opacity=".7"/>
+<!-- sunglasses -->
+<rect x="402" y="418" width="132" height="86" rx="34" fill="#0d0d0d"/>
+<rect x="546" y="418" width="132" height="86" rx="34" fill="#0d0d0d"/>
+<rect x="528" y="440" width="24" height="14" rx="6" fill="#0d0d0d"/>
+<path d="M402 440 L378 432 M678 440 L702 432" stroke="#0d0d0d" stroke-width="12" stroke-linecap="round"/>
+<path d="M420 435 C440 425 470 425 500 432" stroke="#6a7782" stroke-width="6" fill="none" stroke-linecap="round" opacity=".6"/>
+<path d="M564 435 C584 425 614 425 644 432" stroke="#6a7782" stroke-width="6" fill="none" stroke-linecap="round" opacity=".6"/>
+<!-- eyebrows -->
+<path d="M408 400 C440 385 490 388 522 402" stroke="#17120f" stroke-width="14" fill="none" stroke-linecap="round"/>
+<path d="M558 402 C590 388 640 385 672 400" stroke="#17120f" stroke-width="14" fill="none" stroke-linecap="round"/>
+
+</g>
+<circle cx="540" cy="540" r="500" fill="none" stroke="#e9b44c" stroke-width="14"/>
+</svg>
