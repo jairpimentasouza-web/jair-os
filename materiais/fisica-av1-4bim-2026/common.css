@@ -1,0 +1,166 @@
+/* Estilo comum dos materiais de revisão — AV1 Física 4º bimestre 2026 */
+@page { size: A4; margin: 13mm 13mm 15mm 13mm; }
+
+:root {
+  --ink: #1f2328;
+  --muted: #5b616b;
+  --line: #d4d7dd;
+  --head: #4a4c55;
+  --paper: #ffffff;
+  --soft: #f4f5f8;
+  --n1: #1f8a4c;  --n1s: #e7f5ec;
+  --n2: #1f63b5;  --n2s: #e6eefa;
+  --n3: #c46a0a;  --n3s: #fdf0e1;
+  --n4: #b4233c;  --n4s: #fbe7ea;
+  --tip: #1f63b5; --tips: #eaf1fb;
+  --warn: #b4233c; --warns: #fcecee;
+  --key: #6b3fb0; --keys: #f1ebfa;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: "Inter", "Liberation Sans", Arial, sans-serif;
+  font-size: 10.4pt; line-height: 1.45;
+}
+.sheet { max-width: 184mm; margin: 0 auto; }
+
+/* ---------- Capa / cabeçalho ---------- */
+.cover {
+  border: 1.5px solid var(--head); border-radius: 6px; overflow: hidden; margin-bottom: 5mm;
+}
+.cover .bar { background: var(--head); color: #fff; padding: 4mm 5mm; }
+.cover .bar .kicker { font-size: 8.5pt; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
+.cover .bar h1 { margin: 1mm 0 0; font-size: 19pt; line-height: 1.15; font-weight: 800; }
+.cover .bar .sub { margin-top: 1.5mm; font-size: 10.5pt; opacity: .95; }
+.cover .meta { display: grid; grid-template-columns: 2fr 1fr 1fr; border-top: 1px solid var(--line); }
+.cover .meta div { padding: 2.2mm 4mm; border-right: 1px solid var(--line); font-size: 9pt; }
+.cover .meta div:last-child { border-right: 0; }
+.cover .meta b { display: block; font-size: 7.5pt; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+
+.howto { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.5mm; margin: 0 0 5mm; }
+.howto .step { border: 1px solid var(--line); border-radius: 5px; padding: 2.5mm 3mm; font-size: 8.8pt; background: var(--soft); }
+.howto .step b { display: block; font-size: 9.6pt; margin-bottom: .6mm; }
+
+/* ---------- Títulos de seção ---------- */
+h2.sec {
+  background: var(--head); color: #fff; font-size: 12pt; font-weight: 700;
+  padding: 2mm 4mm; border-radius: 4px; margin: 6mm 0 3.5mm; text-transform: uppercase; letter-spacing: .04em;
+  break-after: avoid;
+}
+h2.sec .num { opacity: .7; margin-right: 2mm; }
+h3 { font-size: 11pt; margin: 4mm 0 1.8mm; color: var(--head); border-bottom: 1.5px solid var(--line); padding-bottom: 1mm; break-after: avoid; }
+p { margin: 1.2mm 0; }
+ul, ol { margin: 1mm 0 1.5mm; padding-left: 5.5mm; }
+li { margin: .6mm 0; }
+.pb { break-before: page; }
+.avoid { break-inside: avoid; }
+
+/* ---------- Mapa mental ---------- */
+.mindmap {
+  position: relative; display: grid; grid-template-columns: 1fr 0.86fr 1fr; grid-template-rows: auto auto auto;
+  gap: 7mm 9mm; padding: 4mm 1mm; align-items: center;
+}
+.mindmap svg.links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: visible; }
+.mm-center, .mm-node { position: relative; z-index: 1; }
+.mm-center {
+  grid-column: 2; grid-row: 2; background: var(--head); color: #fff; border-radius: 50%;
+  aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 6mm; box-shadow: 0 0 0 2.5mm #e4e5ea;
+}
+.mm-center b { font-size: 14pt; line-height: 1.1; }
+.mm-center span { font-size: 8.5pt; opacity: .85; margin-top: 1.5mm; }
+.mm-node { border: 1.6px solid var(--c, var(--head)); border-radius: 6px; background: #fff; font-size: 8.4pt; line-height: 1.35; }
+.mm-node .t { background: var(--c, var(--head)); color: #fff; font-weight: 700; font-size: 9.4pt; padding: 1.4mm 2.6mm; }
+.mm-node ul { margin: 1.4mm 0 1.6mm; padding-left: 5.5mm; padding-right: 2mm; }
+.mm-node li { margin: .3mm 0; }
+.mm-node .f { font-family: "DejaVu Sans Mono", monospace; font-size: 8pt; background: var(--soft); padding: 0 1mm; border-radius: 2px; white-space: nowrap; }
+
+/* ---------- Caixas ---------- */
+.box { border-radius: 5px; padding: 2.6mm 3.5mm; margin: 2.5mm 0; break-inside: avoid; border-left: 4px solid; }
+.box > .bt { font-weight: 800; font-size: 9.2pt; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 1mm; }
+.box.tip { background: var(--tips); border-color: var(--tip); }
+.box.tip > .bt { color: var(--tip); }
+.box.warn { background: var(--warns); border-color: var(--warn); }
+.box.warn > .bt { color: var(--warn); }
+.box.key { background: var(--keys); border-color: var(--key); }
+.box.key > .bt { color: var(--key); }
+.box.plain { background: var(--soft); border-color: var(--head); }
+
+.cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5mm; }
+.cols2 > * { min-width: 0; }
+
+/* ---------- Fórmulas ---------- */
+.f { font-family: "DejaVu Sans Mono", monospace; font-size: 9pt; }
+.eq { display: block; text-align: center; margin: 1.6mm 0; font-size: 11pt; font-family: "Liberation Serif", "DejaVu Serif", serif; }
+.m { font-family: "Liberation Serif", "DejaVu Serif", serif; font-size: 11pt; }
+.fr { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 .5mm; line-height: 1.1; }
+.fr > span:first-child { border-bottom: 1px solid currentColor; padding: 0 .8mm; }
+.fr > span:last-child { padding: 0 .8mm; }
+
+table.formulas { width: 100%; border-collapse: collapse; margin: 2mm 0; font-size: 9.4pt; break-inside: avoid; }
+table.formulas th, table.formulas td { border: 1px solid var(--line); padding: 1.6mm 2.4mm; vertical-align: middle; }
+table.formulas th { background: var(--head); color: #fff; text-align: left; font-size: 8.8pt; }
+table.formulas td:nth-child(2) { text-align: center; white-space: nowrap; }
+table.formulas tr:nth-child(even) td { background: var(--soft); }
+
+.check { list-style: none; padding-left: 0; columns: 2; column-gap: 6mm; }
+.check li { padding-left: 6mm; position: relative; break-inside: avoid; }
+.check li::before { content: ""; position: absolute; left: 0; top: 1.2mm; width: 3mm; height: 3mm; border: 1.3px solid var(--head); border-radius: 1px; }
+
+/* ---------- Exercícios ---------- */
+.level {
+  display: flex; align-items: center; gap: 3mm; margin: 5mm 0 2.5mm; padding: 2mm 3.5mm; border-radius: 5px;
+  background: var(--ls); border: 1.5px solid var(--lc); break-after: avoid;
+}
+.level .tag { background: var(--lc); color: #fff; font-weight: 800; font-size: 9pt; padding: 1mm 2.5mm; border-radius: 3px; white-space: nowrap; }
+.level .desc { font-size: 9pt; color: var(--ink); }
+.level .desc b { color: var(--lc); }
+.lv1 { --lc: var(--n1); --ls: var(--n1s); }
+.lv2 { --lc: var(--n2); --ls: var(--n2s); }
+.lv3 { --lc: var(--n3); --ls: var(--n3s); }
+.lv4 { --lc: var(--n4); --ls: var(--n4s); }
+
+.q { margin: 0 0 3.6mm; break-inside: avoid; }
+.q .qh {
+  display: flex; align-items: baseline; gap: 2mm; border-bottom: 1.2px solid var(--line); padding-bottom: .8mm; margin-bottom: 1.4mm;
+  font-size: 9.2pt; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+}
+.q .qh .n { color: var(--lc); font-size: 10.2pt; }
+.q .qh .tagx { margin-left: auto; font-size: 7.6pt; text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--lc); background: var(--ls); padding: .3mm 1.8mm; border-radius: 8px; }
+.q .src { font-weight: 700; }
+.opts { list-style: none; padding: 0; margin: 1.4mm 0 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: .8mm 2mm; }
+.opts.c1 { grid-template-columns: 1fr; }
+.opts.c2 { grid-template-columns: 1fr 1fr; }
+.opts.c3 { grid-template-columns: repeat(3, 1fr); }
+.opts li { margin: 0; }
+.opts li b { margin-right: 1.2mm; }
+.sub { margin: .8mm 0 0 0; padding-left: 0; list-style: none; }
+.sub li { margin: .6mm 0; }
+.fig { display: flex; justify-content: center; margin: 2mm 0; }
+.fig svg { max-width: 100%; height: auto; }
+.fig.side { float: right; margin: 0 0 1mm 3mm; }
+.space { border: 1px dashed #b9bdc6; border-radius: 4px; min-height: 16mm; margin-top: 1.6mm; position: relative; }
+.space::before { content: "Cálculos / resposta"; position: absolute; top: 1mm; left: 2mm; font-size: 7.3pt; color: #9aa0aa; }
+.space.lg { min-height: 26mm; }
+
+/* ---------- Gabarito ---------- */
+table.quick { width: 100%; border-collapse: collapse; font-size: 9.2pt; margin: 2mm 0 4mm; break-inside: avoid; }
+table.quick td, table.quick th { border: 1px solid var(--line); padding: 1.3mm 1mm; text-align: center; }
+table.quick th { background: var(--head); color: #fff; font-weight: 700; }
+table.quick td.k { font-weight: 800; }
+
+.sol { margin: 0 0 3.6mm; border: 1px solid var(--line); border-left: 4px solid var(--lc); border-radius: 4px; padding: 2.2mm 3.2mm; break-inside: avoid; }
+.sol .sh { display: flex; align-items: baseline; gap: 2mm; margin-bottom: 1mm; }
+.sol .sh .n { font-weight: 800; color: var(--lc); }
+.sol .sh .ans { margin-left: auto; font-weight: 800; background: var(--lc); color: #fff; border-radius: 3px; padding: .3mm 2.2mm; font-size: 9pt; }
+.sol ol.steps { margin: .6mm 0; padding-left: 5mm; }
+.sol ol.steps li { margin: .7mm 0; }
+.sol .why { margin-top: 1.2mm; font-size: 9pt; color: var(--muted); border-top: 1px dotted var(--line); padding-top: 1mm; }
+.sol .why b { color: var(--ink); }
+
+.footer-note { margin-top: 6mm; text-align: center; font-size: 8.5pt; color: var(--muted); }
+
+/* Versão do aluno: sem gabarito */
+body.aluno .only-teacher { display: none !important; }
