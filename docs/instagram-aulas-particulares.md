@@ -1,84 +1,119 @@
-# Instagram — Aulas Particulares de Física e Matemática (online)
+# Instagram — Professor Jair Pimenta | Acompanhamento Escolar
 
-Atende: Ensino Fundamental II, Ensino Médio, ENEM e vestibulares.
-Público: pais (fundamental e médio) e vestibulandos/alunos do 2º e 3º ano (ENEM e vestibular).
-Objetivo único: gerar conversas no WhatsApp e aulas experimentais agendadas.
+Baseado no site https://rococo-truffle-521034.netlify.app/
+
+**Posicionamento:** acompanhamento escolar contínuo em Matemática, Física e Química, com didática leve, material personalizado com IA e foco em resultado. Para pais do fundamental e médio e para quem prepara ENEM, UERJ, vestibulares e concursos militares (ESA, EsPCEx).
+**Prova de autoridade:** professor desde 2014 · passagem por colégios (Colégio Adventista de Nova Iguaçu, atualmente Centro Educacional Jacarepaguá) · ex-Escola de Sargentos das Armas (aprovação militar própria) · aluno aprovado em Engenharia de Produção na UERJ em 2023.
+**Objetivo único do Instagram:** gerar conversas no WhatsApp e aulas agendadas.
+
+> O número de WhatsApp não foi gravado aqui (repositório sanitizado). Link: `https://wa.me/55` + DDD + número + `?text=...` (já te passei pronto no chat).
 
 ## 1. Perfil
 
-- **Nome (campo pesquisável):** `Jair | Física e Matemática`
+- **Nome (campo pesquisável):** `Prof. Jair Pimenta | Física e Matemática`
 - **Categoria:** Professor / Educação
-- **Foto:** rosto nítido, sorrindo, fundo limpo
+- **Foto:** rosto nítido, sorrindo, fundo limpo (a mesma linha da foto do site)
 - **Bio:**
 ```
-⚛️📐 Professor de Física e Matemática
-✅ Fundamental, Médio, ENEM e Vestibulares
-💻 Aulas particulares online, 1 a 1
-📈 [1 resultado real: ex. "de 5 para 8 em 2 meses"]
-👇 Aula experimental gratuita
+📐⚛️🧪 Matemática, Física e Química
+👨‍🏫 Acompanhamento escolar desde 2014
+🎯 Fund., Médio, ENEM, UERJ e concursos militares
+💻 Online ou presencial (RJ) · material com IA
+👇 Chame no WhatsApp
 ```
-- **Link:** `https://wa.me/55DDDNUMERO?text=Oi%20Jair%2C%20quero%20saber%20das%20aulas%20de%20F%C3%ADsica%20e%20Matem%C3%A1tica` (trocar DDD e número)
-- **Botões:** ativar WhatsApp / contato no perfil profissional
+- **Links:** 1) WhatsApp com mensagem pronta 2) o site
+- **Botões:** WhatsApp / contato ativos no perfil profissional
 
-## 2. Destaques (nesta ordem)
+## 2. Destaques
 
 | # | Nome | Conteúdo |
 |---|------|----------|
-| 1 | Comece aqui | Quem sou, para quem é, como funciona (3 stories) |
-| 2 | Resultados | Depoimentos de pais e alunos, aprovações (com autorização) |
-| 3 | ENEM / Vestibular | Plano de estudo, temas que mais caem, cronograma |
-| 4 | Fund. e Médio | Reforço, notas, provas da escola |
-| 5 | Como funciona | Aula experimental → diagnóstico → plano → acompanhamento |
-| 6 | Dúvidas | Valor/orçamento, duração, plataforma, frequência |
-| 7 | Dicas | Física e Matemática em 1 minuto |
+| 1 | Comece aqui | Quem sou, desde 2014, para quem é (3 stories) |
+| 2 | Aprovações | Depoimento do aluno aprovado em Engenharia de Produção na UERJ 2023 e novos resultados |
+| 3 | Acompanhamento | O que é: rotina, dever de casa, provas, apoio aos pais |
+| 4 | ENEM / UERJ | Temas que mais caem, simulados, cronograma |
+| 5 | ESA / EsPCEx | Preparação militar com quem já foi aprovado |
+| 6 | Planos | 1, 2 ou 3 aulas por semana, avulsa, como pedir orçamento |
+| 7 | Dúvidas | Online x presencial, reforço, material com IA |
 
-## 3. Três posts fixados
+## 3. Posts fixados
 
-1. **Quem sou e como ajudo** (Reels, 30–45s): "Sou o Jair, professor de Física e Matemática. Ajudo alunos do fundamental ao ensino médio, e quem está se preparando para ENEM e vestibular, a entenderem a matéria de verdade e subirem a nota. Aulas online 1 a 1. Link na bio."
-2. **Como funciona a aula** (carrossel): 1) Aula experimental grátis 2) Diagnóstico 3) Plano personalizado (escola ou ENEM/vestibular) 4) Aulas ao vivo 5) Relatório de evolução
-3. **Resultados** (carrossel com depoimentos e aprovações)
+1. **Apresentação** (Reels 30–45s): "Sou o Jair, professor desde 2014. Sou formado em Matemática, Física e Química. Acompanho o aluno do reforço à aprovação, com didática leve e material feito sob medida. Chama no WhatsApp."
+2. **Acompanhamento escolar, o que é** (carrossel): rotina de estudos · dever de casa · revisão para provas · apoio emocional · tranquilidade para os pais
+3. **Aprovação UERJ 2023** (carrossel com o depoimento do site: "Ele não só ensina a matéria, mas te dá a confiança necessária para encarar a prova")
 
-## 4. Pilares de conteúdo
+## 4. Pilares de conteúdo (3 a 4 posts por semana)
 
 | Pilar | % | Exemplo |
 |---|---|---|
-| Dor (pais e alunos) | 30% | "5 sinais de que seu filho precisa de reforço", "Por que física parece impossível" |
-| Autoridade | 30% | Reels explicando um erro comum em MRU, leis de Newton, funções, trigonometria |
-| Prova social | 20% | Depoimentos, notas, aprovações |
-| Conversão | 20% | "Vagas abertas", "Aula experimental gratuita" |
-
-Dica de segmentação: alterne posts para pais (fundamental/médio) e para vestibulandos (ENEM/vestibular), e deixe a série ou o objetivo claro na primeira frase.
+| Dor de pais e alunos | 30% | "Seu filho esquece tudo depois da prova?", "Por que Física parece impossível" |
+| Autoridade (conteúdo) | 30% | Erros comuns em MRU, Newton, funções, estequiometria |
+| Prova social | 20% | Depoimentos, aprovações, evolução de notas |
+| Conversão | 20% | Planos, vagas abertas, bastidores do acompanhamento |
 
 ## 5. Calendário — 30 dias (3 Reels + 1 carrossel por semana + Stories diários)
 
-**Semana 1**
-- Reels: "Ninguém nasce ruim em Física" · "3 erros que travam o aluno em frações" · "Reforço ou aula particular?"
-- Carrossel: "5 sinais de que seu filho precisa de reforço"
+**Semana 1 — Pais e acompanhamento**
+- Reels: "Seu filho precisa de reforço ou de acompanhamento?" · "3 sinais de que a dificuldade vem de lacunas antigas" · "Como organizar a rotina de estudos"
+- Carrossel: "Acompanhamento escolar: o que é e o que muda na nota"
 
-**Semana 2 (ENEM)**
-- Reels: "O que mais cai de Física no ENEM" · "Matemática do ENEM: onde o aluno perde ponto" · "Como estudar sem decorar fórmula"
-- Carrossel: "Cronograma de 12 semanas para o ENEM"
+**Semana 2 — ENEM e UERJ**
+- Reels: "O que mais cai de Matemática no ENEM" · "Física no ENEM: 3 temas que você não pode ignorar" · "Como estudar sem decorar fórmula"
+- Carrossel: "Cronograma de 12 semanas para o ENEM/UERJ"
 
-**Semana 3 (Fundamental/Médio)**
-- Reels: "Regra de sinais em 30s" · "Velocidade média sem errar" · "3 dúvidas de pais, respondidas"
-- Carrossel: "Antes e depois: evolução de um aluno"
+**Semana 3 — Concursos militares**
+- Reels: "ESA x EsPCEx: qual a diferença?" · "O que estudar em Matemática para a ESA" · "Disciplina que aprovou: minha rotina na preparação militar"
+- Carrossel: "Plano de estudo para concursos militares"
 
-**Semana 4 (Vestibular)**
-- Reels: "Cinemática: o erro clássico da prova" · "Funções do 1º e 2º grau: atalho" · "Vagas abertas para novembro"
-- Carrossel: "Checklist: o que revisar antes do vestibular"
+**Semana 4 — Conversão e prova social**
+- Reels: "Material com IA: como gero a lista do aluno" · "Aprovação na UERJ: o que fez diferença" · "Vagas abertas: 1, 2 ou 3 aulas por semana"
+- Carrossel: "Qual plano combina com o seu filho?"
 
 **CTA de todo post:** "Comente QUERO e eu te explico como funciona" ou "Chame no WhatsApp (link na bio)".
 
-## 6. Roteiro de WhatsApp
+## 6. Roteiros prontos (Reels)
 
-1. "Oi! Aqui é o Jair 😊 Obrigado pelo contato. O aluno está em qual série, ou se prepara para qual prova (ENEM/vestibular)? E qual matéria pesa mais: Física, Matemática ou as duas?"
-2. "Entendi. Faço uma aula experimental gratuita de 30 min, online, para mapear onde trava e já mostrar como trabalho. Quais horários funcionam melhor?"
-3. Após a experimental: relatório curto + proposta (pacote mensal, frequência, valor).
+**R1 — "Reforço ou acompanhamento?"** (35s)
+- Gancho: "Seu filho estuda, mas a nota não sobe? Talvez ele não precise de reforço."
+- Corpo: "Reforço resolve a dúvida de hoje. Acompanhamento cria rotina, organização e confiança, e tira o peso das costas dos pais."
+- CTA: "Comenta QUERO que eu te explico como funciona."
+
+**R2 — "O que mais cai de Matemática no ENEM"** (40s)
+- Gancho: "Se você vai fazer o ENEM, estuda isso primeiro."
+- Corpo: razão e proporção, porcentagem, estatística e geometria, em 3 cartelas com 1 exemplo cada.
+- CTA: "Quer o cronograma completo? Link na bio."
+
+**R3 — "Física parece impossível?"** (30s)
+- Gancho: "Física não é decorar fórmula. É entender o que está acontecendo."
+- Corpo: exemplo de MRU com carro: velocidade média em 20 segundos.
+- CTA: "Me chama que eu te mostro como destravar."
+
+**R4 — "Material com IA"** (35s)
+- Gancho: "Eu gero a lista de exercícios exatamente no ponto em que o aluno travou."
+- Corpo: mostrar tela: aula → dificuldade identificada → lista personalizada.
+- CTA: "Quer isso para seu filho? Chama no WhatsApp."
+
+**R5 — "ESA / EsPCEx"** (40s)
+- Gancho: "Já passei por isso. Quem quer ESA ou EsPCEx precisa de plano, não de sorte."
+- Corpo: 3 pilares: matéria base, simulados e disciplina de rotina.
+- CTA: "Chama no WhatsApp e monto seu plano."
+
+**R6 — Depoimento UERJ** (30s)
+- Gancho: "De aluno com medo de Exatas a aprovado em Engenharia de Produção na UERJ."
+- Corpo: print do depoimento com a frase do aluno.
+- CTA: "Seu próximo passo: chama no WhatsApp."
+
+## 7. Roteiro de WhatsApp
+
+1. "Oi! Aqui é o Jair 😊 Obrigado pelo contato. O aluno está em qual série, ou se prepara para qual prova (ENEM, UERJ, ESA, EsPCEx)? E qual matéria pesa mais: Matemática, Física ou Química?"
+2. "Entendi. Posso te explicar como funciona o acompanhamento e os planos (1, 2 ou 3 aulas por semana, ou aula avulsa). Prefere online ou presencial?"
+3. Combinar a primeira aula/diagnóstico, enviar a proposta e o valor.
 4. Follow-up em 24h e 72h se não responder.
 
-## 7. Rotina e métricas
+## 8. Rotina e métricas
 
 - Responder DMs e comentários em até 1h.
-- Hashtags (5–8): `#aulaparticular #professordefisica #professordematematica #enem #vestibular #fisicaenem #matematicaenem #aulaonline`
+- Hashtags (5–8): `#aulaparticular #professordefisica #professordematematica #enem #uerj #concursomilitar #esa #espcex`
 - Pedir indicação: "Quem indicar um amigo ganha uma aula bônus."
-- **Métrica principal:** conversas iniciadas no WhatsApp e aulas experimentais agendadas. Revisar todo domingo (15 min).
+- Mencionar a região do Rio nos posts presenciais (Jacarepaguá, Nova Iguaçu), sem divulgar endereço de residência.
+- **Métrica principal:** conversas iniciadas no WhatsApp e aulas agendadas. Revisar todo domingo (15 min).
