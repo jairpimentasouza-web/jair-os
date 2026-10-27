@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Lista N3 Matemática</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 11pt; color: #1d2433; line-height: 1.45; margin: 0; }
+  h1 { font-size: 20pt; margin: 0 0 2px; color: #1e3a8a; }
+  h2 { font-size: 15pt; color: #fff; background: #1e3a8a; padding: 6px 12px; border-radius: 6px; margin: 22px 0 10px; break-after: avoid; }
+  h3 { font-size: 12pt; color: #1e3a8a; margin: 16px 0 6px; border-bottom: 2px solid #c7d2fe; padding-bottom: 2px; break-after: avoid; }
+  .capa { border: 3px solid #1e3a8a; border-radius: 10px; padding: 16px 20px; margin-bottom: 14px; }
+  .capa .sub { font-size: 12pt; color: #334155; }
+  .capa table { width: 100%; margin-top: 10px; border-collapse: collapse; font-size: 11pt; }
+  .capa td { padding: 5px 0; }
+  .linha { border-bottom: 1px solid #64748b; display: inline-block; min-width: 180px; }
+  .conceito { background: #eef2ff; border-left: 5px solid #4f46e5; border-radius: 6px; padding: 8px 12px; margin: 8px 0 12px; break-inside: avoid; }
+  .conceito b.t { color: #3730a3; display: block; margin-bottom: 3px; }
+  .conceito ul { margin: 4px 0; padding-left: 20px; }
+  .dica { background: #fef9c3; border-left: 5px solid #ca8a04; border-radius: 6px; padding: 6px 12px; margin: 8px 0; break-inside: avoid; font-size: 10.5pt; }
+  .ex { margin: 10px 0 14px; break-inside: avoid; }
+  .ex > .en { font-weight: bold; }
+  .nivel { font-size: 8.5pt; font-weight: bold; padding: 1px 7px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
+  .n1 { background: #dcfce7; color: #166534; }
+  .n2 { background: #fef3c7; color: #92400e; }
+  .n3 { background: #fee2e2; color: #991b1b; }
+  .itens { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; margin: 6px 0 0 8px; }
+  .itens.c3 { grid-template-columns: 1fr 1fr 1fr; }
+  .itens.c1 { grid-template-columns: 1fr; }
+  .itens div { min-height: 34px; }
+  .b { display: inline-block; border-bottom: 1px solid #64748b; min-width: 70px; }
+  .prob { border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; margin: 10px 0; break-inside: avoid; }
+  .prob .calc { height: 70px; border: 1px dashed #cbd5e1; border-radius: 6px; margin-top: 6px; font-size: 8.5pt; color: #94a3b8; padding: 3px 6px; }
+  .prob .resp { margin-top: 6px; }
+  .f { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; font-size: 0.92em; line-height: 1.05; margin: 0 2px; }
+  .f > span:first-child { border-bottom: 1.2px solid currentColor; padding: 0 2px; }
+  .f > span:last-child { padding: 0 2px; }
+  table.q { border-collapse: collapse; margin: 6px 0; font-size: 10pt; }
+  table.q td, table.q th { border: 1px solid #94a3b8; padding: 3px 8px; text-align: center; }
+  table.q th { background: #e0e7ff; }
+  .quebra { break-before: page; }
+  .gab h3 { font-size: 11pt; margin-top: 10px; }
+  .gab { font-size: 10pt; }
+  .gab p { margin: 3px 0; }
+  .fig { display: flex; gap: 24px; align-items: center; margin: 6px 0; }
+  .rodape { margin-top: 18px; text-align: center; color: #64748b; font-size: 9pt; }
+  .auto td { height: 22px; }
+</style>
+</head>
+<body>
+
+<div class="capa">
+  <h1>Lista de Exercícios – Matemática</h1>
+  <div class="sub"><b>N3 · 3º Trimestre · Volume 3 · Capítulos 11 e 12</b><br>
+  Frações e números decimais · Operações · Medidas de comprimento · Perímetro</div>
+  <table>
+    <tr><td><b>Aluno:</b> Luís</td><td><b>Turma:</b> 601 – 6º ano</td></tr>
+    <tr><td><b>Colégio:</b> Rainha dos Corações – Jacarepaguá (RJ)</td><td><b>Data:</b> <span class="linha" style="min-width:120px">&nbsp;</span></td></tr>
+  </table>
+</div>
+
+<div class="dica"><b>Como usar esta lista:</b> cada parte começa com um quadro de <b>conceitos</b> (leia antes!). Os exercícios vão do mais fácil ao mais difícil:
+<span class="nivel n1">NÍVEL 1 – Aquecimento</span> <span class="nivel n2">NÍVEL 2 – Treino</span> <span class="nivel n3">NÍVEL 3 – Desafio</span>.
+A Parte 7 traz <b>problemas contextualizados</b>, como na prova. O gabarito está no final – só confira depois de tentar!</div>
+
+<!-- ===================== PARTE 1 ===================== -->
+<h2>Parte 1 – Frações: conceitos básicos</h2>
+
+<div class="conceito"><b class="t">📘 Conceitos</b>
+<ul>
+<li>Uma <b>fração</b> representa partes iguais de um inteiro: em [3/4], o <b>denominador</b> (4) diz em quantas partes o inteiro foi dividido e o <b>numerador</b> (3) quantas partes foram tomadas.</li>
+<li><b>Própria:</b> numerador menor que o denominador ([2/5]). <b>Imprópria:</b> numerador maior ([7/4]). <b>Aparente:</b> numerador múltiplo do denominador, representa um número inteiro ([8/4] = 2).</li>
+<li><b>Frações equivalentes</b> representam a mesma quantidade: [1/2] = [2/4] = [4/8]. Multiplicamos ou dividimos numerador e denominador pelo <b>mesmo número</b>.</li>
+<li><b>Simplificar</b> é dividir numerador e denominador por um mesmo número até chegar à <b>fração irredutível</b>: [12/18] = [6/9] = [2/3].</li>
+<li><b>Número misto:</b> parte inteira + fração. [7/3] = 2[1/3] (7 ÷ 3 = 2, resto 1).</li>
+<li><b>Fração de uma quantidade:</b> divida pelo denominador e multiplique pelo numerador. [2/3] de 12 = (12 ÷ 3) × 2 = 8.</li>
+</ul></div>
+
+<div class="ex"><span class="en">1. Escreva como se lê cada fração.</span><span class="nivel n1">NÍVEL 1</span>
+<div class="itens">
+<div>a) [3/5] <span class="b" style="min-width:150px"></span></div>
+<div>b) [7/10] <span class="b" style="min-width:150px"></span></div>
+<div>c) [5/12] <span class="b" style="min-width:150px"></span></div>
+<div>d) [9/100] <span class="b" style="min-width:150px"></span></div>
+<div>e) [4/9] <span class="b" style="min-width:150px"></span></div>
+<div>f) [1/2] <span class="b" style="min-width:150px"></span></div>
+</div></div>
+
+<div class="ex"><span class="en">2. Escreva usando números.</span><span class="nivel n1">NÍVEL 1</span>
+<div class="itens">
+<div>a) dois sétimos: <span class="b"></span></div>
+<div>b) onze quinze avos: <span class="b"></span></div>
+<div>c) três milésimos: <span class="b"></span></div>
+<div>d) seis oitavos: <span class="b"></span></div>
+</div></div>
+
+<div class="ex"><span class="en">3. Observe as figuras e escreva a fração que representa a parte pintada.</span><span class="nivel n1">NÍVEL 1</span>
+<div class="fig">
+  <div>a) <svg width="160" height="30" viewBox="0 0 160 30"><g stroke="#1e3a8a" stroke-width="1.5"><rect x="0" y="0" width="40" height="30" fill="#93c5fd"/><rect x="40" y="0" width="40" height="30" fill="#93c5fd"/><rect x="80" y="0" width="40" height="30" fill="#93c5fd"/><rect x="120" y="0" width="40" height="30" fill="#fff"/></g></svg> <span class="b"></span></div>
+  <div>b) <svg width="150" height="30" viewBox="0 0 150 30"><g stroke="#1e3a8a" stroke-width="1.5"><rect x="0" y="0" width="25" height="30" fill="#fca5a5"/><rect x="25" y="0" width="25" height="30" fill="#fca5a5"/><rect x="50" y="0" width="25" height="30" fill="#fff"/><rect x="75" y="0" width="25" height="30" fill="#fff"/><rect x="100" y="0" width="25" height="30" fill="#fff"/><rect x="125" y="0" width="25" height="30" fill="#fff"/></g></svg> <span class="b"></span></div>
+</div>
+<div class="fig">
+  <div>c) <svg width="70" height="70" viewBox="-35 -35 70 70"><g stroke="#1e3a8a" stroke-width="1.5"><path d="M0 0 L0 -32 A32 32 0 0 1 32 0 Z" fill="#86efac"/><path d="M0 0 L32 0 A32 32 0 0 1 0 32 Z" fill="#86efac"/><path d="M0 0 L0 32 A32 32 0 0 1 -32 0 Z" fill="#86efac"/><path d="M0 0 L-32 0 A32 32 0 0 1 0 -32 Z" fill="#fff"/></g></svg> <span class="b"></span></div>
+  <div>d) <svg width="120" height="60" viewBox="0 0 120 60"><g stroke="#1e3a8a" stroke-width="1.5"><rect x="0" y="0" width="30" height="30" fill="#fde68a"/><rect x="30" y="0" width="30" height="30" fill="#fde68a"/><rect x="60" y="0" width="30" height="30" fill="#fde68a"/><rect x="90" y="0" width="30" height="30" fill="#fde68a"/><rect x="0" y="30" width="30" height="30" fill="#fde68a"/><rect x="30" y="30" width="30" height="30" fill="#fff"/><rect x="60" y="30" width="30" height="30" fill="#fff"/><rect x="90" y="30" width="30" height="30" fill="#fff"/></g></svg> <span class="b"></span></div>
+</div>
+<div style="margin-left:8px">e) Qual das frações acima pode ser simplificada? Simplifique-a: <span class="b" style="min-width:160px"></span></div>
+</div>
+
+<div class="ex"><span class="en">4. Classifique em própria (P), imprópria (I) ou aparente (A).</span><span class="nivel n1">NÍVEL 1</span>
+<div class="itens c3">
+<div>a) [3/4] (&nbsp;&nbsp;&nbsp;)</div><div>b) [9/5] (&nbsp;&nbsp;&nbsp;)</div><div>c) [12/4] (&nbsp;&nbsp;&nbsp;)</div>
+<div>d) [7/7] (&nbsp;&nbsp;&nbsp;)</div><div>e) [1/10] (&nbsp;&nbsp;&nbsp;)</div><div>f) [15/6] (&nbsp;&nbsp;&nbsp;)</div>
+</div></div>
+
+<div class="ex"><span class="en">5. Simplifique até obter a fração irredutível.</span><span class="nivel n2">NÍVEL 2</span>
+<div class="itens c3">
+<div>a) [6/8] = <span class="b"></span></div><div>b) [10/25] = <span class="b"></span></div><div>c) [12/18] = <span class="b"></span></div>
+<div>d) [24/40] = <span class="b"></span></div><div>e) [45/60] = <span class="b"></span></div><div>f) [35/49] = <span class="b"></span></div>
+<div>g) [18/81] = <span class="b"></span></div><div>h) [32/48] = <span class="b"></span></div><div>i) [50/100] = <span class="b"></span></div>
+</div></div>
+
+<div class="ex"><span class="en">6. Complete para que as frações sejam equivalentes.</span><span class="nivel n2">NÍVEL 2</span>
+<div class="itens c3">
+<div>a) [2/3] = [?/12]</div><div>b) [5/4] = [20/?]</div><div>c) [3/7] = [?/35]</div>
+<div>d) [9/15] = [3/?]</div><div>e) [1/6] = [?/48]</div><div>f) [4/5] = [?/100]</div>
+</div></div>
+
+<div class="ex"><span class="en">7. Transforme:</span><span class="nivel n2">NÍVEL 2</span>
+<div style="margin:4px 0 0 8px"><i>em número misto:</i></div>
+<div class="itens c3" style="grid-template-columns:repeat(4,1fr)">
+<div>a) [7/3] = <span class="b" style="min-width:50px"></span></div><div>b) [11/4] = <span class="b" style="min-width:50px"></span></div><div>c) [23/5] = <span class="b" style="min-width:50px"></span></div><div>d) [17/6] = <span class="b" style="min-width:50px"></span></div>
+</div>
+<div style="margin:6px 0 0 8px"><i>em fração imprópria:</i></div>
+<div class="itens c3">
+<div>e) 1[2/5] = <span class="b"></span></div><div>f) 3[1/4] = <span class="b"></span></div><div>g) 2[5/8] = <span class="b"></span></div>
+</div></div>
+
+<div class="ex"><span class="en">8. Compare usando &gt;, &lt; ou =.</span><span class="nivel n2">NÍVEL 2</span>
+<div class="itens c3">
+<div>a) [3/5] ___ [4/5]</div><div>b) [2/7] ___ [2/9]</div><div>c) [1/2] ___ [4/8]</div>
+<div>d) [3/4] ___ [2/3]</div><div>e) [5/6] ___ [7/8]</div><div>f) [9/10] ___ [4/5]</div>
+</div></div>
+
+<div class="ex"><span class="en">9. Coloque em ordem crescente: [1/2], [3/4], [2/3], [5/12].</span><span class="nivel n3">NÍVEL 3</span>
+<div class="dica" style="margin-left:8px">Dica: escreva todas com o mesmo denominador (use o MMC dos denominadores).</div>
+<div style="margin-left:8px"><span class="b" style="min-width:380px"></span></div></div>
+
+<div class="ex"><span class="en">10. Calcule a fração de cada quantidade.</span><span class="nivel n2">NÍVEL 2</span>
+<div class="itens c3">
+<div>a) [1/4] de 20 = <span class="b" style="min-width:40px"></span></div><div>b) [2/3] de 30 = <span class="b" style="min-width:40px"></span></div><div>c) [3/5] de 45 = <span class="b" style="min-width:40px"></span></div>
+<div>d) [5/8] de 64 = <span class="b" style="min-width:40px"></span></div><div>e) [7/10] de 200 = <span class="b" style="min-width:40px"></span></div><div>f) [3/4] de 1 hora = <span class="b" style="min-width:40px"></span> min</div>
+</div></div>
+
+<!-- ===================== PARTE 2 ===================== -->
+<h2>Parte 2 – Números decimais</h2>
+
+<div class="conceito"><b class="t">📘 Conceitos</b>
+<ul>
+<li>Os números decimais representam frações com denominador 10, 100, 1000…: [3/10] = 0,3 (décimos) · [47/100] = 0,47 (centésimos) · [9/1000] = 0,009 (milésimos).</li>
+<li>Quadro de ordens:</li>
+</ul>
+<table class="q" style="margin-left:20px">
+<tr><th>Centena</th><th>Dezena</th><th>Unidade</th><th>,</th><th>Décimo</th><th>Centésimo</th><th>Milésimo</th></tr>
+<tr><td></td><td>1</td><td>3</td><td>,</td><td>6</td><td>0</td><td>5</td></tr>
+</table>
+<ul>
+<li>13,605 lê-se “treze inteiros e seiscentos e cinco milésimos”.</li>
+<li><b>Zeros à direita</b> da parte decimal não mudam o valor: 2,3 = 2,30 = 2,300.</li>
+<li>Para <b>transformar fração em decimal</b>, divida o numerador pelo denominador: [3/4] = 3 ÷ 4 = 0,75.</li>
+<li>Para <b>comparar decimais</b>, iguale o número de casas decimais: 0,5 e 0,49 → 0,50 &gt; 0,49.</li>
+</ul></div>
+
+<div class="ex"><span class="en">11. Escreva como se lê.</span><span class="nivel n1">NÍVEL 1</span>
+<div class="itens c1">
+<div>a) 0,7 → <span class="b" style="min-width:360px"></span></div>
+<div>b) 2,35 → <span class="b" style="min-width:360px"></span></div>
+<div>c) 0,048 → <span class="b" style="min-width:360px"></span></div>
+<div>d) 13,6 → <span class="b" style="min-width:360px"></span></div>
+</div></div>
+
+<div class="ex"><span class="en">12. Escreva na forma decimal.</span><span class="nivel n1">NÍVEL 1</span>
+<div class="itens c3">
+<div>a) [3/10] = <span class="b"></span></div><div>b) [47/100] = <span class="b"></span></div><div>c) [9/1000] = <span class="b"></span></div>
+<div>d) [125/100] = <span class="b"></span></div><div>e) [6/100] = <span class="b"></span></div><div>f) [2048/1000] = <span class="b"></span></div>
+</div></div>
+
+<div class="ex"><span class="en">13. Escreva cada decimal como fração irredutível.</span><span class="nivel n2">NÍVEL 2</span>
+<div class="itens c3">
+<div>a) 0,5 = <span class="b"></span></div><div>b) 0,25 = <span class="b"></span></div><div>c) 0,75 = <span class="b"></span></div>
+<div>d) 0,2 = <span class="b"></span></div><div>e) 1,4 = <span class="b"></span></div><div>f) 0,125 = <span class="b"></span></div>
+</div></div>
+
+<div class="ex"><span class="en">14. Transforme em decimal fazendo a divisão.</span><span class="nivel n2">NÍVEL 2</span>
+<div class="itens c3">
+<div>a) [1/4] = <span class="b"></span></div><div>b) [3/5] = <span class="b"></span></div><div>c) [7/8] = <span class="b"></span></div>
+<div>d) [9/20] = <span class="b"></span></div><div>e) [1/3] = <span class="b"></span></div><div>f) [5/2] = <span class="b"></span></div>
+</div></div>
+
+<div class="ex"><span class="en">15. Compare usando &gt;, &lt; ou =.</span><span class="nivel n1">NÍVEL 1</span>
+<div class="itens c3">
+<div>a) 0,5 ___ 0,49</div><div>b) 2,3 ___ 2,30</div><div>c) 0,07 ___ 0,7</div>
+<div>d) 1,099 ___ 1,1</div><div>e) 4,01 ___ 4,010</div><div>f) [1/2] ___ 0,6</div>
+</div></div>
+
+<div class="ex"><span class="en">16. Coloque em ordem decrescente: 3,2 · 3,02 · 3,22 · 3,202 · 2,99</span><span class="nivel n2">NÍVEL 2</span>
+<div style="margin-left:8px"><span class="b" style="min-width:380px"></span></div></div>
+
+<!-- ===================== PARTE 3 ===================== -->
+<h2>Parte 3 – Operações com frações</h2>
+
+<div class="conceito"><b class="t">📘 Conceitos</b>
+<ul>
+<li><b>Adição e subtração com denominadores iguais:</b> conserva o denominador e soma (ou subtrai) os numeradores: [2/7] + [3/7] = [5/7].</li>
+<li><b>Denominadores diferentes:</b> primeiro transforme em frações equivalentes com o mesmo denominador (MMC): [1/2] + [1/3] = [3/6] + [2/6] = [5/6].</li>
+<li><b>Multiplicação:</b> numerador × numerador e denominador × denominador: [2/3] × [4/5] = [8/15]. Simplifique quando puder!</li>
+<li><b>Divisão:</b> conserve a primeira fração e multiplique pelo <b>inverso</b> da segunda: [3/4] ÷ [1/2] = [3/4] × [2/1] = [6/4] = [3/2].</li>
+<li><b>Potenciação:</b> eleve o numerador e o denominador ao expoente: ([2/3])^2 = [4/9]. Todo número (diferente de zero) elevado a 0 é 1.</li>
+<li><b>Ordem das operações:</b> 1º parênteses → 2º potências → 3º multiplicações e divisões → 4º adições e subtrações.</li>
+</ul></div>
+
+<div class="ex"><span class="en">17. Calcule e simplifique quando possível (denominadores iguais).</span><span class="nivel n1">NÍVEL 1</span>
+<div class="itens">
+<div>a) [2/7] + [3/7] = </div><div>b) [5/9] + [1/9] = </div>
+<div>c) [11/12] − [5/12] = </div><div>d) [7/8] − [3/8] = </div>
+<div>e) [3/10] + [4/10] + [1/10] = </div><div>f) [13/15] − [4/15] = </div>
+</div></div>
+
+<div class="ex"><span class="en">18. Calcule (denominadores diferentes).</span><span class="nivel n2">NÍVEL 2</span>
+<div class="itens">
+<div>a) [1/2] + [1/3] = </div><div>b) [3/4] + [1/6] = </div>
+<div>c) [5/6] − [1/4] = </div><div>d) [2/3] + [3/5] = </div>
+<div>e) [7/10] − [2/5] = </div><div>f) [1/2] + [1/4] + [1/8] = </div>
+</div></div>
+
+<div class="ex"><span class="en">19. Calcule com inteiros e números mistos.</span><span class="nivel n3">NÍVEL 3</span>
+<div class="itens">
+<div>a) 2 − [3/4] = </div><div>b) 1[1/2] + 2[1/3] = </div>
+<div>c) 3[1/4] − 1[2/3] = </div><div>d) 5 + [2/5] − 1[1/10] = </div>
+</div></div>
+
+<div class="ex"><span class="en">20. Multiplique e simplifique.</span><span class="nivel n2">NÍVEL 2</span>
+<div class="itens">
+<div>a) [2/3] × [4/5] = </div><div>b) [3/4] × [2/9] = </div>
+<div>c) 5 × [3/10] = </div><div>d) [7/8] × [4/21] = </div>
+<div>e) 1[1/2] × [2/3] = </div><div>f) [1/2] × [1/2] × [1/2] = </div>
+</div></div>
+
+<div class="ex"><span class="en">21. Divida e simplifique.</span><span class="nivel n2">NÍVEL 2</span>
+<div class="itens">
+<div>a) [3/4] ÷ [1/2] = </div><div>b) [2/5] ÷ [4/5] = </div>
+<div>c) 6 ÷ [3/4] = </div><div>d) [5/6] ÷ 5 = </div>
+<div>e) [7/9] ÷ [14/27] = </div><div>f) 2[1/4] ÷ [3/8] = </div>
+</div></div>
+
+<div class="ex"><span class="en">22. Calcule as potências.</span><span class="nivel n1">NÍVEL 1</span>
+<div class="itens c3">
+<div>a) ([1/2])^2 = </div><div>b) ([2/3])^3 = </div><div>c) ([3/5])^2 = </div>
+<div>d) ([1/10])^3 = </div><div>e) ([4/7])^1 = </div><div>f) ([5/8])^0 = </div>
+</div></div>
+
+<div class="ex"><span class="en">23. Resolva as expressões (atenção à ordem das operações!).</span><span class="nivel n3">NÍVEL 3</span>
+<div class="itens">
+<div>a) [1/2] + [1/3] × [3/4] = </div><div>b) ([2/3])^2 − [1/9] = </div>
+<div>c) ([1/2] + [1/4]) ÷ [3/8] = </div><div>d) [3/5] × (1 − [1/3]) = </div>
+<div>e) ([1/2])^3 + [3/4] ÷ 2 = </div><div>f) ([3/4] − [1/2])^2 × 16 = </div>
+</div></div>
+
+<!-- ===================== PARTE 4 ===================== -->
+<h2>Parte 4 – Operações com números decimais</h2>
+
+<div class="conceito"><b class="t">📘 Conceitos</b>
+<ul>
+<li><b>Adição e subtração:</b> coloque <b>vírgula embaixo de vírgula</b> e complete com zeros: 10 − 3,75 → 10,00 − 3,75 = 6,25.</li>
+<li><b>Multiplicação:</b> multiplique como se não houvesse vírgula; o resultado terá tantas casas decimais quanto a <b>soma das casas</b> dos fatores: 1,2 × 0,3 → 12 × 3 = 36 → 0,36.</li>
+<li><b>× 10, 100, 1000:</b> a vírgula anda 1, 2 ou 3 casas para a <b>direita</b>. <b>÷ 10, 100, 1000:</b> anda para a <b>esquerda</b>.</li>
+<li><b>Divisão:</b> iguale as casas decimais do dividendo e do divisor e “corte” as vírgulas: 4,8 ÷ 0,6 = 48 ÷ 6 = 8.</li>
+<li><b>Potenciação:</b> (0,3)^2 = 0,3 × 0,3 = 0,09 (o resultado tem 2 × 1 = 2 casas decimais).</li>
+</ul></div>
+
+<div class="ex"><span class="en">24. Arme e efetue.</span><span class="nivel n1">NÍVEL 1</span>
+<div class="itens c3">
+<div>a) 3,5 + 2,47</div><div>b) 12,8 + 0,35 + 4</div><div>c) 10 − 3,75</div>
+<div>d) 8,4 − 2,96</div><div>e) 0,9 + 0,09 + 0,009</div><div>f) 25 − 7,08</div>
+</div><div style="height:40px"></div></div>
+
+<div class="ex"><span class="en">25. Multiplique ou divida por 10, 100 ou 1000 (sem armar a conta!).</span><span class="nivel n1">NÍVEL 1</span>
+<div class="itens c3">
+<div>a) 4,56 × 10 = <span class="b" style="min-width:50px"></span></div><div>b) 0,37 × 100 = <span class="b" style="min-width:50px"></span></div><div>c) 2,5 × 1000 = <span class="b" style="min-width:50px"></span></div>
+<div>d) 83,4 ÷ 10 = <span class="b" style="min-width:50px"></span></div><div>e) 6 ÷ 100 = <span class="b" style="min-width:50px"></span></div><div>f) 125,7 ÷ 1000 = <span class="b" style="min-width:50px"></span></div>
+</div></div>
+
+<div class="ex"><span class="en">26. Multiplique.</span><span class="nivel n2">NÍVEL 2</span>
+<div class="itens c3">
+<div>a) 2,5 × 4</div><div>b) 1,2 × 0,3</div><div>c) 3,45 × 2,1</div>
+<div>d) 0,05 × 0,4</div><div>e) 12,6 × 1,5</div><div>f) 0,8 × 0,8</div>
+</div><div style="height:40px"></div></div>
+
+<div class="ex"><span class="en">27. Divida.</span><span class="nivel n2">NÍVEL 2</span>
+<div class="itens c3">
+<div>a) 7,5 ÷ 3</div><div>b) 9 ÷ 4</div><div>c) 4,8 ÷ 0,6</div>
+<div>d) 1,44 ÷ 1,2</div><div>e) 15 ÷ 0,25</div><div>f) 0,36 ÷ 0,04</div>
+</div><div style="height:40px"></div></div>
+
+<div class="ex"><span class="en">28. Calcule as potências.</span><span class="nivel n2">NÍVEL 2</span>
+<div class="itens c3">
+<div>a) (0,3)^2 = </div><div>b) (1,2)^2 = </div><div>c) (0,1)^3 = </div>
+<div>d) (0,5)^3 = </div><div>e) (2,5)^2 = </div><div>f) (1,5)^0 = </div>
+</div></div>
+
+<div class="ex"><span class="en">29. Resolva as expressões.</span><span class="nivel n3">NÍVEL 3</span>
+<div class="itens">
+<div>a) 2,5 + 1,5 × 4 = </div><div>b) (3,2 − 1,7) × 2 = </div>
+<div>c) (0,4)^2 + 0,84 = </div><div>d) 10 − 6,3 ÷ 0,9 = </div>
+<div>e) (1,5)^2 − 0,25 = </div><div>f) (0,6 + 1,4)^3 ÷ 0,5 = </div>
+</div></div>
+
+<div class="ex"><span class="en">30. Frações e decimais juntos: calcule e dê a resposta em decimal.</span><span class="nivel n3">NÍVEL 3</span>
+<div class="itens">
+<div>a) [1/2] + 0,25 = </div><div>b) 0,6 × [2/3] = </div>
+<div>c) [3/4] − 0,5 = </div><div>d) 0,2 ÷ [1/5] = </div>
+</div></div>
+
+<!-- ===================== PARTE 5 ===================== -->
+<h2>Parte 5 – Medidas de comprimento</h2>
+
+<div class="conceito"><b class="t">📘 Conceitos</b>
+<ul><li>A unidade padrão é o <b>metro (m)</b>. Seus múltiplos e submúltiplos:</li></ul>
+<table class="q" style="margin-left:20px">
+<tr><th>km</th><th>hm</th><th>dam</th><th style="background:#c7d2fe">m</th><th>dm</th><th>cm</th><th>mm</th></tr>
+<tr><td>1000 m</td><td>100 m</td><td>10 m</td><td>1 m</td><td>0,1 m</td><td>0,01 m</td><td>0,001 m</td></tr>
+</table>
+<ul>
+<li>Para ir de uma unidade <b>maior para menor</b> (para a direita na tabela): <b>× 10</b> a cada casa. Ex.: 3,2 km = 3 200 m.</li>
+<li>Para ir de uma unidade <b>menor para maior</b> (para a esquerda): <b>÷ 10</b> a cada casa. Ex.: 450 cm = 4,5 m.</li>
+<li>Atalhos úteis: 1 km = 1000 m · 1 m = 100 cm · 1 cm = 10 mm · 1 m = 1000 mm.</li>
+</ul></div>
+
+<div class="ex"><span class="en">31. Qual unidade é mais adequada para medir (km, m, cm ou mm)?</span><span class="nivel n1">NÍVEL 1</span>
+<div class="itens">
+<div>a) o comprimento de uma formiga: <span class="b" style="min-width:50px"></span></div>
+<div>b) a altura da porta da sala de aula: <span class="b" style="min-width:50px"></span></div>
+<div>c) a distância de Jacarepaguá ao Centro do Rio: <span class="b" style="min-width:50px"></span></div>
+<div>d) o comprimento de um lápis: <span class="b" style="min-width:50px"></span></div>
+<div>e) a espessura de uma moeda: <span class="b" style="min-width:50px"></span></div>
+<div>f) o comprimento da quadra do colégio: <span class="b" style="min-width:50px"></span></div>
+</div></div>
+
+<div class="ex"><span class="en">32. Faça as conversões.</span><span class="nivel n2">NÍVEL 2</span>
+<div class="itens">
+<div>a) 5 m = <span class="b"></span> cm</div><div>b) 3,2 km = <span class="b"></span> m</div>
+<div>c) 450 cm = <span class="b"></span> m</div><div>d) 75 mm = <span class="b"></span> cm</div>
+<div>e) 2 500 m = <span class="b"></span> km</div><div>f) 1,8 m = <span class="b"></span> mm</div>
+<div>g) 36 dm = <span class="b"></span> m</div><div>h) 0,6 km = <span class="b"></span> cm</div>
+<div>i) 4 dam = <span class="b"></span> m</div><div>j) 9 hm = <span class="b"></span> km</div>
+<div>k) 0,35 m = <span class="b"></span> cm</div><div>l) 12 mm = <span class="b"></span> m</div>
+</div></div>
+
+<div class="ex"><span class="en">33. Some e dê a resposta em metros.</span><span class="nivel n2">NÍVEL 2</span>
+<div class="itens c1">
+<div>a) 2 km + 350 m = <span class="b" style="min-width:120px"></span></div>
+<div>b) 1,5 m + 80 cm = <span class="b" style="min-width:120px"></span></div>
+<div>c) 3 m + 45 cm + 120 mm = <span class="b" style="min-width:120px"></span></div>
+</div></div>
+
+<div class="ex"><span class="en">34. Compare usando &gt;, &lt; ou =.</span><span class="nivel n3">NÍVEL 3</span>
+<div class="itens">
+<div>a) 1,2 km ___ 1 200 m</div><div>b) 85 cm ___ 0,9 m</div>
+<div>c) 3 500 mm ___ 3,4 m</div><div>d) 0,05 km ___ 500 dm</div>
+</div></div>
+
+<!-- ===================== PARTE 6 ===================== -->
+<h2>Parte 6 – Perímetro</h2>
+
+<div class="conceito"><b class="t">📘 Conceitos</b>
+<ul>
+<li><b>Perímetro</b> é a medida do contorno de uma figura: a <b>soma das medidas de todos os lados</b>.</li>
+<li>Quadrado: P = 4 × lado · Retângulo: P = 2 × (comprimento + largura) · Triângulo equilátero: P = 3 × lado · Polígono regular de n lados: P = n × lado.</li>
+<li><b>Atenção:</b> antes de somar, todos os lados devem estar na <b>mesma unidade</b> de medida!</li>
+</ul></div>
+
+<div class="ex"><span class="en">35. Calcule o perímetro.</span><span class="nivel n1">NÍVEL 1</span>
+<div class="itens c1">
+<div>a) quadrado com lado de 7 cm: <span class="b" style="min-width:120px"></span></div>
+<div>b) retângulo de 12 m por 5 m: <span class="b" style="min-width:120px"></span></div>
+<div>c) triângulo com lados de 6 cm, 8 cm e 10 cm: <span class="b" style="min-width:120px"></span></div>
+<div>d) triângulo equilátero com lado de 4,5 cm: <span class="b" style="min-width:120px"></span></div>
+<div>e) hexágono regular com lado de 2,5 m: <span class="b" style="min-width:120px"></span></div>
+<div>f) retângulo de 3,2 m por 1,75 m: <span class="b" style="min-width:120px"></span></div>
+</div></div>
+
+<div class="ex"><span class="en">36. Observe as figuras (medidas em cm) e calcule o perímetro.</span><span class="nivel n2">NÍVEL 2</span>
+<div class="fig">
+<div>a)<br><svg width="200" height="120" viewBox="-20 -10 200 120"><rect x="0" y="0" width="150" height="80" fill="#e0e7ff" stroke="#1e3a8a" stroke-width="2"/><text x="75" y="98" text-anchor="middle" font-size="13">10,5</text><text x="158" y="45" font-size="13">4,2</text></svg></div>
+<div>b)<br><svg width="180" height="130" viewBox="-20 -10 180 130"><polygon points="0,100 140,100 60,0" fill="#dcfce7" stroke="#166534" stroke-width="2"/><text x="70" y="117" text-anchor="middle" font-size="13">9</text><text x="8" y="50" font-size="13">6,4</text><text x="105" y="50" font-size="13">7,8</text></svg></div>
+<div>c) (figura em L)<br><svg width="200" height="160" viewBox="-25 -18 200 160"><polygon points="0,0 100,0 100,40 160,40 160,120 0,120" fill="#fef3c7" stroke="#92400e" stroke-width="2"/><text x="50" y="-4" text-anchor="middle" font-size="13">5</text><text x="104" y="25" font-size="13">2</text><text x="130" y="36" text-anchor="middle" font-size="13">?</text><text x="164" y="85" font-size="13">?</text><text x="80" y="136" text-anchor="middle" font-size="13">8</text><text x="-14" y="65" font-size="13">6</text></svg></div>
+</div>
+<div class="itens c3"><div>a) P = <span class="b"></span></div><div>b) P = <span class="b"></span></div><div>c) P = <span class="b"></span></div></div>
+<div class="dica" style="margin-top:8px">Na figura c, descubra primeiro as medidas que faltam (?) olhando para os lados opostos.</div>
+</div>
+
+<div class="ex"><span class="en">37. Calcule o perímetro (cuidado com as unidades!).</span><span class="nivel n2">NÍVEL 2</span>
+<div class="itens c1">
+<div>a) retângulo de 1,2 m por 80 cm (resposta em cm e em m): <span class="b" style="min-width:140px"></span></div>
+<div>b) triângulo com lados de 0,5 m, 45 cm e 300 mm (resposta em cm): <span class="b" style="min-width:140px"></span></div>
+</div></div>
+
+<div class="ex"><span class="en">38. Descubra a medida que falta.</span><span class="nivel n3">NÍVEL 3</span>
+<div class="itens c1">
+<div>a) Um quadrado tem perímetro de 36 cm. Quanto mede cada lado? <span class="b"></span></div>
+<div>b) Um triângulo equilátero tem perímetro de 27,6 cm. Quanto mede cada lado? <span class="b"></span></div>
+<div>c) Um retângulo tem perímetro de 30 m e comprimento de 9 m. Qual é a largura? <span class="b"></span></div>
+<div>d) Um pentágono regular tem perímetro de 12,5 cm. Quanto mede cada lado? <span class="b"></span></div>
+</div></div>
+
+<div class="ex"><span class="en">39. Perímetro com frações.</span><span class="nivel n3">NÍVEL 3</span>
+<div class="itens c1">
+<div>a) retângulo com lados de [3/4] m e [1/2] m: <span class="b" style="min-width:140px"></span></div>
+<div>b) quadrado com lado de 2[1/2] cm: <span class="b" style="min-width:140px"></span></div>
+</div></div>
+
+<!-- ===================== PARTE 7 ===================== -->
+<h2>Parte 7 – Problemas contextualizados</h2>
+<div class="dica"><b>Passo a passo para resolver problemas:</b> 1) Leia com atenção e sublinhe os dados. 2) Descubra o que a pergunta pede. 3) Escolha a operação. 4) Calcule. 5) Responda com uma frase completa (com a unidade!).</div>
+
+<h3>🟢 Nível 1 – Aquecimento</h3>
+
+<div class="prob"><b>P1.</b> Luís pediu uma pizza dividida em 8 fatias iguais e comeu 3 fatias. Que fração da pizza ele comeu? Que fração sobrou?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P2.</b> A turma 601 tem 32 alunos, e [3/8] deles são meninas. Quantas meninas e quantos meninos há na turma?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P3.</b> Na cantina do colégio, Luís comprou um suco de R$ 4,50 e um salgado de R$ 6,75. Pagou com uma nota de R$ 20,00. Quanto recebeu de troco?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P4.</b> Uma garrafa de 1,5 litro de suco foi dividida igualmente em 6 copos. Quantos litros ficaram em cada copo? Escreva a resposta também em fração.
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P5.</b> A régua de Luís tem 30 cm. Quantas réguas, colocadas uma depois da outra, são necessárias para medir 1,5 m?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<h3>🟡 Nível 2 – Treino</h3>
+
+<div class="prob"><b>P6.</b> Luís gastou [1/4] da mesada com lanches e [1/3] com figurinhas.<br>
+a) Que fração da mesada ele gastou? &nbsp; b) Que fração sobrou? &nbsp; c) Se a mesada é de R$ 120,00, quantos reais sobraram?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P7.</b> A quadra do colégio é retangular e mede 28 m por 15 m. Na aula de Educação Física, Luís deu 3 voltas completas em torno da quadra. Quantos metros ele correu? E quantos quilômetros?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P8.</b> O carro da família de Luís percorre 12,5 km com 1 litro de gasolina. Suponha que a distância de Jacarepaguá até o Maracanã seja de 20 km.<br>
+a) Quantos litros o carro gasta para ir e voltar? &nbsp; b) Se o litro custa R$ 6,20, quanto a família gastará?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P9.</b> Uma costureira tem 5 m de fita e vai cortá-la em pedaços de [3/4] m. Quantos pedaços inteiros ela consegue? Quantos centímetros de fita sobram?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P10.</b> Luís pedalou 2,35 km de manhã e 1 850 m à tarde. Quanto ele pedalou no dia? Dê a resposta em km e em m.
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P11.</b> Uma receita de bolo usa [3/4] de xícara de açúcar.<br>
+a) Quanto açúcar é necessário para fazer meia receita? &nbsp; b) E para fazer 3 receitas? (Responda em número misto.)
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P12.</b> Um terreno retangular de 18,5 m por 12 m será cercado com 3 voltas de arame. O metro do arame custa R$ 2,40.<br>
+a) Quantos metros de arame serão necessários? &nbsp; b) Quanto será gasto?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P13.</b> Um quadro quadrado tem 45 cm de lado. A moldura custa R$ 25,00 por metro. Quanto custa a moldura para contornar todo o quadro?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P14.</b> No mercado A, o pacote de 1,5 kg de arroz custa R$ 9,60. No mercado B, o pacote de 2 kg custa R$ 12,40. Em qual mercado o quilo do arroz é mais barato? Quanto mais barato?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<h3>🔴 Nível 3 – Desafio</h3>
+
+<div class="prob"><b>P15.</b> Luís leu [2/5] de um livro no sábado e [1/3] do que restou no domingo. Ainda faltam 60 páginas para terminar. Quantas páginas tem o livro?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P16.</b> A caixa-d’água do colégio estava com [3/4] da sua capacidade. Durante o dia, foram usados [2/3] dessa água.<br>
+a) Que fração da capacidade total ainda restou? &nbsp; b) Se a capacidade é de 1 000 litros, quantos litros restaram?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P17.</b> Um terreno quadrado tem o mesmo perímetro que um terreno retangular de 14 m por 10 m. Quanto mede o lado do terreno quadrado?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P18.</b> A escada da entrada do colégio tem 15 degraus, cada um com 17,5 cm de altura. Qual é a altura total da escada, em centímetros e em metros?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P19.</b> Uma formiga deu uma volta completa pela borda de uma folha A4, que mede 21 cm por 29,7 cm. Quantos centímetros ela andou? E quantos metros?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P20.</b> Uma folha de papel é cortada ao meio. Depois, cada pedaço é cortado ao meio de novo, e assim por diante. Use potência de fração para responder: depois de 3 rodadas de cortes, cada pedaço é que fração da folha original? E depois de 5 rodadas?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P21.</b> Um retângulo tem 24 cm de perímetro, e seu comprimento é o dobro da largura. Quais são as medidas do comprimento e da largura?
+<div class="calc">cálculos</div><div class="resp">Resposta: <span class="b" style="min-width:400px"></span></div></div>
+
+<div class="prob"><b>P22.</b> Agora é a sua vez! <b>Crie um problema</b> sobre o seu dia a dia (em casa, no colégio ou em Jacarepaguá) que use <b>perímetro</b> e <b>números decimais</b>. Depois, resolva-o.
+<div class="calc" style="height:110px">seu problema e sua resolução</div></div>
+
+<h3>📋 Autoavaliação – marque com X</h3>
+<table class="q auto" style="width:100%">
+<tr><th style="text-align:left">Conteúdo</th><th>Sei bem 😀</th><th>Mais ou menos 😐</th><th>Preciso estudar 😟</th></tr>
+<tr><td style="text-align:left">Frações: conceito, equivalência e simplificação</td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">Números decimais: leitura, comparação e conversão</td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">Adição e subtração de frações e decimais</td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">Multiplicação e divisão de frações e decimais</td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">Potenciação de frações e decimais</td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">Medidas de comprimento e conversões</td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">Perímetro</td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">Problemas contextualizados</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- ===================== GABARITO ===================== -->
+<div class="quebra gab">
+<h2>Gabarito</h2>
+
+<h3>Parte 1 – Frações</h3>
+<p><b>1.</b> a) três quintos · b) sete décimos · c) cinco doze avos · d) nove centésimos · e) quatro nonos · f) um meio (metade)</p>
+<p><b>2.</b> a) [2/7] · b) [11/15] · c) [3/1000] · d) [6/8]</p>
+<p><b>3.</b> a) [3/4] · b) [2/6] · c) [3/4] · d) [5/8] · e) [2/6] = [1/3]</p>
+<p><b>4.</b> a) P · b) I · c) A (= 3) · d) A (= 1) · e) P · f) I</p>
+<p><b>5.</b> a) [3/4] · b) [2/5] · c) [2/3] · d) [3/5] · e) [3/4] · f) [5/7] · g) [2/9] · h) [2/3] · i) [1/2]</p>
+<p><b>6.</b> a) 8 · b) 16 · c) 15 · d) 5 · e) 8 · f) 80</p>
+<p><b>7.</b> a) 2[1/3] · b) 2[3/4] · c) 4[3/5] · d) 2[5/6] · e) [7/5] · f) [13/4] · g) [21/8]</p>
+<p><b>8.</b> a) &lt; · b) &gt; · c) = · d) &gt; ([9/12] e [8/12]) · e) &lt; ([20/24] e [21/24]) · f) &gt; ([9/10] e [8/10])</p>
+<p><b>9.</b> Com denominador 12: [6/12], [9/12], [8/12], [5/12] → [5/12] &lt; [1/2] &lt; [2/3] &lt; [3/4]</p>
+<p><b>10.</b> a) 5 · b) 20 · c) 27 · d) 40 · e) 140 · f) 45 min</p>
+
+<h3>Parte 2 – Decimais</h3>
+<p><b>11.</b> a) sete décimos · b) dois inteiros e trinta e cinco centésimos · c) quarenta e oito milésimos · d) treze inteiros e seis décimos</p>
+<p><b>12.</b> a) 0,3 · b) 0,47 · c) 0,009 · d) 1,25 · e) 0,06 · f) 2,048</p>
+<p><b>13.</b> a) [1/2] · b) [1/4] · c) [3/4] · d) [1/5] · e) [7/5] · f) [1/8]</p>
+<p><b>14.</b> a) 0,25 · b) 0,6 · c) 0,875 · d) 0,45 · e) 0,333… (dízima periódica) · f) 2,5</p>
+<p><b>15.</b> a) &gt; · b) = · c) &lt; · d) &lt; · e) = · f) &lt;</p>
+<p><b>16.</b> 3,22 &gt; 3,202 &gt; 3,2 &gt; 3,02 &gt; 2,99</p>
+
+<h3>Parte 3 – Operações com frações</h3>
+<p><b>17.</b> a) [5/7] · b) [6/9] = [2/3] · c) [6/12] = [1/2] · d) [4/8] = [1/2] · e) [8/10] = [4/5] · f) [9/15] = [3/5]</p>
+<p><b>18.</b> a) [5/6] · b) [11/12] · c) [7/12] · d) [19/15] = 1[4/15] · e) [3/10] · f) [7/8]</p>
+<p><b>19.</b> a) [5/4] = 1[1/4] · b) [23/6] = 3[5/6] · c) [19/12] = 1[7/12] · d) [43/10] = 4[3/10]</p>
+<p><b>20.</b> a) [8/15] · b) [1/6] · c) [3/2] · d) [1/6] · e) 1 · f) [1/8]</p>
+<p><b>21.</b> a) [3/2] · b) [1/2] · c) 8 · d) [1/6] · e) [3/2] · f) 6</p>
+<p><b>22.</b> a) [1/4] · b) [8/27] · c) [9/25] · d) [1/1000] · e) [4/7] · f) 1</p>
+<p><b>23.</b> a) [1/2] + [1/4] = [3/4] · b) [4/9] − [1/9] = [1/3] · c) [3/4] × [8/3] = 2 · d) [3/5] × [2/3] = [2/5] · e) [1/8] + [3/8] = [1/2] · f) [1/16] × 16 = 1</p>
+
+<h3>Parte 4 – Operações com decimais</h3>
+<p><b>24.</b> a) 5,97 · b) 17,15 · c) 6,25 · d) 5,44 · e) 0,999 · f) 17,92</p>
+<p><b>25.</b> a) 45,6 · b) 37 · c) 2 500 · d) 8,34 · e) 0,06 · f) 0,1257</p>
+<p><b>26.</b> a) 10 · b) 0,36 · c) 7,245 · d) 0,02 · e) 18,9 · f) 0,64</p>
+<p><b>27.</b> a) 2,5 · b) 2,25 · c) 8 · d) 1,2 · e) 60 · f) 9</p>
+<p><b>28.</b> a) 0,09 · b) 1,44 · c) 0,001 · d) 0,125 · e) 6,25 · f) 1</p>
+<p><b>29.</b> a) 8,5 · b) 3 · c) 0,16 + 0,84 = 1 · d) 10 − 7 = 3 · e) 2 · f) 8 ÷ 0,5 = 16</p>
+<p><b>30.</b> a) 0,75 · b) 0,4 · c) 0,25 · d) 1</p>
+
+<h3>Parte 5 – Medidas de comprimento</h3>
+<p><b>31.</b> a) mm · b) m · c) km · d) cm · e) mm · f) m</p>
+<p><b>32.</b> a) 500 · b) 3 200 · c) 4,5 · d) 7,5 · e) 2,5 · f) 1 800 · g) 3,6 · h) 60 000 · i) 40 · j) 0,9 · k) 35 · l) 0,012</p>
+<p><b>33.</b> a) 2 350 m · b) 2,3 m · c) 3 + 0,45 + 0,12 = 3,57 m</p>
+<p><b>34.</b> a) = · b) &lt; (85 cm &lt; 90 cm) · c) &gt; (3,5 m &gt; 3,4 m) · d) = (ambos 50 m)</p>
+
+<h3>Parte 6 – Perímetro</h3>
+<p><b>35.</b> a) 28 cm · b) 34 m · c) 24 cm · d) 13,5 cm · e) 15 m · f) 9,9 m</p>
+<p><b>36.</b> a) 2 × (10,5 + 4,2) = 29,4 cm · b) 9 + 6,4 + 7,8 = 23,2 cm · c) lados que faltam: 3 cm (8 − 5) e 4 cm (6 − 2); P = 5 + 2 + 3 + 4 + 8 + 6 = 28 cm</p>
+<p><b>37.</b> a) 2 × (120 + 80) = 400 cm = 4 m · b) 50 + 45 + 30 = 125 cm</p>
+<p><b>38.</b> a) 9 cm · b) 9,2 cm · c) 6 m · d) 2,5 cm</p>
+<p><b>39.</b> a) 2 × [5/4] = [5/2] m = 2,5 m · b) 4 × [5/2] = 10 cm</p>
+
+<h3>Parte 7 – Problemas</h3>
+<p><b>P1.</b> Comeu [3/8]; sobrou [5/8].</p>
+<p><b>P2.</b> 32 ÷ 8 × 3 = 12 meninas e 20 meninos.</p>
+<p><b>P3.</b> 4,50 + 6,75 = 11,25; troco: 20,00 − 11,25 = R$ 8,75.</p>
+<p><b>P4.</b> 1,5 ÷ 6 = 0,25 L = [1/4] L por copo.</p>
+<p><b>P5.</b> 1,5 m = 150 cm; 150 ÷ 30 = 5 réguas.</p>
+<p><b>P6.</b> a) [1/4] + [1/3] = [7/12] · b) [5/12] · c) [5/12] de 120 = R$ 50,00.</p>
+<p><b>P7.</b> Perímetro: 2 × (28 + 15) = 86 m; 3 voltas: 258 m = 0,258 km.</p>
+<p><b>P8.</b> a) Ida e volta = 40 km; 40 ÷ 12,5 = 3,2 L · b) 3,2 × 6,20 = R$ 19,84.</p>
+<p><b>P9.</b> 5 ÷ 0,75 = 6,66… → 6 pedaços (6 × 0,75 = 4,5 m); sobram 0,5 m = 50 cm.</p>
+<p><b>P10.</b> 2,35 km + 1,85 km = 4,2 km = 4 200 m.</p>
+<p><b>P11.</b> a) [1/2] × [3/4] = [3/8] de xícara · b) 3 × [3/4] = [9/4] = 2[1/4] xícaras.</p>
+<p><b>P12.</b> a) Perímetro: 2 × (18,5 + 12) = 61 m; 3 voltas: 183 m · b) 183 × 2,40 = R$ 439,20.</p>
+<p><b>P13.</b> 4 × 45 = 180 cm = 1,8 m; 1,8 × 25 = R$ 45,00.</p>
+<p><b>P14.</b> A: 9,60 ÷ 1,5 = R$ 6,40/kg · B: 12,40 ÷ 2 = R$ 6,20/kg → B é mais barato, R$ 0,20 por quilo.</p>
+<p><b>P15.</b> Após sábado restam [3/5]; domingo leu [1/3] × [3/5] = [1/5]; leu ao todo [3/5]; faltam [2/5] = 60 páginas → [1/5] = 30 → livro com 150 páginas.</p>
+<p><b>P16.</b> a) Restou [1/3] da água: [1/3] × [3/4] = [1/4] da capacidade · b) [1/4] de 1 000 = 250 L.</p>
+<p><b>P17.</b> Perímetro do retângulo: 2 × (14 + 10) = 48 m; lado do quadrado: 48 ÷ 4 = 12 m.</p>
+<p><b>P18.</b> 15 × 17,5 = 262,5 cm = 2,625 m.</p>
+<p><b>P19.</b> 2 × (21 + 29,7) = 101,4 cm = 1,014 m.</p>
+<p><b>P20.</b> ([1/2])^3 = [1/8] · ([1/2])^5 = [1/32].</p>
+<p><b>P21.</b> Largura + comprimento = 12 cm (metade do perímetro); largura + 2 × largura = 12 → largura = 4 cm e comprimento = 8 cm.</p>
+<p><b>P22.</b> Resposta pessoal – peça para alguém conferir!</p>
+
+<div class="rodape">Bons estudos, Luís! Matemática se aprende praticando. 💪<br>Lista preparada para a N3 – 3º trimestre – Turma 601 – Colégio Rainha dos Corações</div>
+</div>
+
+</body>
+</html>
