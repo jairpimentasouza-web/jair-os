@@ -265,8 +265,8 @@ def faixa(texto, alinhamento=TA_CENTER):
     return t
 
 
-def orientacoes():
-    corpo = Table([[Paragraph(o, st_ori, bulletText="-")] for o in ORIENTACOES], colWidths=[LARG])
+def orientacoes(itens=ORIENTACOES):
+    corpo = Table([[Paragraph(o, st_ori, bulletText="-")] for o in itens], colWidths=[LARG])
     corpo.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), CLARO),
                                ("LEFTPADDING", (0, 0), (-1, -1), 14),
                                ("TOPPADDING", (0, 0), (-1, -1), 1),
