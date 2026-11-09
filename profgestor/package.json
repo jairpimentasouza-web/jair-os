@@ -9,9 +9,10 @@
   },
   "scripts": {
     "test": "npm run test:unit && npm run test:emulator",
-    "test:unit": "node --test \"tests/unit/*.test.js\"",
+    "test:unit": "TZ=America/Sao_Paulo node --test \"tests/unit/*.test.js\"",
     "test:emulator": "firebase emulators:exec --only firestore,storage --project demo-profgestor \"node --test --test-concurrency=1 tests/emulator/*.test.js\"",
-    "lint:js": "node tools/check-syntax.mjs"
+    "lint:js": "node tools/check-syntax.mjs",
+    "test:e2e": "firebase emulators:exec --only firestore,auth --project demo-profgestor \"TZ=America/Sao_Paulo node --test --test-concurrency=1 tests/e2e/*.test.js\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^4.0.1",

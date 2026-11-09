@@ -1,11 +1,14 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, orderBy, onSnapshot } 
+        import { getFirestore, connectFirestoreEmulator, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, orderBy, onSnapshot } 
         from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut, sendEmailVerification, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js";
-        import { getDoc, runTransaction } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getDoc, runTransaction, writeBatch } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        const firebaseConfig = {
+        // Homologação local: em localhost com ?emulator=1 o app usa os emuladores e um projeto "demo-",
+        // que o Firebase garante não corresponder a nenhum recurso real. Produção nunca é contatada.
+        const USE_EMULATORS = ['localhost', '127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).has('emulator');
+        const firebaseConfig = USE_EMULATORS ? { apiKey: 'demo-key', authDomain: 'demo-profgestor.firebaseapp.com', projectId: 'demo-profgestor', appId: '1:000000000000:web:demo' } : {
           apiKey: "AIzaSyBA6M3uG6oqFmS8NEzoltlEqVwMnmXv13M",
           authDomain: "gestao-aulas-jair.firebaseapp.com",
           projectId: "gestao-aulas-jair",
@@ -19,10 +22,20 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
         const db = getFirestore(app);
         const auth = getAuth(app);
         const functions = getFunctions(app);
+        if(USE_EMULATORS) {
+            connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+            connectFirestoreEmulator(db, '127.0.0.1', 8080);
+            document.title = '[EMULADOR] ' + document.title;
+        }
         let usuarioAtual = null;
         let perfilAtual = null;
         let cadastroEmAndamento = false;
-        function currentOrgId() { return perfilAtual?.organizationId || 'org_jair'; }
+        // V5: o tenant vem do perfil. O fallback cobre apenas o perfil-admin legado do V4, criado antes
+        // de organizationId existir; a migração V5 preenche o campo e torna o fallback inócuo.
+        function currentOrgId() {
+            if(perfilAtual?.organizationId) return perfilAtual.organizationId;
+            return perfilAtual?.role === 'admin' ? 'org_jair' : '__sem_organizacao__';
+        }
 
         let alunos = [];
         let eventos = [];
@@ -41,7 +54,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
         let googleLastError = '';
         const GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
         const GOOGLE_CALENDAR_API = 'https://www.googleapis.com/calendar/v3';
-        const GOOGLE_CALENDAR_TIMEZONE = 'America/Sao_Paulo';
+        const GOOGLE_CALENDAR_TIMEZONE = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo'; } catch { return 'America/Sao_Paulo'; } })();
+        const GOOGLE_HINT_KEY = 'profgestor_google_conectado_antes';
         const HORARIOS_PRESOS_KEY = 'gestaoAulas_horariosPresos_v1';
         const ORDEM_DIAS_SEMANA = [1, 2, 3, 4, 5, 6, 0];
         const NOMES_DIAS_SEMANA = { 0: 'Dom', 1: 'Seg', 2: 'Ter', 3: 'Qua', 4: 'Qui', 5: 'Sex', 6: 'Sáb' };
@@ -315,16 +329,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
             const el = document.getElementById('loginMessage');
             if(el) { el.textContent = message; el.style.display = 'block'; }
         }
-        async function registrarContaInicialNoFirestore(user, nome) {
-            const profileRef = doc(db, 'usuarios', user.uid);
-            const configRef = doc(db, 'sistema', 'configuracao');
-            await runTransaction(db, async transaction => {
-                const config = await transaction.get(configRef);
-                if(config.exists) throw new Error('A primeira conta já foi criada.');
-                transaction.set(profileRef, { email: user.email.toLowerCase(), nome, role: 'admin', ativo: true, organizationId: 'org_jair', createdAt: nowLocalISO(), updatedAt: nowLocalISO() });
-                transaction.set(configRef, { adminUid: user.uid, initializedAt: nowLocalISO() });
-            });
-        }
         function setAuthGate(open) {
             const gate = document.getElementById('authGate');
             if(gate) gate.style.display = open ? 'flex' : 'none';
@@ -349,11 +353,33 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
             const profileRef = doc(db, 'usuarios', user.uid);
             await runTransaction(db, async transaction => {
                 const convite = await transaction.get(inviteRef);
-                if(!convite.exists || convite.data().ativo !== true) throw new Error('Este e-mail ainda não foi liberado pelo professor.');
+                if(!convite.exists() || convite.data().ativo !== true) throw new Error('Este e-mail ainda não foi liberado pelo professor.');
                 const dados = convite.data();
                 if(!['aluno','responsavel'].includes(dados.role) || !dados.alunoId) throw new Error('Convite inválido.');
                 transaction.set(profileRef, { email, nome, role: dados.role, alunoId: dados.alunoId, organizationId: dados.organizationId || 'org_jair', ativo: true, createdAt: nowLocalISO(), updatedAt: nowLocalISO() });
             });
+        }
+        // O convite só vira acesso depois que o dono do e-mail confirma o link de verificação.
+        // Isso impede que alguém que apenas saiba o e-mail convidado ative o portal antes do responsável.
+        async function tentarAtivarFamiliaVerificada() {
+            const user = auth.currentUser;
+            if(!user) return false;
+            try { await user.reload(); } catch(e) { console.warn(e); }
+            if(!auth.currentUser?.emailVerified) {
+                await signOut(auth);
+                showLoginMessage('Confirme seu e-mail pelo link que enviamos e depois entre novamente.');
+                return false;
+            }
+            try {
+                await auth.currentUser.getIdToken(true);
+                await ativarPerfilFamilia(auth.currentUser, auth.currentUser.displayName || '');
+                return true;
+            } catch(error) {
+                console.error(error);
+                await signOut(auth);
+                showLoginMessage(error?.message?.includes('liberado') ? error.message : 'Sua conta ainda não possui permissão de acesso.');
+                return false;
+            }
         }
         async function handleAuthState(user) {
             if(!user) {
@@ -364,9 +390,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
                 setAuthGate(true); return;
             }
             try {
-                const profile = await getDoc(doc(db, 'usuarios', user.uid));
-                if(!profile.exists || profile.data().ativo === false) {
+                let profile = await getDoc(doc(db, 'usuarios', user.uid));
+                if(auth.currentUser?.uid !== user.uid) return; // sessão mudou durante a leitura (ex.: logout após cadastro)
+                if(!profile.exists()) {
                     if(cadastroEmAndamento) return;
+                    if(!(await tentarAtivarFamiliaVerificada())) return;
+                    profile = await getDoc(doc(db, 'usuarios', user.uid));
+                }
+                if(!profile.exists() || profile.data().ativo === false) {
                     await signOut(auth); showLoginMessage('Sua conta ainda não possui permissão de acesso.'); return;
                 }
                 const perfil = profile.data();
@@ -383,7 +414,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
                 document.getElementById('userName').textContent = `${perfil.nome || user.email} · ${perfil.role}`;
                 await iniciarAplicacao();
             } catch(error) {
-                console.error(error); if(cadastroEmAndamento) return;
+                console.error(error); if(cadastroEmAndamento || auth.currentUser?.uid !== user.uid) return;
                 await signOut(auth); showLoginMessage('Não foi possível validar suas permissões. Tente novamente.');
             }
         }
@@ -417,8 +448,10 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
                         cadastroEmAndamento = true;
                         const credential = await createUserWithEmailAndPassword(auth, email, password);
                         await updateProfile(credential.user, { displayName: nome });
-                        await ativarPerfilFamilia(credential.user, nome);
-                        cadastroEmAndamento = false; await handleAuthState(credential.user);
+                        await sendEmailVerification(credential.user);
+                        await signOut(auth);
+                        cadastroEmAndamento = false; modoCadastro = false;
+                        showLoginMessage(`Enviamos um link de confirmação para ${email}. Confirme o e-mail e depois entre com a senha criada.`);
                     } else { await signInWithEmailAndPassword(auth, email, password); }
                 } catch(error) {
                     cadastroEmAndamento = false; console.error(error);
@@ -455,7 +488,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
         async function iniciarPortalFamilia(perfil, user) {
             const alunoId = perfil.alunoId;
             const alunoSnap = await getDoc(doc(db, 'alunos', alunoId));
-            if(!alunoSnap.exists) throw new Error('Aluno vinculado não encontrado.');
+            if(!alunoSnap.exists()) throw new Error('Aluno vinculado não encontrado.');
             const aluno = { id: alunoSnap.id, ...alunoSnap.data() };
             const [aulasSnap, pacotesSnap, reqSnap, materiaisSnap] = await Promise.all([
                 getDocs(query(collection(db, 'aulas'), where('alunoId', '==', alunoId), where('organizationId','==',currentOrgId()))),
@@ -551,6 +584,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
             return { clientId: String(cfg.googleClientId || '').trim(), calendarId: String(cfg.googleCalendarId || 'primary').trim() || 'primary' };
         }
 
+        function googleReconnectNeeded() {
+            try { return localStorage.getItem(GOOGLE_HINT_KEY) === '1' && !!googleCalendarConfig().clientId; } catch(e) { return false; }
+        }
         function hasValidGoogleToken() {
             return !!googleAccessToken && Date.now() < (googleTokenExpiresAt - 60_000);
         }
@@ -599,7 +635,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
             document.getElementById('dashGoogleAlerts')?.replaceChildren(document.createTextNode(`${summary.conflicts} / ${summary.errors}`));
             status?.classList.toggle('connected', connected);
             status?.classList.toggle('attention', connected && !!(summary.errors || googleLastError));
-            if(statusText) statusText.textContent = connected ? (summary.errors || googleLastError ? 'Conectado — atenção necessária' : 'Google conectado') : 'Google desconectado';
+            if(statusText) statusText.textContent = connected ? (summary.errors || googleLastError ? 'Conectado — atenção necessária' : 'Google conectado') : (googleReconnectNeeded() ? 'Google: reconexão necessária' : 'Google desconectado');
             if(connect) connect.innerHTML = connected ? '<i class="fas fa-unlink me-1"></i>Desconectar' : '<i class="fab fa-google me-1"></i>Conectar Google';
             if(refresh) refresh.style.display = connected ? '' : 'none';
             if(sync) sync.style.display = connected ? '' : 'none';
@@ -622,7 +658,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
             const btnMigrate = document.getElementById('btnMigrarHorariosGoogle');
             const externalCount = googleCalendarFullCalendarEvents().length;
             status?.classList.toggle('connected', connected);
-            if(text) text.textContent = connected ? `Google conectado${externalCount ? ` • ${externalCount} bloqueio(s)` : ''}` : 'Google desconectado';
+            if(text) text.textContent = connected ? `Google conectado${externalCount ? ` • ${externalCount} bloqueio(s)` : ''}` : (googleReconnectNeeded() ? 'Google: reconexão necessária' : 'Google desconectado');
             if(btnConnect) btnConnect.innerHTML = connected ? '<i class="fab fa-google me-1"></i>Desconectar' : '<i class="fab fa-google me-1"></i>Conectar Google';
             if(btnSync) btnSync.style.display = connected ? '' : 'none';
             if(btnRefresh) btnRefresh.style.display = connected ? '' : 'none';
@@ -685,6 +721,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
                     if(response?.error) { reject(new Error(response.error_description || response.error)); return; }
                     googleAccessToken = response.access_token || '';
                     googleTokenExpiresAt = Date.now() + (Number(response.expires_in || 3600) * 1000);
+                    try { localStorage.setItem(GOOGLE_HINT_KEY, '1'); } catch(e) {}
                     updateGoogleCalendarStatus();
                     resolve(googleAccessToken);
                 };
@@ -998,6 +1035,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
                 try { window.google?.accounts?.oauth2?.revoke?.(googleAccessToken, () => {}); } catch(e) {}
                 googleAccessToken = ''; googleTokenExpiresAt = 0; googleTokenClient = null; googleCalendarEvents = [];
                 googleLastError = '';
+                try { localStorage.removeItem(GOOGLE_HINT_KEY); } catch(e) {}
                 configureGoogleAutoRefresh();
                 updateGoogleCalendarStatus(); renderCalendario();
                 showToast('Google Calendar desconectado desta sessão.', 'info');
@@ -1138,6 +1176,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
             box.innerHTML = itens.length ? itens.join('') : '<div class="empty-state"><i class="fas fa-check-circle"></i><p>Nenhuma ação urgente.</p></div>';
         }
         function renderDashboard() {
+            try { document.dispatchEvent(new Event('profgestor:data')); } catch(e) { console.warn(e); }
             const now = new Date();
             const mesKey = `${now.getFullYear()}-${pad2(now.getMonth()+1)}`;
             
@@ -2667,20 +2706,51 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
                 cobrancaFalta: presenca === 'falta_cobrada'
             };
             try {
-                const pacoteAtivo = pacotes.find(pacote => pacote.alunoId === aula.alunoId && pacote.status === 'ativo' && Number(pacote.creditosUsados || 0) < Number(pacote.creditosTotal || 0) && (!pacote.validade || pacote.validade >= ymdLocal(new Date())));
-                if(presenca === 'presente' && !aula.creditoConsumidoPacoteId && pacoteAtivo) {
-                    dados.creditoConsumidoPacoteId = pacoteAtivo.id;
-                    await updateDoc(doc(db, 'pacotes', pacoteAtivo.id), { creditosUsados: Number(pacoteAtivo.creditosUsados || 0) + 1, updatedAt: nowLocalISO() });
-                }
-                await updateDoc(doc(db, 'aulas', aulaId), dados);
+                const efeito = await registrarPresencaComCredito(aulaId, aula.alunoId, presenca, dados);
                 form.reset();
-                showToast(pacoteAtivo && presenca === 'presente' ? 'Acompanhamento salvo e 1 crédito consumido.' : 'Acompanhamento pedagógico salvo.', 'success');
+                showToast(efeito === 'consumido' ? 'Acompanhamento salvo e 1 crédito consumido.' : efeito === 'estornado' ? 'Acompanhamento salvo e 1 crédito estornado.' : 'Acompanhamento pedagógico salvo.', 'success');
             } catch(error) {
                 console.error(error);
                 showToast('Não foi possível salvar o acompanhamento.', 'error', 5000);
             }
         };
 
+        // Regra de negócio explícita: presenças que consomem crédito de pacote.
+        // Decisão pendente do proprietário: incluir 'falta_cobrada'? (V4 consumia apenas em 'presente').
+        const PRESENCAS_QUE_CONSOMEM_CREDITO = ['presente'];
+        async function registrarPresencaComCredito(aulaId, alunoId, presenca, dados) {
+            const hoje = ymdLocal(new Date());
+            const candidato = pacotes.filter(p => p.alunoId === alunoId && pacoteValido(p))
+                .sort((a, b) => String(a.validade || '9999').localeCompare(String(b.validade || '9999')))[0];
+            return runTransaction(db, async tx => {
+                const aulaRef = doc(db, 'aulas', aulaId);
+                const aulaSnap = await tx.get(aulaRef);
+                if(!aulaSnap.exists()) throw new Error('Aula não encontrada.');
+                const consumidoEm = aulaSnap.data().creditoConsumidoPacoteId || null;
+                const consome = PRESENCAS_QUE_CONSOMEM_CREDITO.includes(presenca);
+                const patch = { ...dados };
+                let efeito = null;
+                if(consome && !consumidoEm && candidato) {
+                    const pRef = doc(db, 'pacotes', candidato.id);
+                    const pSnap = await tx.get(pRef);
+                    const p = pSnap.exists() ? pSnap.data() : null;
+                    const usados = Number(p?.creditosUsados || 0), total = Number(p?.creditosTotal || 0);
+                    if(p && p.status === 'ativo' && usados < total && (!p.validade || p.validade >= hoje)) {
+                        tx.update(pRef, { creditosUsados: usados + 1, updatedAt: nowLocalISO() });
+                        patch.creditoConsumidoPacoteId = candidato.id;
+                        efeito = 'consumido';
+                    }
+                } else if(!consome && consumidoEm) {
+                    const pRef = doc(db, 'pacotes', consumidoEm);
+                    const pSnap = await tx.get(pRef);
+                    if(pSnap.exists()) tx.update(pRef, { creditosUsados: Math.max(0, Number(pSnap.data().creditosUsados || 0) - 1), updatedAt: nowLocalISO() });
+                    patch.creditoConsumidoPacoteId = null;
+                    efeito = 'estornado';
+                }
+                tx.update(aulaRef, patch);
+                return efeito;
+            });
+        }
         function pacoteSaldo(pacote) { return Math.max(0, Number(pacote.creditosTotal || 0) - Number(pacote.creditosUsados || 0)); }
         function pacoteValido(pacote) { return pacote.status === 'ativo' && (!pacote.validade || pacote.validade >= ymdLocal(new Date())) && pacoteSaldo(pacote) > 0; }
         function renderPacotes() {
@@ -2714,8 +2784,16 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
         window.ajustarCredito = async (id, delta) => {
             const pacote = pacotes.find(item => item.id === id);
             if(!pacote) return;
-            const usado = Math.max(0, Math.min(Number(pacote.creditosTotal || 0), Number(pacote.creditosUsados || 0) - delta));
-            try { await updateDoc(doc(db, 'pacotes', id), { creditosUsados: usado, updatedAt: nowLocalISO() }); showToast(delta < 0 ? 'Crédito consumido.' : 'Crédito estornado.', 'success'); }
+            try {
+                await runTransaction(db, async tx => {
+                    const ref = doc(db, 'pacotes', id);
+                    const snap = await tx.get(ref);
+                    if(!snap.exists()) throw new Error('Pacote não encontrado.');
+                    const atual = snap.data();
+                    const usado = Math.max(0, Math.min(Number(atual.creditosTotal || 0), Number(atual.creditosUsados || 0) - delta));
+                    tx.update(ref, { creditosUsados: usado, updatedAt: nowLocalISO() });
+                });
+                showToast(delta < 0 ? 'Crédito consumido.' : 'Crédito estornado.', 'success'); }
             catch(error) { console.error(error); showToast('Não foi possível ajustar o crédito.', 'error'); }
         };
 
@@ -2819,7 +2897,10 @@ ${cfg.professor}`;
                 });
                 if(status) status.innerHTML = `<span class="text-success"><i class="fas fa-check-circle me-1"></i>Acesso liberado para ${escapeHtml(email)} como ${escapeHtml(role)}.</span>`;
                 showToast('Acesso ao portal liberado.', 'success');
-            } catch(error) { console.error(error); showToast('Não foi possível liberar o acesso.', 'error'); }
+            } catch(error) {
+                console.error(error);
+                showToast(error?.code === 'permission-denied' ? 'Este e-mail já está vinculado a outro professor ou o aluno não pertence à sua conta.' : 'Não foi possível liberar o acesso.', 'error', 6000);
+            }
         };
         window.resolverSolicitacao = async (id, novoStatus) => {
             try { await updateDoc(doc(db,'solicitacoes',id), { status:novoStatus, resolvedAt:nowLocalISO(), resolvedBy:usuarioAtual.uid }); showToast('Solicitação atualizada.', 'success'); }
@@ -2828,6 +2909,20 @@ ${cfg.professor}`;
         window.v4CreateLead = async (data) => { const payload={ organizationId:currentOrgId(), nome:String(data.nome||'').trim(), tel:String(data.tel||'').replace(/\D/g,''), interesse:String(data.interesse||'').trim(), origem:String(data.origem||'Outro'), etapa:String(data.etapa||'lead'), createdBy:usuarioAtual?.uid||'', createdAt:nowLocalISO(), updatedAt:nowLocalISO() }; const ref=await addDoc(collection(db,'leads'),payload); return ref.id; };
         window.v4UpdateLead = async (id, patch) => updateDoc(doc(db,'leads',id), { ...patch, organizationId:currentOrgId(), updatedAt:nowLocalISO() });
         window.v4DeleteLead = async (id) => deleteDoc(doc(db,'leads',id));
+        // Utilitários de interface para os módulos V4/V5 carregados como scripts clássicos.
+        window.pgToast = (msg, type = 'info', duration) => showToast(msg, type, duration);
+        window.pgConfirm = (title, msg, onConfirm, type) => showConfirm(title, msg, onConfirm, type);
+        window.v4ConvertLead = async (id) => {
+            const lead = leads.find(item => item.id === id);
+            if(!lead) throw new Error('Lead não encontrado.');
+            if(lead.alunoId) return lead.alunoId;
+            const batch = writeBatch(db);
+            const alunoRef = doc(collection(db, 'alunos'));
+            batch.set(alunoRef, { nome: String(lead.nome || '').trim() || 'Novo aluno', tel: String(lead.tel || '').replace(/\D/g, ''), materia: String(lead.interesse || '').trim(), origem: lead.origem || '', leadId: id, organizationId: currentOrgId(), createdAt: nowLocalISO(), updatedAt: nowLocalISO() });
+            batch.update(doc(db, 'leads', id), { etapa: 'convertido', alunoId: alunoRef.id, convertidoEm: nowLocalISO(), updatedAt: nowLocalISO() });
+            await batch.commit();
+            return alunoRef.id;
+        };
         window.v4UpdateLesson = async (id, patch) => updateDoc(doc(db,'aulas',id), { ...patch, organizationId:currentOrgId(), updatedAt:nowLocalISO() });
         window.v4OpenLesson = (id) => { const a=eventos.find(x=>x.id===id); if(!a) return; const ev={id:a.id,start:parseLocalISO(a.start),end:parseLocalISO(a.end),extendedProps:{...a}}; window.abrirModalEvento?.(ev); };
         window.v4GoPedagogico = (id) => { const a=eventos.find(x=>x.id===id); window.showSection?.('pedagogico'); setTimeout(()=>{ const aluno=document.getElementById('pedAlunoFiltro'); if(aluno&&a){ aluno.value=a.alunoId; aluno.dispatchEvent(new Event('change')); } const aula=document.getElementById('pedAula'); if(aula){ aula.value=id; aula.dispatchEvent(new Event('change')); } },120); };

@@ -25,7 +25,7 @@ function injectDashboardHero(){
 }
 
 function renderKpis(){
-  const el=document.getElementById('v4Kpis'); if(!el) return; const s=V4.state(); const now=new Date(); const today=now.toISOString().slice(0,10); const month=today.slice(0,7);
+  const el=document.getElementById('v4Kpis'); if(!el) return; const s=V4.state(); const now=new Date(); const pad=n=>String(n).padStart(2,'0'); const today=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`; const month=today.slice(0,7);
   const aulasHoje=s.eventos.filter(e=>String(e.start||'').slice(0,10)===today && (e.statusAula||'agendada')!=='cancelada');
   const mes=s.eventos.filter(e=>String(e.start||'').slice(0,7)===month && (e.statusAula||'agendada')!=='cancelada');
   const recebido=mes.filter(e=>e.status==='pago').reduce((a,e)=>a+Number(e.valor||0),0); const pendente=mes.filter(e=>e.status!=='pago').reduce((a,e)=>a+Number(e.valor||0),0);
