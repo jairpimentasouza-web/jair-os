@@ -1,4 +1,26 @@
 {
+  "hosting": {
+    "public": "web",
+    "ignore": ["PROVENANCE.md", "**/.*"],
+    "cleanUrls": false,
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          { "key": "Strict-Transport-Security", "value": "max-age=31556926; includeSubDomains; preload" },
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+          { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+          { "key": "X-Frame-Options", "value": "DENY" }
+        ]
+      },
+      { "source": "**/*.@(js|css)", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+      { "source": "sw.js", "headers": [{ "key": "Cache-Control", "value": "no-store" }] }
+    ]
+  },
+  "functions": [
+    { "source": "functions", "codebase": "profgestor-v5", "runtime": "nodejs22", "ignore": ["node_modules", ".git", "*.log"] }
+  ],
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
