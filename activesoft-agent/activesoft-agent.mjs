@@ -193,7 +193,7 @@ class Sessao {
     this.page.on('response', async (resp) => {
       const req = resp.request();
       const url = req.url();
-      if (!url.startsWith(BASE) || !url.includes('/api/')) return;
+      if (!/^https:\/\/[a-z0-9-]+\.activesoft\.com\.br\//.test(url) || !url.includes('/api/')) return;
       const h = req.headers();
       for (const [k, v] of Object.entries(h)) if (!CABECALHOS_DO_NAVEGADOR.test(k)) this.cabecalhosApi[k] = v;
       let json = null;
@@ -227,6 +227,8 @@ class Sessao {
       throw new Error(`Login recusado pelo ActiveSoft: ${msg.join(' | ') || 'sem mensagem'}`);
     }
     if (p.url().includes('/login/unidade')) await this.escolherUnidade();
+    // Após o login o ActiveSoft move a sessão para um servidor próprio (ex.: siga01); seguir esse host.
+    this.origem = new URL(p.url()).origin;
     return p.url();
   }
 
@@ -260,13 +262,13 @@ class Sessao {
 
   async abrirGrade(turmaId, disciplinaId) {
     const inicio = this.capturas.length;
-    await this.page.goto(`${BASE}/portal_eb_professor/planilha_notas_faltas/${turmaId}/${disciplinaId}/`, { waitUntil: 'networkidle', timeout: 60000 });
+    await this.page.goto(`${this.origem}/portal_eb_professor/planilha_notas_faltas/${turmaId}/${disciplinaId}/`, { waitUntil: 'networkidle', timeout: 60000 });
     await this.page.waitForTimeout(1500);
     return this.capturas.slice(inicio);
   }
 
   async api(metodo, caminho, { params = {}, corpo } = {}) {
-    const url = new URL(caminho, BASE);
+    const url = new URL(caminho, this.origem);
     for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== null) url.searchParams.set(k, v);
     const headers = { accept: 'application/json, text/plain, */*', ...this.cabecalhosApi };
     if (corpo !== undefined) headers['content-type'] = 'application/json';
@@ -280,6 +282,20 @@ class Sessao {
       let json = null; try { json = JSON.parse(texto); } catch { /* não-JSON */ }
       return { status: r.status, json, texto: json ? undefined : texto.slice(0, 500) };
     }, { url: url.toString(), metodo, headers, corpo });
+  }
+
+  // A grade legada aparece num iframe "alunoTurma" apontando para app*.activesoft.com.br/sistema/LoginDiretoV2.asp
+  async temGradeLegada() {
+    const p = this.page;
+    const fase = p.getByText('Nenhuma opção selecionada').first();
+    if (await fase.count().catch(() => 0)) {
+      await fase.click().catch(() => null);
+      await p.locator('[role=option], [class*=option]').first().click().catch(() => null);
+      await p.getByRole('button', { name: /consultar/i }).click().catch(() => null);
+      await p.waitForTimeout(3000);
+    }
+    return p.frames().some((f) => /^https:\/\/app\d*\.activesoft\.com\.br\/sistema\//.test(f.url()))
+      || (await p.locator('iframe#alunoTurma').count().catch(() => 0)) > 0;
   }
 
   async fechar() { await this.browser?.close(); }
@@ -297,15 +313,26 @@ function paramsDaGrade(capturas, { turmaId, disciplinaId }) {
 
 async function lerGrade(s, params) {
   const r = await s.api('GET', API_NOTAS, { params });
+  if (r.status === 403 && (await s.temGradeLegada())) {
+    throw new Error('Esta escola usa a grade LEGADA (ASP, iframe "alunoTurma" em app*.activesoft.com.br); a API moderna avaliacao_nota responde 403 mesmo na sessão do navegador. O lançamento precisa ser feito pela grade ASP (modo ainda não implementado) ou manualmente.');
+  }
   if (r.status !== 200) throw new Error(`Leitura da grade falhou: HTTP ${r.status} ${r.texto || ''}`);
   const grade = acharAlunos(r.json);
   if (!grade || !grade.chaveId) throw new Error('Não identifiquei a lista de alunos/ids na resposta da grade (rode "descobrir").');
   return { ...grade, bruto: r.json };
 }
 
-function resolverFase(capturas, params, bimestre, fasePorTurma) {
+// Fases de nota da turma, pela mesma lista que alimenta o seletor "Fase de nota" da página.
+async function fasesDaTurma(s, turmaId) {
+  const r = await s.api('GET', '/api/v1/fields/select/fase_nota/', { params: { search: '', limit: 50, offset: 0, turmas: turmaId, fase_informada: 1 } });
+  if (r.status !== 200) return [];
+  return (r.json?.results || []).map((f) => ({ id: f.value, rotulo: f.label, json: f }));
+}
+
+async function resolverFase(s, capturas, params, bimestre, turmaId, fasePorTurma) {
   if (fasePorTurma) return { fase: String(fasePorTurma), origem: 'lote' };
-  const fases = acharFase(capturas, bimestre);
+  let fases = acharFase([{ json: (await fasesDaTurma(s, turmaId)).map((f) => ({ id: f.id, descricao: f.rotulo })) }], bimestre);
+  if (!fases.length) fases = acharFase(capturas, bimestre);
   if (fases.length === 1) return { fase: String(fases[0].id), origem: `descoberta: ${fases[0].rotulo}` };
   throw new Error(`Não consegui determinar a fase do ${bimestre}º bimestre (${fases.length} candidatas: ${fases.map((f) => `${f.id}=${f.rotulo}`).join(', ') || 'nenhuma'}; padrão da página: ${params.fase_nota || '—'}). Informe "fase_nota" no lote.`);
 }
@@ -380,7 +407,7 @@ async function lancar(s, a) {
       const cap = await s.abrirGrade(turma.turma_id, lote.disciplina_id);
       const { params } = paramsDaGrade(cap, { turmaId: turma.turma_id, disciplinaId: lote.disciplina_id });
       if (lote.periodo && !params.periodo) params.periodo = String(lote.periodo);
-      const { fase, origem } = resolverFase(cap, params, lote.bimestre, turma.fase_nota || lote.fase_nota?.[turma.turma]);
+      const { fase, origem } = await resolverFase(s, cap, params, lote.bimestre, turma.turma_id, turma.fase_nota || lote.fase_nota?.[turma.turma]);
       params.fase_nota = fase;
       rt.fase_nota = fase; rt.fase_origem = origem;
 

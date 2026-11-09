@@ -73,6 +73,13 @@ Saída (relatório JSON e capturas de tela) em `./saida-activesoft/`, que fica f
 
 `fase_nota` é opcional: sem ela, o agente descobre a fase do bimestre nas respostas da própria grade e para, sem gravar nada, se encontrar zero ou mais de uma candidata.
 
+## Achados da primeira execução real (09/11/2026)
+
+- Depois do login o ActiveSoft move a sessão para um servidor próprio (ex.: `siga01`); o agente segue esse host.
+- A fase do bimestre é descoberta pela lista oficial do seletor "Fase de nota" (`/api/v1/fields/select/fase_nota/`).
+- **Na Legacy a grade de notas é a LEGADA (ASP)**: ao clicar em CONSULTAR o portal abre um iframe `alunoTurma` em `app2.activesoft.com.br/sistema/LoginDiretoV2.asp`, que repassa para `appNN`. A API moderna `avaliacao_nota` responde 403 mesmo na sessão real do navegador. O agente detecta isso e para sem gravar nada.
+- Falta implementar o modo de lançamento pela grade ASP. Ele precisa rodar num computador cujo navegador alcance `app*.activesoft.com.br`; na nuvem do Claude Code o navegador recebe 502 nesses hosts.
+
 ## Testes
 
 ```bash
