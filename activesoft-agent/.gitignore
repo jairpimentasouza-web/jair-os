@@ -1,0 +1,4 @@
+# Dados de alunos e saídas do agente nunca vão para o repositório (público)
+saida-activesoft/
+lote*.json
+*.xlsx
