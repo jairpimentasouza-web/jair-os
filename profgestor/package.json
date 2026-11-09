@@ -1,0 +1,22 @@
+{
+  "name": "profgestor",
+  "private": true,
+  "version": "5.0.0-dev",
+  "description": "ProfGestor V5 — gestão de aulas particulares (SaaS multitenant).",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "npm run test:unit && npm run test:emulator",
+    "test:unit": "node --test \"tests/unit/*.test.js\"",
+    "test:emulator": "firebase emulators:exec --only firestore,storage --project demo-profgestor \"node --test --test-concurrency=1 tests/emulator/*.test.js\"",
+    "lint:js": "node tools/check-syntax.mjs"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.10.0",
+    "firebase-admin": "^13.10.0",
+    "firebase-tools": "^14.27.0"
+  }
+}
