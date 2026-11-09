@@ -1,0 +1,10 @@
+{
+  "name": "ProfGestor V4",
+  "short_name": "ProfGestor",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#0b1f4d",
+  "lang": "pt-BR",
+  "description": "Gestão completa para professores particulares: agenda, alunos, financeiro, pedagógico, CRM e portal familiar."
+}
