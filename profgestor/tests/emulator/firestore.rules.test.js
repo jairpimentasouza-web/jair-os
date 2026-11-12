@@ -3,7 +3,7 @@ import { describe, it, before, after, beforeEach } from 'node:test';
 import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, collection, query, where, getDocs,
-  writeBatch, serverTimestamp, runTransaction, increment,
+  writeBatch, serverTimestamp, runTransaction, increment, orderBy, limit,
 } from 'firebase/firestore';
 import { createEnv, seed, as, daysFromNow } from './helpers.js';
 
@@ -305,6 +305,13 @@ describe('Pacotes e créditos', () => {
 });
 
 describe('Trilha de auditoria', () => {
+  it('histórico: o admin consulta a do próprio tenant; colaborador e outro tenant não', async () => {
+    const q = (db, org) => getDocs(query(collection(db, 'auditLogs'), where('organizationId', '==', org), orderBy('at', 'desc'), limit(30)));
+    await assertSucceeds(q(as(env, 'profA'), 'org_a'));
+    await assertFails(q(as(env, 'colabA'), 'org_a'));
+    await assertFails(q(as(env, 'profB'), 'org_a'));
+    await assertFails(q(as(env, 'famA'), 'org_a'));
+  });
   it('somente inserção, com autor e horário do servidor', async () => {
     const db = as(env, 'profA');
     const ref = doc(collection(db, 'auditLogs'));

@@ -12,8 +12,8 @@ function addNavGroups(){
   before('link-dashboard','Visão geral'); before('link-agenda','Operação'); before('link-financeiro','Negócio'); before('link-relatorios','Acompanhamento'); before('link-comunicacao','Comunicação');
   const pacote=document.getElementById('link-pacotes'); if(pacote) pacote.innerHTML='<span class="nav-icon"><i class="fas fa-layer-group"></i></span> Planos e Créditos';
   const com=document.getElementById('link-comunicacao'); if(com) com.innerHTML='<span class="nav-icon"><i class="fas fa-comments"></i></span> Mensagens & Portal';
-  const brand=document.querySelector('.sidebar-brand span'); if(brand) brand.textContent='ProfGestor V4';
-  const fbrand=document.querySelector('.family-brand'); if(fbrand) fbrand.innerHTML='<i class="fas fa-graduation-cap me-2"></i>ProfGestor V4 · Portal';
+  const brand=document.querySelector('.sidebar-brand span'); if(brand) brand.textContent='ProfGestor';
+  const fbrand=document.querySelector('.family-brand'); if(fbrand) fbrand.innerHTML='<i class="fas fa-graduation-cap me-2"></i>ProfGestor · Portal';
 }
 
 function injectDashboardHero(){

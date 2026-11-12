@@ -80,3 +80,29 @@ test('CRM: funil, filtros e taxa de conversão', () => {
   assert.equal(M.crm(leads, 'convertido').lista.length, 2);
   assert.equal(M.crm([], 'todos').taxaConversao, null);
 });
+
+const DAY = 864e5;
+const T = NOW.getTime();
+const plain = (x) => JSON.parse(JSON.stringify(x)); // objetos do vm têm protótipos de outro realm
+test('direito de uso espelha a regra orgWritable do servidor', () => {
+  assert.deepEqual(plain(M.direitoDeUso(null, T)), { writable: true, tipo: 'legado' });
+  assert.equal(M.direitoDeUso({ billingExempt: true, createdAtMs: T - 900 * DAY }, T).tipo, 'isenta');
+  const teste = M.direitoDeUso({ createdAtMs: T - 10 * DAY }, T);
+  assert.deepEqual([teste.writable, teste.tipo, teste.diasRestantes], [true, 'teste', 4]);
+  assert.deepEqual(plain(M.direitoDeUso({ createdAtMs: T - 15 * DAY }, T)), { writable: false, tipo: 'somente_leitura', motivo: 'teste_encerrado' });
+  const pago = M.direitoDeUso({ createdAtMs: T - 60 * DAY, entitlement: { status: 'active', plan: 'profissional', accessUntilMs: T + DAY } }, T);
+  assert.deepEqual([pago.writable, pago.tipo, pago.plano], [true, 'assinante', 'profissional']);
+  assert.equal(M.direitoDeUso({ createdAtMs: T - 60 * DAY, entitlement: { status: 'past_due', accessUntilMs: T + DAY } }, T).tipo, 'pagamento_pendente');
+  assert.equal(M.direitoDeUso({ createdAtMs: T - 60 * DAY, entitlement: { status: 'active', accessUntilMs: T - 1 } }, T).writable, false);
+  assert.equal(M.direitoDeUso({ createdAtMs: T - 60 * DAY, entitlement: { status: 'canceled', accessUntilMs: T + DAY } }, T).motivo, 'cancelada');
+});
+
+test('onboarding: 8 passos derivados dos dados e das visitas', () => {
+  const vazio = M.onboarding({ alunos: [], eventos: [], config: {} }, {});
+  assert.equal(vazio.total, 8);
+  assert.equal(vazio.feitos, 1);
+  const cheio = M.onboarding({ alunos: [{}], eventos: [{ valor: 100 }], config: { contatoConfigurado: true } }, { financeiro: true, relatorio: true, integracoes: true });
+  assert.equal(cheio.completo, true);
+  const semPreco = M.onboarding({ alunos: [{}], eventos: [{ valor: 0 }], config: {} }, {});
+  assert.deepEqual(plain(semPreco.passos.filter((p) => !p.done).map((p) => p.id)), ['perfil', 'preco', 'financeiro', 'relatorio', 'integracoes']);
+});

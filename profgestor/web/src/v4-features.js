@@ -95,8 +95,47 @@
         experimentais: conta('experimental'), propostas: conta('proposta'), convertidos: conta('convertido'),
         taxaConversao: (conta('convertido') + conta('perdido')) ? conta('convertido') / (conta('convertido') + conta('perdido')) : null
       };
+    },
+    // Espelho, para a interface, da regra orgWritable do firestore.rules (a decisão real é do servidor).
+    direitoDeUso: function (org, now) {
+      now = now || Date.now();
+      var DAY = 864e5;
+      if (!org) return { writable: true, tipo: 'legado' };
+      if (org.billingExempt) return { writable: true, tipo: 'isenta' };
+      var ent = org.entitlement || {};
+      if ((ent.status === 'active' || ent.status === 'past_due') && now < num(ent.accessUntilMs)) {
+        return { writable: true, tipo: ent.status === 'past_due' ? 'pagamento_pendente' : 'assinante', plano: ent.plan, ate: num(ent.accessUntilMs), cancelaNoFim: !!ent.cancelAtPeriodEnd };
+      }
+      var fimTeste = num(org.createdAtMs) + 14 * DAY;
+      if (now < fimTeste) return { writable: true, tipo: 'teste', ate: fimTeste, diasRestantes: Math.max(1, Math.ceil((fimTeste - now) / DAY)) };
+      return { writable: false, tipo: 'somente_leitura', motivo: ent.status === 'canceled' ? 'cancelada' : (ent.status === 'blocked' ? 'bloqueada' : 'teste_encerrado') };
+    },
+    // Onboarding progressivo (8 passos), derivado dos dados reais e de marcas locais de visita.
+    onboarding: function (state, flags) {
+      flags = flags || {};
+      var cfg = state.config || {};
+      var aulas = state.eventos || [];
+      var passos = [
+        { id: 'conta', label: 'Criar sua conta', done: true },
+        { id: 'perfil', label: 'Configurar contato e Pix no perfil', done: !!cfg.contatoConfigurado, acao: 'config' },
+        { id: 'aluno', label: 'Cadastrar o primeiro aluno', done: (state.alunos || []).length > 0, acao: 'alunos' },
+        { id: 'aula', label: 'Agendar a primeira aula', done: aulas.length > 0, acao: 'agenda' },
+        { id: 'preco', label: 'Definir o preço das aulas', done: aulas.some(function (a) { return num(a.valor) > 0; }), acao: 'agenda' },
+        { id: 'financeiro', label: 'Conhecer o financeiro', done: !!flags.financeiro, acao: 'financeiro' },
+        { id: 'relatorio', label: 'Gerar o primeiro relatório', done: !!flags.relatorio, acao: 'relatorios' },
+        { id: 'integracoes', label: 'Explorar integrações (opcional)', done: !!flags.integracoes, acao: 'config' }
+      ];
+      var feitos = passos.filter(function (p) { return p.done; }).length;
+      return { passos: passos, feitos: feitos, total: passos.length, completo: feitos === passos.length };
     }
   };
+  // Vitrine dos planos. O valor efetivamente cobrado é decidido no servidor (functions/src/plans.js).
+  var PLANOS = [
+    { id: 'essencial', nome: 'Essencial', preco: 'R$ 29,90', detalhe: 'por mês · até 25 alunos ativos', vende: true },
+    { id: 'profissional', nome: 'Profissional', preco: 'R$ 49,90', detalhe: 'por mês · alunos ilimitados', vende: true },
+    { id: 'fundador', nome: 'Fundador', preco: 'R$ 39,90', detalhe: 'por mês nos 12 primeiros meses (recursos do Profissional) · vagas limitadas', vende: true },
+    { id: 'equipe', nome: 'Equipe', preco: 'R$ 119,90', detalhe: 'em breve — multiusuário ainda não disponível', vende: false }
+  ];
   if (typeof window !== 'undefined') window.ProfGestorMetrics = Metrics;
   if (typeof document === 'undefined') return; // ambiente de teste
 
@@ -167,11 +206,141 @@
     }).join('');
   };
 
+  // ---------------- Conta, plano, aviso de somente leitura e onboarding (V5) ----------------
+  function ls(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* armazenamento indisponível */ } }
+  function dataCurta(ms) { return ms ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(ms)) : '—'; }
+  var NOME_PLANO = { essencial: 'Essencial', profissional: 'Profissional', fundador: 'Fundador', equipe: 'Equipe' };
+
+  function renderBanner() {
+    var el = document.getElementById('v5Banner'); if (!el) return;
+    var st = state(); if (!st.usuario || !st.perfil || ['aluno', 'responsavel'].indexOf(st.perfil.role) >= 0) { el.hidden = true; return; }
+    var d = Metrics.direitoDeUso(st.organizacao);
+    if (d.tipo === 'somente_leitura') {
+      el.innerHTML = '<i class="fas fa-lock"></i><span><strong>Conta em modo somente leitura.</strong> ' +
+        (d.motivo === 'cancelada' ? 'A assinatura foi encerrada.' : d.motivo === 'bloqueada' ? 'A assinatura não está ativa.' : 'O período de teste terminou.') +
+        ' Seus dados continuam disponíveis para consulta e exportação; para voltar a registrar aulas, escolha um plano.</span>' +
+        '<button type="button" class="btn btn-sm btn-primary" data-pg-action="ir" data-id="conta">Ver planos</button>';
+      el.hidden = false;
+    } else if (d.tipo === 'pagamento_pendente') {
+      el.innerHTML = '<i class="fas fa-triangle-exclamation"></i><span><strong>Pagamento pendente.</strong> Atualize a forma de pagamento até ' + esc(dataCurta(d.ate)) + ' para manter o acesso completo.</span>' +
+        '<button type="button" class="btn btn-sm btn-primary" data-pg-action="ir" data-id="conta">Resolver</button>';
+      el.hidden = false;
+    } else el.hidden = true;
+  }
+
+  function onboardingFlags() {
+    return {
+      financeiro: ls('pg_onb_visitou_financeiro') === '1',
+      relatorio: ls('pg_onb_relatorio') === '1',
+      integracoes: ls('pg_onb_integracoes') === '1' || ls('profgestor_google_conectado_antes') === '1'
+    };
+  }
+  function renderOnboarding() {
+    var el = document.getElementById('v5Onboarding'); if (!el) return;
+    var st = state(), org = st.organizacao;
+    // Apenas para contas novas do SaaS; a conta original isenta não recebe o roteiro.
+    if (!org || org.billingExempt || ls('pg_onb_ocultar') === '1' || !st.perfil || st.perfil.role !== 'admin') { el.innerHTML = ''; return; }
+    var o = Metrics.onboarding(st, onboardingFlags());
+    if (o.completo) { el.innerHTML = ''; return; }
+    el.innerHTML = '<section class="v5-onb" aria-label="Primeiros passos"><div class="v5-onb-head"><strong>Primeiros passos · ' + o.feitos + ' de ' + o.total + '</strong>' +
+      '<button type="button" class="btn btn-sm btn-ghost" data-pg-action="onb-ocultar">Ocultar</button></div>' +
+      '<div class="v5-onb-bar" aria-hidden="true"><span style="width:' + Math.round(o.feitos / o.total * 100) + '%"></span></div><ol>' +
+      o.passos.map(function (p) {
+        return '<li class="' + (p.done ? 'done' : '') + '"><i class="fas ' + (p.done ? 'fa-circle-check text-success' : 'fa-circle text-muted') + '" aria-hidden="true"></i>' +
+          (p.done || !p.acao ? esc(p.label) : '<button type="button" data-pg-action="ir" data-id="' + esc(p.acao) + '">' + esc(p.label) + '</button>') +
+          '<span class="visually-hidden">' + (p.done ? ' (concluído)' : ' (pendente)') + '</span></li>';
+      }).join('') + '</ol></section>';
+  }
+
+  window.renderContaV5 = function () {
+    var box = document.getElementById('v5ContaStatus'), planos = document.getElementById('v5Planos'); if (!box || !planos) return;
+    var st = state(), org = st.organizacao, plat = st.plataforma || {};
+    var d = Metrics.direitoDeUso(org);
+    var pill = {
+      legado: ['', 'Conta original (aguardando migração V5)'],
+      isenta: ['ok', 'Conta isenta de cobrança'],
+      teste: ['warn', 'Teste grátis · ' + (d.diasRestantes || 0) + ' dia(s) restante(s)'],
+      assinante: ['ok', 'Plano ' + (NOME_PLANO[d.plano] || d.plano || '') + ' ativo'],
+      pagamento_pendente: ['warn', 'Pagamento pendente'],
+      somente_leitura: ['bad', 'Somente leitura']
+    }[d.tipo] || ['', d.tipo];
+    var linhas = [];
+    if (org && org.nome) linhas.push('<div class="mb-2"><span class="text-muted small">Conta</span><div class="fw-semibold">' + esc(org.nome) + '</div></div>');
+    linhas.push('<div class="mb-2"><span class="v5-status-pill ' + pill[0] + '" id="v5StatusPill">' + esc(pill[1]) + '</span></div>');
+    if (d.tipo === 'teste') linhas.push('<p class="small text-muted mb-2">O teste vai até ' + esc(dataCurta(d.ate)) + '. Nada é cobrado durante o teste.</p>');
+    if (d.tipo === 'assinante') linhas.push('<p class="small text-muted mb-2">' + (d.cancelaNoFim ? 'Cancelamento agendado. Acesso até ' : 'Acesso garantido até ') + esc(dataCurta(d.ate)) + '.</p>');
+    if (d.tipo === 'somente_leitura') linhas.push('<p class="small mb-2">Leitura, exportação e exclusão de dados continuam disponíveis.</p>');
+    if (plat.billingEnabled && org && org.entitlement && org.entitlement.temCliente && st.perfil && st.perfil.role === 'admin') {
+      linhas.push('<button type="button" class="btn btn-outline-primary btn-sm" data-pg-action="portal"><i class="fas fa-credit-card me-1"></i>Gerenciar assinatura</button>');
+    }
+    box.innerHTML = linhas.join('');
+    var podeAssinar = !!plat.billingEnabled && d.tipo !== 'isenta' && d.tipo !== 'legado' && st.perfil && st.perfil.role === 'admin' && d.tipo !== 'assinante' && d.tipo !== 'pagamento_pendente';
+    planos.innerHTML = '<div class="v5-plans">' + PLANOS.map(function (p) {
+      var atual = d.plano === p.id && (d.tipo === 'assinante' || d.tipo === 'pagamento_pendente');
+      return '<div class="v5-plan' + (atual ? ' atual' : '') + '"><strong>' + esc(p.nome) + (atual ? ' <span class="badge bg-primary">atual</span>' : '') + '</strong>' +
+        '<span class="preco">' + esc(p.preco) + '</span><small>' + esc(p.detalhe) + '</small>' +
+        (p.vende && podeAssinar ? '<button type="button" class="btn btn-sm btn-primary mt-auto" data-pg-action="assinar" data-id="' + esc(p.id) + '">Assinar</button>' : '') + '</div>';
+    }).join('') + '</div>' +
+      (plat.billingEnabled ? '<p class="small text-muted mt-3 mb-0">Pagamento por cartão ou Pix Automático em página segura do provedor. O ProfGestor não armazena dados de cartão.</p>'
+        : '<p class="small text-muted mt-3 mb-0">As assinaturas ainda não estão abertas. Durante o piloto nada é cobrado.</p>');
+  };
+
+  var ACOES = {
+    'aula.pagamento': 'Pagamento de aula', 'aula.financeiro': 'Valor/status de aula alterado', 'aula.excluir': 'Aula excluída',
+    'despesa.excluir': 'Despesa excluída', 'aluno.excluir': 'Aluno excluído', 'pacote.ajuste': 'Ajuste manual de crédito',
+    'pacote.consumo': 'Crédito consumido', 'pacote.estorno': 'Crédito estornado', 'convite.liberar': 'Acesso ao portal liberado',
+    'dados.exportar': 'Exportação de dados'
+  };
+  function detalheAuditoria(e) {
+    var d = e.detalhes || {};
+    if (e.action === 'aula.pagamento') return (d.de || '—') + ' → ' + (d.para || '—') + ' · ' + money(d.valor);
+    if (e.action === 'aula.financeiro') return (d.de ? d.de.status + ' ' + money(d.de.valor) : '') + ' → ' + (d.para ? d.para.status + ' ' + money(d.para.valor) : '');
+    if (e.action === 'aula.excluir' || e.action === 'despesa.excluir') return money(d.valor);
+    if (e.action === 'pacote.ajuste') return (num(d.delta) < 0 ? 'consumo manual' : 'estorno manual');
+    if (e.action === 'convite.liberar') return 'como ' + (d.papel || '');
+    if (e.action === 'dados.exportar') return Object.keys(d).map(function (k) { return k + ': ' + d[k]; }).join(', ');
+    return '';
+  }
+  function carregarAuditoria() {
+    var body = document.getElementById('v5Auditoria'); if (!body || !window.v5ListarAuditoria) return;
+    body.innerHTML = '<tr><td colspan="3" class="text-muted text-center py-3">Carregando…</td></tr>';
+    window.v5ListarAuditoria().then(function (itens) {
+      body.innerHTML = itens.length ? itens.map(function (e) {
+        return '<tr><td style="white-space:nowrap">' + esc(e.at ? new Date(e.at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : 'agora') + '</td><td>' + esc(ACOES[e.action] || e.action) + '</td><td class="small">' + esc(detalheAuditoria(e)) + '</td></tr>';
+      }).join('') : '<tr><td colspan="3" class="text-muted text-center py-3">Nenhuma alteração registrada ainda.</td></tr>';
+    }).catch(function (err) {
+      body.innerHTML = '<tr><td colspan="3" class="text-muted text-center py-3">' + (err && err.code === 'permission-denied' ? 'Disponível para o administrador da conta.' : 'Não foi possível carregar o histórico.') + '</td></tr>';
+    });
+  }
+
+  document.addEventListener('show.bs.modal', function (ev) { if (ev.target && ev.target.id === 'modalConfig') lsSet('pg_onb_integracoes', '1'); });
+
   // Delegação de eventos (sem onclick com dados interpolados).
   document.addEventListener('click', function (ev) {
     var btn = ev.target.closest && ev.target.closest('[data-pg-action]');
     if (!btn || btn.tagName === 'SELECT') return;
     var id = btn.getAttribute('data-id'), action = btn.getAttribute('data-pg-action');
+    if (action === 'ir') {
+      if (id === 'config') { var m = document.getElementById('modalConfig'); if (m && window.bootstrap) window.bootstrap.Modal.getOrCreateInstance(m).show(); }
+      else if (window.showSection) window.showSection(id);
+      renderOnboarding();
+    }
+    if (action === 'onb-ocultar') { lsSet('pg_onb_ocultar', '1'); renderOnboarding(); }
+    if (action === 'auditoria') carregarAuditoria();
+    if (action === 'exportar' && window.v5ExportarDados) {
+      var st = document.getElementById('v5ExportStatus'); btn.disabled = true;
+      window.v5ExportarDados().then(function (c) {
+        if (st) st.textContent = 'Exportado: ' + Object.keys(c).map(function (k) { return c[k] + ' ' + k; }).join(', ') + '.';
+        toast('Exportação concluída.', 'success');
+      }).catch(function (e) { console.error(e); toast('Não foi possível exportar os dados.', 'error'); })
+        .then(function () { btn.disabled = false; });
+    }
+    if ((action === 'assinar' || action === 'portal') && window.v5Assinar) {
+      btn.disabled = true;
+      (action === 'assinar' ? window.v5Assinar(id) : window.v5GerenciarAssinatura())
+        .catch(function (e) { console.error(e); toast(e && e.message ? e.message : 'Não foi possível abrir a assinatura.', 'error'); btn.disabled = false; });
+    }
     if (action === 'registrar' && window.v4GoPedagogico) window.v4GoPedagogico(id);
     if (action === 'pagar' && window.alternarPagamento) window.alternarPagamento(id, 'pago');
     if (action === 'converter' && window.v4ConvertLead) {
@@ -207,7 +376,12 @@
     });
   }
 
-  function renderAll() { renderDashboardV4(); window.renderAulasOperacao(); window.renderCRM(); }
+  function renderAll() {
+    renderDashboardV4(); window.renderAulasOperacao(); window.renderCRM();
+    renderBanner(); renderOnboarding();
+    var conta = document.getElementById('conta');
+    if (conta && conta.classList.contains('active')) window.renderContaV5();
+  }
   function boot() {
     bindCrmForm(); renderAll();
     document.addEventListener('profgestor:data', renderAll);

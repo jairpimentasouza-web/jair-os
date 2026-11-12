@@ -7,9 +7,10 @@ import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { initializeApp } from 'firebase-admin/app';
+import { initializeApp, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { clearEmulators } from './harness.js';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
@@ -89,8 +90,9 @@ async function login(email, { familia = false } = {}) {
 }
 
 before(async () => {
-  initializeApp({ projectId: 'demo-profgestor' });
+  if (!getApps().length) initializeApp({ projectId: 'demo-profgestor' });
   db = getFirestore(); auth = getAuth();
+  await clearEmulators();
   await seed();
   server = serveStatic();
   browser = await chromium.launch();

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProfGestor V4 · Gestão de Aulas</title>
+    <title>ProfGestor · Gestão de Aulas</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -18,7 +18,7 @@
 <body>
     <div class="auth-gate" id="authGate" aria-live="polite">
         <form class="auth-card" id="loginForm">
-            <div class="auth-brand"><i class="fas fa-shield-alt"></i><span>ProfGestor <small style="opacity:.55">V4</small></span></div>
+            <div class="auth-brand"><i class="fas fa-shield-alt"></i><span>ProfGestor</span></div>
             <h1 class="h4 mb-2" id="authTitle">Acesso seguro</h1>
             <p class="text-muted small mb-4" id="authSubtitle">Entre com seu usuário autorizado para acessar dados de alunos, aulas e financeiro.</p>
             <div class="auth-persona" aria-label="Tipo de acesso">
@@ -26,6 +26,7 @@
                 <button type="button" id="personaFamilia" onclick="setAuthPersona('familia')"><i class="fas fa-user-graduate me-1"></i>Aluno / Responsável</button>
             </div>
             <div class="mb-3" id="registerNameGroup" hidden><label class="form-label" for="registerName">Seu nome</label><input id="registerName" class="form-control" autocomplete="name"></div>
+            <div class="mb-3" id="registerSchoolGroup" hidden><label class="form-label" for="registerSchool">Nome do seu negócio (opcional)</label><input id="registerSchool" class="form-control" autocomplete="organization" maxlength="120" placeholder="Ex.: Aulas de Física da Ana"></div>
             <div class="mb-3"><label class="form-label" for="loginEmail">E-mail</label><input id="loginEmail" type="email" class="form-control" autocomplete="email" required></div>
             <div class="mb-3"><label class="form-label" for="loginPassword">Senha</label><input id="loginPassword" type="password" class="form-control" autocomplete="current-password" required></div>
             <button class="btn btn-primary w-100" type="submit" id="loginButton"><i class="fas fa-lock me-1"></i>Entrar</button>
@@ -80,6 +81,7 @@
         <li class="nav-group-label">COMUNICAÇÃO</li>
         <li><a onclick="showSection('comunicacao')" onkeydown="navKey(event,'comunicacao')" role="button" tabindex="0" id="link-comunicacao"><span class="nav-icon"><i class="fab fa-whatsapp"></i></span> Mensagens & Automações</a></li>
         <li class="nav-group-label">SISTEMA</li>
+        <li><a onclick="showSection('conta')" onkeydown="navKey(event,'conta')" role="button" tabindex="0" id="link-conta"><span class="nav-icon"><i class="fas fa-id-card"></i></span> Conta e plano</a></li>
         <li><a href="#" data-bs-toggle="modal" data-bs-target="#modalConfig"><span class="nav-icon"><i class="fas fa-plug"></i></span> Integrações & Config.</a></li>
     </ul>
 </nav>
@@ -104,6 +106,7 @@
             </div>
 
             <div id="content">
+                <div id="v5Banner" class="v5-banner" role="status" hidden></div>
                 <!-- ========== DASHBOARD ========== -->
                 <div id="dashboard" class="section-view active">
                     <div class="v4-dashboard-hero">
@@ -117,6 +120,7 @@
  <div class="v4-kpi"><span>Resultado do mês</span><strong id="v4NetMonth">R$ 0</strong><small>recebido − despesas</small></div>
  <div class="v4-kpi"><span>Relatórios pendentes</span><strong id="v4ReportsPending">0</strong><small>pós-aula</small></div>
 </div>
+<div id="v5Onboarding"></div>
                     <div class="row g-3 mb-4">
                         <div class="col-6 col-lg-3">
                             <div class="stat-card blue">
@@ -601,6 +605,17 @@
                       <div class="v4-kpi"><span>Convertidos</span><strong id="v4CrmWon">0</strong><small>alunos ganhos</small></div>
                     </div>
                     <div class="row g-3"><div class="col-lg-4"><div class="panel"><div class="panel-header"><span class="panel-title"><i class="fas fa-user-plus me-2 text-primary"></i>Novo lead</span></div><div class="panel-body"><form id="v4CrmForm"><div class="mb-2"><label class="form-label">Nome</label><input id="v4CrmNome" class="form-control" required></div><div class="mb-2"><label class="form-label">WhatsApp</label><input id="v4CrmTel" class="form-control"></div><div class="mb-2"><label class="form-label">Interesse</label><input id="v4CrmInteresse" class="form-control" placeholder="Ex.: Matemática · ENEM"></div><div class="mb-2"><label class="form-label">Origem</label><select id="v4CrmOrigem" class="form-select"><option>Indicação</option><option>Instagram</option><option>Google</option><option>WhatsApp</option><option>Outro</option></select></div><div class="mb-3"><label class="form-label">Etapa</label><select id="v4CrmEtapa" class="form-select"><option value="lead">Lead</option><option value="experimental">Aula experimental</option><option value="proposta">Proposta</option><option value="convertido">Convertido</option><option value="perdido">Perdido</option></select></div><button class="btn btn-primary w-100" type="submit">Salvar lead</button></form></div></div></div><div class="col-lg-8"><div class="panel"><div class="panel-header"><span class="panel-title"><i class="fas fa-filter me-2 text-primary"></i>Pipeline</span><select id="v4CrmFiltro" class="form-select form-select-sm" style="width:auto" onchange="renderCRM()"><option value="todos">Todas as etapas</option><option value="lead">Lead</option><option value="experimental">Experimental</option><option value="proposta">Proposta</option><option value="convertido">Convertido</option><option value="perdido">Perdido</option></select></div><div class="panel-body p-0"><div class="table-responsive"><table class="table table-clean mb-0"><thead><tr><th>Contato</th><th>Interesse</th><th>Origem</th><th>Etapa</th><th class="text-end">Ações</th></tr></thead><tbody id="v4CrmBody"></tbody></table></div></div></div></div></div>
+                </div>
+
+                <!-- ========== CONTA E PLANO (V5) ========== -->
+                <div id="conta" class="section-view">
+                    <div class="module-hero mb-3"><h3>Conta e plano</h3><p>Situação da assinatura, seus dados e o histórico de alterações importantes.</p></div>
+                    <div class="row g-3">
+                        <div class="col-lg-5"><div class="panel h-100"><div class="panel-header"><span class="panel-title"><i class="fas fa-id-card me-2 text-primary"></i>Situação da conta</span></div><div class="panel-body" id="v5ContaStatus">Carregando…</div></div></div>
+                        <div class="col-lg-7"><div class="panel h-100"><div class="panel-header"><span class="panel-title"><i class="fas fa-tags me-2 text-primary"></i>Planos</span></div><div class="panel-body" id="v5Planos"></div></div></div>
+                        <div class="col-lg-5"><div class="panel h-100"><div class="panel-header"><span class="panel-title"><i class="fas fa-file-export me-2 text-primary"></i>Seus dados</span></div><div class="panel-body"><p class="text-muted small">Baixe uma cópia completa dos dados da sua conta (alunos, aulas, pacotes, financeiro, CRM e convites) em formato estruturado (JSON). Disponível mesmo após o fim do teste.</p><button type="button" class="btn btn-outline-primary w-100" data-pg-action="exportar"><i class="fas fa-download me-1"></i>Exportar meus dados</button><div class="small text-muted mt-2" id="v5ExportStatus" role="status"></div></div></div></div>
+                        <div class="col-lg-7"><div class="panel h-100"><div class="panel-header"><span class="panel-title"><i class="fas fa-clock-rotate-left me-2 text-primary"></i>Histórico de alterações</span><button type="button" class="btn btn-sm btn-ghost" data-pg-action="auditoria">Atualizar</button></div><div class="panel-body p-0"><div class="table-responsive"><table class="table table-clean mb-0"><thead><tr><th>Quando</th><th>Ação</th><th>Detalhes</th></tr></thead><tbody id="v5Auditoria"><tr><td colspan="3" class="text-muted text-center py-3">Clique em Atualizar para carregar.</td></tr></tbody></table></div></div></div></div>
+                    </div>
                 </div>
 
                 <!-- ========== COMUNICAÇÃO E PORTAL ========== -->

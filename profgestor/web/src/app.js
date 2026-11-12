@@ -2,8 +2,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
         import { getFirestore, connectFirestoreEmulator, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, orderBy, onSnapshot } 
         from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut, sendEmailVerification, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js";
-        import { getDoc, runTransaction, writeBatch } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFunctions, httpsCallable, connectFunctionsEmulator } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js";
+        import { getDoc, runTransaction, writeBatch, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         // Homologação local: em localhost com ?emulator=1 o app usa os emuladores e um projeto "demo-",
         // que o Firebase garante não corresponder a nenhum recurso real. Produção nunca é contatada.
@@ -25,10 +25,16 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
         if(USE_EMULATORS) {
             connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
             connectFirestoreEmulator(db, '127.0.0.1', 8080);
+            connectFunctionsEmulator(functions, '127.0.0.1', 5001);
             document.title = '[EMULADOR] ' + document.title;
         }
         let usuarioAtual = null;
         let perfilAtual = null;
+        // Flags públicas da plataforma (platformConfig/public, gravadas só pelo backend).
+        let plataforma = { selfSignupOpen: false, billingEnabled: false, pixAulaEnabled: false };
+        let organizacaoAtual = null;
+        let organizacaoUnsub = null;
+        const SIGNUP_KEY = 'profgestor_cadastro_pendente';
         let cadastroEmAndamento = false;
         // V5: o tenant vem do perfil. O fallback cobre apenas o perfil-admin legado do V4, criado antes
         // de organizationId existir; a migração V5 preenche o campo e torna o fallback inócuo.
@@ -217,7 +223,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
             pedagogico: 'Central Pedagógica',
             pacotes: 'Planos e Pacotes',
             comunicacao: 'Mensagens & Automações',
-            relatorios: 'Relatórios'
+            relatorios: 'Relatórios',
+            conta: 'Conta e plano'
         };
 
         window.showSection = (id) => {
@@ -227,6 +234,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
             const link = document.getElementById('link-' + id);
             if (link) link.classList.add('active');
             document.getElementById('pageTitle').textContent = sectionTitles[id] || '';
+            try { localStorage.setItem(`pg_onb_visitou_${id}`, '1'); } catch(e) {}
+            if (id === 'conta') window.renderContaV5?.();
             closeSidebar();
             if (id === 'agenda' && calendar) { calendar.render(); if(hasValidGoogleToken()) refreshGoogleCalendarEvents({ silent: true }); }
             if (id === 'dashboard') renderDashboard();
@@ -372,8 +381,17 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
             }
             try {
                 await auth.currentUser.getIdToken(true);
-                await ativarPerfilFamilia(auth.currentUser, auth.currentUser.displayName || '');
-                return true;
+                const emailAtual = String(auth.currentUser.email || '').toLowerCase();
+                const convite = await getDoc(doc(db, 'convites', emailAtual)).catch(() => null);
+                if(convite?.exists() && convite.data().ativo === true) {
+                    await ativarPerfilFamilia(auth.currentUser, auth.currentUser.displayName || '');
+                    return true;
+                }
+                if(authPersona === 'professor' && plataforma.selfSignupOpen === true) {
+                    await criarOrganizacaoPropria(auth.currentUser);
+                    return true;
+                }
+                throw new Error('Este e-mail ainda não foi liberado pelo professor.');
             } catch(error) {
                 console.error(error);
                 await signOut(auth);
@@ -383,7 +401,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
         }
         async function handleAuthState(user) {
             if(!user) {
-                usuarioAtual = null; perfilAtual = null; clearSensitiveUi();
+                usuarioAtual = null; perfilAtual = null; organizacaoAtual = null;
+                if(organizacaoUnsub) { organizacaoUnsub(); organizacaoUnsub = null; }
+                clearSensitiveUi();
                 document.getElementById('familyApp').style.display = 'none';
                 document.getElementById('wrapper').style.display = 'flex';
                 document.getElementById('loading').style.display = 'none';
@@ -412,6 +432,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
                 document.getElementById('familyApp').style.display = 'none';
                 document.getElementById('wrapper').style.display = 'flex';
                 document.getElementById('userName').textContent = `${perfil.nome || user.email} · ${perfil.role}`;
+                acompanharOrganizacao();
                 await iniciarAplicacao();
             } catch(error) {
                 console.error(error); if(cadastroEmAndamento || auth.currentUser?.uid !== user.uid) return;
@@ -420,14 +441,25 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
         }
         function atualizarModoAuth() {
             const family = authPersona === 'familia';
-            document.getElementById('registerNameGroup').hidden = !(family && modoCadastro);
-            document.getElementById('authToggle').style.display = family ? '' : 'none';
+            const professorPodeCadastrar = !family && plataforma.selfSignupOpen === true;
+            if(!family && !professorPodeCadastrar) modoCadastro = false;
+            document.getElementById('registerNameGroup').hidden = !modoCadastro;
+            document.getElementById('registerSchoolGroup').hidden = !(modoCadastro && !family);
+            document.getElementById('authToggle').style.display = (family || professorPodeCadastrar) ? '' : 'none';
+            if(!family && modoCadastro) {
+                document.getElementById('authTitle').textContent = 'Criar conta de professor';
+                document.getElementById('authSubtitle').textContent = '14 dias grátis, sem cartão. Enviaremos um link para confirmar o e-mail.';
+                document.getElementById('loginButton').innerHTML = '<i class="fas fa-user-plus me-1"></i>Criar conta';
+                document.getElementById('authToggle').textContent = 'Já tenho conta';
+            } else if(!family) {
+                document.getElementById('authToggle').textContent = 'Criar conta de professor — 14 dias grátis';
+            }
             if(family) {
                 document.getElementById('authTitle').textContent = modoCadastro ? 'Ativar acesso' : 'Aluno / Responsável';
                 document.getElementById('authSubtitle').textContent = modoCadastro ? 'Use exatamente o e-mail liberado pelo professor e crie sua senha.' : 'Entre para consultar somente o acompanhamento do aluno vinculado.';
                 document.getElementById('loginButton').innerHTML = modoCadastro ? '<i class="fas fa-user-plus me-1"></i>Criar senha e ativar' : '<i class="fas fa-lock me-1"></i>Entrar no portal';
                 document.getElementById('authToggle').textContent = modoCadastro ? 'Já tenho acesso' : 'Ativar meu acesso';
-            } else {
+            } else if(!modoCadastro) {
                 document.getElementById('authTitle').textContent = 'Acesso do professor';
                 document.getElementById('authSubtitle').textContent = 'Entre no painel administrativo para gerenciar agenda, alunos, financeiro e relatórios.';
                 document.getElementById('loginButton').innerHTML = '<i class="fas fa-lock me-1"></i>Entrar como professor';
@@ -441,11 +473,13 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
                 const email = document.getElementById('loginEmail').value.trim().toLowerCase();
                 const password = document.getElementById('loginPassword').value;
                 const nome = document.getElementById('registerName').value.trim();
-                if(authPersona === 'familia' && modoCadastro && (!nome || password.length < 8)) { showLoginMessage('Informe seu nome e uma senha de ao menos 8 caracteres.'); return; }
+                const escola = (document.getElementById('registerSchool')?.value || '').trim();
+                if(modoCadastro && (!nome || password.length < 8)) { showLoginMessage('Informe seu nome e uma senha de ao menos 8 caracteres.'); return; }
                 button.disabled = true; document.getElementById('loginMessage').style.display = 'none';
                 try {
-                    if(authPersona === 'familia' && modoCadastro) {
+                    if(modoCadastro) {
                         cadastroEmAndamento = true;
+                        if(authPersona === 'professor') { try { localStorage.setItem(SIGNUP_KEY, JSON.stringify({ email, nome, escola })); } catch(e) {} }
                         const credential = await createUserWithEmailAndPassword(auth, email, password);
                         await updateProfile(credential.user, { displayName: nome });
                         await sendEmailVerification(credential.user);
@@ -456,12 +490,16 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
                 } catch(error) {
                     cadastroEmAndamento = false; console.error(error);
                     const msg = error?.message?.includes('liberado') ? error.message : 'Não foi possível concluir o acesso. Confira e-mail, senha e liberação.';
-                    if(authPersona === 'familia' && modoCadastro && auth.currentUser) await signOut(auth);
+                    if(modoCadastro && auth.currentUser) await signOut(auth);
                     showLoginMessage(msg);
                 } finally { button.disabled = false; atualizarModoAuth(); }
             });
-            document.getElementById('authToggle').addEventListener('click', () => { if(authPersona !== 'familia') return; modoCadastro = !modoCadastro; atualizarModoAuth(); });
+            document.getElementById('authToggle').addEventListener('click', () => {
+                if(authPersona !== 'familia' && !plataforma.selfSignupOpen) return;
+                modoCadastro = !modoCadastro; atualizarModoAuth();
+            });
             atualizarModoAuth(); onAuthStateChanged(auth, handleAuthState);
+            carregarPlataforma();
         }
         window.sairDoSistema = () => signOut(auth);
         let authBootstrapStarted = false;
@@ -1884,6 +1922,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
             try {
                 if (id) {
                     await updateDoc(doc(db, "aulas", id), dados);
+                    if(existing && ((existing.status || 'pendente') !== dados.status || Number(existing.valor || 0) !== dados.valor)) {
+                        registrarAuditoria('aula.financeiro', { tipo: 'aula', id }, { de: { status: existing.status || 'pendente', valor: Number(existing.valor || 0) }, para: { status: dados.status, valor: dados.valor } });
+                    }
                     const aulaAtualizada = { ...existing, ...dados, id };
                     if(hasValidGoogleToken() && getConfig().googleAutoSync !== false) {
                         try { await syncAulaToGoogle(aulaAtualizada); }
@@ -2014,6 +2055,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
                     showToast('Não foi possível excluir a aula. Tente novamente.', 'error', 5000);
                     throw error;
                 });
+                registrarAuditoria('aula.excluir', { tipo: 'aula', id }, { valor: Number(aula?.valor || 0), status: aula?.status || null, start: aula?.start || null });
                 bootstrap.Modal.getInstance(document.getElementById('modalEvento')).hide();
                 showToast('Aula excluída.', 'success');
             });
@@ -2102,7 +2144,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
         window.deletarDespesa = (id) => {
             showConfirm('Excluir Despesa', 'Deseja excluir esta despesa?', async () => {
                 try {
+                    const despesaRemovida = despesas.find(item => item.id === id);
                     await deleteDoc(doc(db, "despesas", id));
+                    registrarAuditoria('despesa.excluir', { tipo: 'despesa', id }, { valor: Number(despesaRemovida?.valor || 0), data: despesaRemovida?.data || null });
                     showToast('Despesa excluída.', 'success');
                 } catch(e) { showToast('Erro ao excluir.', 'error'); }
             });
@@ -2206,7 +2250,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
                     }
 
                     let btnRecibo = isEntrada ? `<button class="btn btn-icon btn-ghost" onclick="gerarReciboUnico('${item.id}')" title="Recibo"><i class="fas fa-file-invoice" style="color:var(--info)"></i></button>` : '';
-                    let btnPix = isEntrada && item.status !== 'pago' && item.statusAula !== 'cancelada' ? `<button class="btn btn-icon btn-ghost" onclick="gerarPixParaAula('${item.id}')" title="Gerar Pix seguro"><i class="fas fa-qrcode" style="color:var(--primary)"></i></button>` : '';
+                    let btnPix = plataforma.pixAulaEnabled && isEntrada && item.status !== 'pago' && item.statusAula !== 'cancelada' ? `<button class="btn btn-icon btn-ghost" onclick="gerarPixParaAula('${item.id}')" title="Gerar Pix seguro"><i class="fas fa-qrcode" style="color:var(--primary)"></i></button>` : '';
                     let btnDelete = !isEntrada ? `<button class="btn btn-icon btn-ghost" onclick="deletarDespesa('${item.id}')" title="Excluir"><i class="fas fa-trash" style="color:var(--danger)"></i></button>` : '';
                     let btnPagamento = '';
                     if(isEntrada && item.statusAula !== 'cancelada') {
@@ -2259,6 +2303,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
                     pagoEm: nextStatus === 'pago' ? (evento.pagoEm || nowLocalISO()) : null,
                     updatedAt: nowLocalISO()
                 });
+                registrarAuditoria('aula.pagamento', { tipo: 'aula', id }, { de: evento.status || 'pendente', para: nextStatus, valor: Number(evento.valor || 0) });
                 showToast(nextStatus === 'pago' ? 'Pagamento confirmado!' : 'Pagamento marcado como pendente.', nextStatus === 'pago' ? 'success' : 'info');
             } catch(e) {
                 console.error(e);
@@ -2409,6 +2454,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
             d.autoTable({ head, body, startY: y+6, theme:'grid', styles:{fontSize:9,cellPadding:2,overflow:'linebreak'}, headStyles:{fillColor:[240,240,240],textColor:0}, columnStyles: incluirObs ? {6:{cellWidth:55}} : {} });
             pdfFooter(d);
             d.save(`relatorio_${aluno.nome}_${inicio}_a_${fim}.pdf`);
+            try { localStorage.setItem('pg_onb_relatorio', '1'); } catch(e) {}
             showToast('Relatório gerado!', 'success');
         }
 
@@ -2641,6 +2687,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
             showConfirm('Excluir aluno', `Excluir <strong>${escapeHtml(aluno.nome)}</strong>?`, async () => {
                 try {
                     await deleteDoc(doc(db, 'alunos', id));
+                    registrarAuditoria('aluno.excluir', { tipo: 'aluno', id });
                     showToast('Aluno excluído.', 'success');
                 } catch(error) {
                     console.error(error);
@@ -2707,6 +2754,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
             };
             try {
                 const efeito = await registrarPresencaComCredito(aulaId, aula.alunoId, presenca, dados);
+                if(efeito) registrarAuditoria(efeito === 'consumido' ? 'pacote.consumo' : 'pacote.estorno', { tipo: 'aula', id: aulaId }, { presenca });
                 form.reset();
                 showToast(efeito === 'consumido' ? 'Acompanhamento salvo e 1 crédito consumido.' : efeito === 'estornado' ? 'Acompanhamento salvo e 1 crédito estornado.' : 'Acompanhamento pedagógico salvo.', 'success');
             } catch(error) {
@@ -2793,6 +2841,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
                     const usado = Math.max(0, Math.min(Number(atual.creditosTotal || 0), Number(atual.creditosUsados || 0) - delta));
                     tx.update(ref, { creditosUsados: usado, updatedAt: nowLocalISO() });
                 });
+                registrarAuditoria('pacote.ajuste', { tipo: 'pacote', id }, { delta });
                 showToast(delta < 0 ? 'Crédito consumido.' : 'Crédito estornado.', 'success'); }
             catch(error) { console.error(error); showToast('Não foi possível ajustar o crédito.', 'error'); }
         };
@@ -2896,6 +2945,7 @@ ${cfg.professor}`;
                     tx.set(ref, { email, alunoId, alunoNome: aluno?.nome || '', role, organizationId: currentOrgId(), ativo:true, createdBy:usuarioAtual.uid, createdAt:nowLocalISO(), updatedAt:nowLocalISO() });
                 });
                 if(status) status.innerHTML = `<span class="text-success"><i class="fas fa-check-circle me-1"></i>Acesso liberado para ${escapeHtml(email)} como ${escapeHtml(role)}.</span>`;
+                registrarAuditoria('convite.liberar', { tipo: 'aluno', id: alunoId }, { papel: role });
                 showToast('Acesso ao portal liberado.', 'success');
             } catch(error) {
                 console.error(error);
@@ -2926,7 +2976,102 @@ ${cfg.professor}`;
         window.v4UpdateLesson = async (id, patch) => updateDoc(doc(db,'aulas',id), { ...patch, organizationId:currentOrgId(), updatedAt:nowLocalISO() });
         window.v4OpenLesson = (id) => { const a=eventos.find(x=>x.id===id); if(!a) return; const ev={id:a.id,start:parseLocalISO(a.start),end:parseLocalISO(a.end),extendedProps:{...a}}; window.abrirModalEvento?.(ev); };
         window.v4GoPedagogico = (id) => { const a=eventos.find(x=>x.id===id); window.showSection?.('pedagogico'); setTimeout(()=>{ const aluno=document.getElementById('pedAlunoFiltro'); if(aluno&&a){ aluno.value=a.alunoId; aluno.dispatchEvent(new Event('change')); } const aula=document.getElementById('pedAula'); if(aula){ aula.value=id; aula.dispatchEvent(new Event('change')); } },120); };
-        window.__gestaoV4 = { getState: () => ({ alunos:[...alunos], eventos:[...eventos], despesas:[...despesas], pacotes:[...pacotes], solicitacoes:[...solicitacoes], leads:[...leads], perfil:perfilAtual, usuario:usuarioAtual, organizationId:currentOrgId() }) };
+        // ============================
+        // V5 — PLATAFORMA, CONTA, ASSINATURA, LGPD E AUDITORIA
+        // ============================
+        async function carregarPlataforma() {
+            try {
+                const snap = await getDoc(doc(db, 'platformConfig', 'public'));
+                if(snap.exists()) {
+                    const d = snap.data();
+                    plataforma = { selfSignupOpen: d.selfSignupOpen === true, billingEnabled: d.billingEnabled === true, pixAulaEnabled: d.pixAulaEnabled === true };
+                }
+            } catch(error) { console.warn('Configuração pública da plataforma indisponível.', error?.code || error); }
+            const pedido = new URLSearchParams(location.search).get('cadastro');
+            if(pedido === 'professor' && !auth.currentUser) {
+                window.setAuthPersona('professor');
+                if(plataforma.selfSignupOpen) { modoCadastro = true; }
+                else showLoginMessage('O cadastro de novos professores ainda não está aberto. Volte em breve.');
+            }
+            atualizarModoAuth();
+            if(typeof renderFinanceiro === 'function' && usuarioAtual) renderFinanceiro();
+            document.dispatchEvent(new Event('profgestor:data'));
+        }
+
+        async function criarOrganizacaoPropria(user) {
+            let pendente = null;
+            try { pendente = JSON.parse(localStorage.getItem(SIGNUP_KEY) || 'null'); } catch(e) {}
+            const email = String(user.email || '').toLowerCase();
+            const nome = (user.displayName || pendente?.nome || email.split('@')[0]).slice(0, 120);
+            const escola = ((pendente?.email === email && pendente.escola) || `Aulas de ${nome}`).slice(0, 120);
+            const orgId = `org_${user.uid}`;
+            const batch = writeBatch(db);
+            batch.set(doc(db, 'organizations', orgId), { nome: escola, ownerUid: user.uid, createdAt: serverTimestamp(), timezone: GOOGLE_CALENDAR_TIMEZONE });
+            batch.set(doc(db, 'usuarios', user.uid), { email, nome, role: 'admin', organizationId: orgId, ativo: true, createdAt: nowLocalISO(), updatedAt: nowLocalISO() });
+            await batch.commit();
+            try { localStorage.removeItem(SIGNUP_KEY); setConfig({ ...getConfig(), professor: nome, escola }); } catch(e) {}
+        }
+
+        function acompanharOrganizacao() {
+            if(organizacaoUnsub) organizacaoUnsub();
+            const orgId = currentOrgId();
+            organizacaoUnsub = onSnapshot(doc(db, 'organizations', orgId), snap => {
+                const d = snap.exists() ? snap.data() : null;
+                const ms = v => (v && typeof v.toMillis === 'function') ? v.toMillis() : (Number(v) || 0);
+                organizacaoAtual = d ? {
+                    id: orgId, nome: d.nome || '', billingExempt: d.billingExempt === true, createdAtMs: ms(d.createdAt),
+                    entitlement: d.entitlement ? { status: d.entitlement.status || '', plan: d.entitlement.plan || null, accessUntilMs: ms(d.entitlement.accessUntil), cancelAtPeriodEnd: !!d.entitlement.cancelAtPeriodEnd, temCliente: !!d.entitlement.customerId } : null
+                } : null;
+                document.dispatchEvent(new Event('profgestor:data'));
+            }, error => { console.warn('Organização indisponível.', error?.code || error); organizacaoAtual = null; });
+        }
+
+        // Trilha de auditoria: somente inserção, sem dados pessoais nos detalhes.
+        async function registrarAuditoria(action, alvo = {}, detalhes = {}) {
+            if(!usuarioAtual) return;
+            try {
+                await addDoc(collection(db, 'auditLogs'), { organizationId: currentOrgId(), actorUid: usuarioAtual.uid, at: serverTimestamp(), action, alvo, detalhes });
+            } catch(error) { console.warn('Falha ao registrar auditoria.', error?.code || error); }
+        }
+        window.v5ListarAuditoria = async () => {
+            const snap = await getDocs(query(collection(db, 'auditLogs'), where('organizationId', '==', currentOrgId()), orderBy('at', 'desc'), limit(30)));
+            return snap.docs.map(d => { const x = d.data(); return { id: d.id, action: x.action, actorUid: x.actorUid, alvo: x.alvo || {}, detalhes: x.detalhes || {}, at: x.at?.toMillis ? x.at.toMillis() : null }; });
+        };
+
+        // Portabilidade (LGPD): exporta os dados do tenant em JSON estruturado.
+        window.v5ExportarDados = async () => {
+            const orgId = currentOrgId();
+            let convites = [];
+            try { convites = (await getDocs(query(collection(db, 'convites'), where('organizationId', '==', orgId)))).docs.map(d => ({ id: d.id, ...d.data() })); }
+            catch(error) { console.warn('Convites não exportados.', error?.code || error); }
+            const colecoes = { alunos, aulas: eventos, pacotes, despesas, leads, solicitacoes, convites };
+            const contagens = Object.fromEntries(Object.entries(colecoes).map(([k, v]) => [k, v.length]));
+            const pacote = { formato: 'profgestor-export/1', exportadoEm: new Date().toISOString(), organizationId: orgId, organizacao: organizacaoAtual ? { nome: organizacaoAtual.nome } : null, contagens, dados: colecoes };
+            const blob = new Blob([JSON.stringify(pacote, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `profgestor-export-${orgId}-${ymdLocal(new Date())}.json`;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+            registrarAuditoria('dados.exportar', { tipo: 'organizacao', id: orgId }, contagens);
+            return contagens;
+        };
+
+        // Assinatura: preço e plano são decididos no servidor; o cliente envia só o identificador.
+        const functionsBR = getFunctions(app, 'southamerica-east1');
+        if(USE_EMULATORS) connectFunctionsEmulator(functionsBR, '127.0.0.1', 5001);
+        window.v5Assinar = async (planId) => {
+            if(!plataforma.billingEnabled) throw new Error('Assinaturas ainda não estão abertas.');
+            const r = await httpsCallable(functionsBR, 'criarCheckoutAssinatura')({ planId });
+            location.assign(r.data.url);
+        };
+        window.v5GerenciarAssinatura = async () => {
+            if(!plataforma.billingEnabled) throw new Error('Assinaturas ainda não estão abertas.');
+            const r = await httpsCallable(functionsBR, 'abrirPortalAssinatura')({});
+            location.assign(r.data.url);
+        };
+
+        window.__gestaoV4 = { getState: () => ({ alunos:[...alunos], eventos:[...eventos], despesas:[...despesas], pacotes:[...pacotes], solicitacoes:[...solicitacoes], leads:[...leads], perfil:perfilAtual, usuario:usuarioAtual, organizationId:currentOrgId(), organizacao: organizacaoAtual, plataforma: { ...plataforma }, config: (() => { const c = getConfig(); return { professor: c.professor, escola: c.escola, contatoConfigurado: !!(c.whatsapp || c.email || c.pix) }; })() }) };
         window.renderCalendario = renderCalendario;
         window.renderFinanceiro = renderFinanceiro;
         window.renderAlunos = renderAlunos;
