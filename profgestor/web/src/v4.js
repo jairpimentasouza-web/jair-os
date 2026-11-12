@@ -9,7 +9,8 @@
 function addNavGroups(){
   const ul=document.querySelector('#sidebar ul'); if(!ul || ul.dataset.v4Grouped) return; ul.dataset.v4Grouped='1';
   const before=(id,label)=>{ const a=document.getElementById(id); const li=a?.closest('li'); if(!li) return; const g=document.createElement('li'); g.className='v4-nav-group'; g.textContent=label; ul.insertBefore(g,li); };
-  before('link-dashboard','Visão geral'); before('link-agenda','Operação'); before('link-financeiro','Negócio'); before('link-relatorios','Acompanhamento'); before('link-comunicacao','Comunicação');
+  // O index.html já traz os rótulos de grupo; inseri-los de novo duplicava o menu.
+  if(!ul.querySelector('.nav-group-label')) { before('link-dashboard','Visão geral'); before('link-agenda','Operação'); before('link-financeiro','Negócio'); before('link-relatorios','Acompanhamento'); before('link-comunicacao','Comunicação'); }
   const pacote=document.getElementById('link-pacotes'); if(pacote) pacote.innerHTML='<span class="nav-icon"><i class="fas fa-layer-group"></i></span> Planos e Créditos';
   const com=document.getElementById('link-comunicacao'); if(com) com.innerHTML='<span class="nav-icon"><i class="fas fa-comments"></i></span> Mensagens & Portal';
   const brand=document.querySelector('.sidebar-brand span'); if(brand) brand.textContent='ProfGestor';
