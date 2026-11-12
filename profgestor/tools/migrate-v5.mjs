@@ -91,8 +91,14 @@ export async function plan(db, { adoptOrphans = false, orgName = 'Conta original
   const org = await orgRef.get();
   if (!org.exists) {
     ops.push({ type: 'create', path: orgRef.path, data: { nome: orgName, ownerUid: owner, createdAt: '__now__', billingExempt: true, migratedFrom: 'v4', migratedAt: '__now__' } });
-  } else if (org.data().billingExempt !== true) {
-    notes.push(`${orgRef.path} já existe sem billingExempt; não será alterada automaticamente. A conta original ficará sujeita a cobrança até ajuste manual.`);
+  } else if (org.data().billingExempt !== true || !org.data().ownerUid) {
+    // Organização legada já existente (ex.: criada pelo V4 com name/plan/status): acrescenta só
+    // os campos que faltam, sem alterar os existentes.
+    const add = {};
+    if (org.data().billingExempt !== true) add.billingExempt = true;
+    if (!org.data().ownerUid) add.ownerUid = owner;
+    if (!org.data().nome && org.data().name) add.nome = String(org.data().name);
+    ops.push({ type: 'addFields', path: orgRef.path, data: add });
   }
   for (const u of users) {
     if (!hasOrg(u.data)) ops.push({ type: 'addOrg', path: u.path });
@@ -118,6 +124,12 @@ export async function apply(db, p, { backupManifest }) {
       const data = Object.fromEntries(Object.entries(op.data).map(([k, v]) => [k, v === '__now__' ? now : v]));
       const exists = (await db.doc(op.path).get()).exists;
       if (!exists) writes.push({ type: 'set', path: op.path, data });
+    } else if (op.type === 'addFields') {
+      const cur = await db.doc(op.path).get();
+      if (cur.exists) {
+        const missing = Object.fromEntries(Object.entries(op.data).filter(([k, v]) => cur.data()[k] !== v));
+        if (Object.keys(missing).length) writes.push({ type: 'update', path: op.path, data: missing });
+      }
     } else if (op.type === 'addOrg') {
       const cur = await db.doc(op.path).get();
       if (cur.exists && !hasOrg(cur.data())) writes.push({ type: 'update', path: op.path, data: { organizationId: p.legacyOrg } });
@@ -167,6 +179,11 @@ export async function rollback(db, { backupDir, mode = 'migration', apply: doApp
     for (const op of p.ops) {
       const cur = await db.doc(op.path).get();
       if (op.type === 'create' && cur.exists && !before.has(op.path)) writes.push({ type: 'delete', path: op.path });
+      if (op.type === 'addFields' && cur.exists) {
+        const antes = before.get(op.path)?.data || {};
+        const remover = Object.keys(op.data).filter((k) => !(k in antes));
+        if (remover.length) writes.push({ type: 'update', path: op.path, data: Object.fromEntries(remover.map((k) => [k, FieldValue.delete()])) });
+      }
       if (op.type === 'addOrg' && cur.exists && cur.data().organizationId === p.legacyOrg && !hasOrg(before.get(op.path)?.data || {})) {
         writes.push({ type: 'update', path: op.path, data: { organizationId: FieldValue.delete() } });
       }

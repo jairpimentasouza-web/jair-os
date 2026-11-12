@@ -144,6 +144,22 @@ describe('Migração V4 → V5', () => {
     assert.equal(digest(now.filter((r) => r.path !== 'aulas/depois')), digest(records));
   });
 
+  it('organização legada já existente (formato real de produção): acrescenta isenção e dono sem mexer no resto', async () => {
+    await db.doc('organizations/org_jair').set({ name: 'Jair Aulas', plan: 'founder', status: 'active', slug: 'jair', createdAt: '2026-09-07T05:00:00' });
+    await db.doc('usuarios/owner').update({ organizationId: 'org_jair' });
+    const { manifest, p } = await backupAndPlan();
+    assert.deepEqual(p.ops, [{ type: 'addFields', path: 'organizations/org_jair', data: { billingExempt: true, ownerUid: 'owner', nome: 'Jair Aulas' } }]);
+    await apply(db, p, { backupManifest: manifest });
+    const org = (await db.doc('organizations/org_jair').get()).data();
+    assert.deepEqual([org.billingExempt, org.ownerUid, org.nome, org.name, org.plan, org.status, org.slug], [true, 'owner', 'Jair Aulas', 'Jair Aulas', 'founder', 'active', 'jair']);
+    const { records } = await readBackup(dir);
+    assert.deepEqual(await verify(db, { backupManifest: manifest, backupRecords: records, plan: p }), { ok: true, problems: [] });
+    await assertSucceeds(addDoc(collection(ownerDb(), 'aulas'), { organizationId: 'org_jair', alunoId: 'a1', valor: 100 }));
+    await rollback(db, { backupDir: dir, apply: true });
+    const depois = (await db.doc('organizations/org_jair').get()).data();
+    assert.deepEqual(Object.keys(depois).sort(), ['createdAt', 'name', 'plan', 'slug', 'status']);
+  });
+
   it('rollback total restaura exatamente o backup', async () => {
     const { manifest, p } = await backupAndPlan();
     await apply(db, p, { backupManifest: manifest });
