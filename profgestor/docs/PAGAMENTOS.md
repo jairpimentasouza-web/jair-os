@@ -69,7 +69,7 @@ tarifas do Mercado Pago antes de fixar preços. Também confirmar a exigência d
 
 ## Pendências
 
-- Interface de assinatura no app (status do plano, botões de assinar/gerenciar) — não implementada.
+- Interface de assinatura no app: **implementada** (seção "Conta e plano"), oculta até `platformConfig/public.billingEnabled = true`.
 - Limites por plano (contador de alunos ativos mantido pelo backend).
 - Página de métricas comerciais (MRR, churn etc.) a partir de `billingEvents`/`entitlement`.
 - Emissão de nota fiscal de serviço (obrigação fiscal da empresa; fora do escopo do provedor).

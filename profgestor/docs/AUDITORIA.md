@@ -28,7 +28,7 @@ Severidade: impacto para o uso atual e para o SaaS. Probabilidade: chance de oco
 | A6 | Convite do portal com ID = e-mail (global) | Alta (SaaS) | Média | Professor B sobrescreveria convite do professor A | Regras | Mitigado nas regras; limitação: um e-mail só pode estar em um tenant |
 | A7 | `currentOrgId()` cai em `org_jair` para **qualquer** perfil sem tenant | Crítica (SaaS) | Certa em SaaS | Dados de outros professores gravados na conta do proprietário | — | Corrigido (fallback só para o admin legado) |
 | A8 | Google Calendar "desconectado": token do Google Identity Services só em memória (cai a cada recarga); Client ID no `localStorage` do navegador; escopo `calendar.events` é **sensível** (verificação do app OAuth pelo Google é exigida para uso comercial) | Média | Certa | Sincronização interrompida; inviável comercialmente como está | OAuth no servidor | Parcial: estado "reconexão necessária". Correção definitiva **pendente** |
-| A9 | Botão "Gerar Pix" chama `criarCobrancaPix`, que não está publicada (404) | Média | Certa | Recurso aparente que sempre falha | Functions | Pendente (ocultar ou publicar) |
+| A9 | Botão "Gerar Pix" chama `criarCobrancaPix`, que não está publicada (404) | Média | Certa | Recurso aparente que sempre falha | Functions | Corrigido: botão oculto até `pixAulaEnabled`; backend pendente |
 | A10 | Listeners carregam **coleções inteiras** do tenant a cada abertura, sem paginação nem cache persistente | Média | Certa | Leituras crescem com o histórico (custo e lentidão) | — | Pendente (ver CUSTOS.md) |
 | A11 | Data "hoje" calculada em UTC no `v4.js` | Baixa | Certa após 21h | Indicador do dia errado à noite | — | Corrigido |
 | A12 | Rewrite catch-all do Hosting responde 200 com HTML para arquivos ausentes | Média | — | Mascarou A1 | — | Corrigido no `firebase.json` proposto |
@@ -40,6 +40,7 @@ Severidade: impacto para o uso atual e para o SaaS. Probabilidade: chance de oco
 | A18 | Scripts de CDN sem SRI; Firebase SDK 9.22 (2023) | Média | Baixa | Cadeia de suprimentos | — | Pendente |
 | A19 | Agente externo (Jair OS) grava em produção pelo Admin SDK; documentos sem `organizationId` ficam invisíveis no app | Info | — | Registros "fantasmas" | — | Inventário da migração detecta |
 | A20 | `jair-os` é **público**: ao mesclar, o código do SaaS fica público | Decisão | — | Exposição de propriedade intelectual (não há segredos no código) | Proprietário | Decisão pendente |
+| A22 | Rótulos do menu lateral **duplicados** em todos os grupos (o `v4.js` inseria rótulos sobre os já existentes no HTML); marca "ProfGestorV4" colada | Baixa | Certa | Aparência pouco profissional | — | Corrigido (encontrado nas capturas de tela) |
 | A21 | Dependências das Functions: 6 vulnerabilidades **moderadas** em `rimraf→glob→minimatch` (ferramental interno do `google-gax`), sem caminho a partir do código da aplicação | Baixa | Baixa | — | Upstream | Aceito e monitorado (CI falha em alta/crítica) |
 
 ## Pontos fortes preservados

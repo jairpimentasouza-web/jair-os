@@ -280,7 +280,7 @@ describe('Mercado Pago (adaptador alternativo, validador oficial do SDK)', () =>
   });
   it('assinatura inválida ou replay antigo → 401', async () => {
     pre('PRE_ABC');
-    assert.equal((await call('subscription_preapproval', 'PRE_ABC', { sig: mpSign('PRE_ABC', 'req-1').replace(/v1=./, 'v1=0') })).status, 401);
+    assert.equal((await call('subscription_preapproval', 'PRE_ABC', { sig: mpSign('PRE_ABC', 'req-1').replace(/.$/, (c) => (c === '0' ? '1' : '0')) })).status, 401);
     assert.equal((await call('subscription_preapproval', 'PRE_ABC', { sig: mpSign('PRE_ABC', 'req-1', Math.floor(Date.now() / 1000) - 3600) })).status, 401);
     assert.equal((await call('subscription_preapproval', 'PRE_ABC', { sig: '' })).status, 401);
   });

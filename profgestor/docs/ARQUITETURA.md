@@ -34,7 +34,7 @@ alunos | aulas | pacotes | despesas | leads | solicitacoes | materiais | convite
                           organizationId (chave do tenant), alunoId (quando aplicável)
 auditLogs/{id}            organizationId, actorUid, at (servidor), action — só inserção
 billingEvents/{id}*       registro de idempotência (sem dados pessoais)
-platformConfig/public*    selfSignupOpen (feature flag do cadastro self-service)
+platformConfig/public*    selfSignupOpen, billingEnabled, pixAulaEnabled (feature flags lidas pelo app)
 platformAdmins/{uid}*     administração comercial da plataforma
 platformMigrations/{id}*  registro das migrações aplicadas
 * gravado somente pelo backend (Admin SDK); o cliente nunca escreve

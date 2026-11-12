@@ -12,6 +12,7 @@
 
 Consequência prática: o ProfGestor precisa de **contrato de operador (DPA)** com cada
 assinante, termos de uso e política de privacidade próprios, e lista pública de suboperadores.
+Minutas dos três documentos: [docs/legal/](legal/).
 
 ## Inventário de dados
 
@@ -38,7 +39,7 @@ Não há dados de cartão no ProfGestor (checkout hospedado pelo provedor).
 
 | Direito | Situação |
 |---|---|
-| Acesso / portabilidade | Leitura permitida mesmo após vencimento da assinatura; **exportação estruturada (JSON/CSV) pelo app: pendente** |
+| Acesso / portabilidade | Leitura permitida mesmo após o vencimento; **exportação completa em JSON pelo app** (Conta e plano), testada no E2E |
 | Eliminação | Exclusão permitida pelas regras mesmo após vencimento; **exclusão em cascata da conta do professor (dados + Auth): pendente** |
 | Correção | Edição pela equipe do tenant |
 | Revogação de acesso da família | Admin do tenant desativa o perfil (`ativo: false`) — testado |
@@ -46,7 +47,8 @@ Não há dados de cartão no ProfGestor (checkout hospedado pelo provedor).
 ## Segurança aplicada
 
 Isolamento por tenant nas regras (testes negativos), menor privilégio por papel, auditoria
-somente-inserção (`auditLogs`), webhooks autenticados, segredos fora do código (Secret Manager),
+somente-inserção (`auditLogs`, gravada pelo app em pagamentos, valores, exclusões, créditos,
+convites e exportações), webhooks autenticados, segredos fora do código (Secret Manager),
 backups verificáveis. **Pendente**: política de retenção configurável, registro de acessos
 excepcionais do suporte, plano de resposta a incidentes formalizado (comunicação à ANPD e aos
 titulares), revisão de logs para não conter dados pessoais.
