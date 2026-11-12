@@ -2764,8 +2764,10 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
         };
 
         // Regra de negócio explícita: presenças que consomem crédito de pacote.
-        // Decisão pendente do proprietário: incluir 'falta_cobrada'? (V4 consumia apenas em 'presente').
-        const PRESENCAS_QUE_CONSOMEM_CREDITO = ['presente'];
+        // Configurável por conta (Conta e plano › Regras de pacotes). Padrão = comportamento V4: só a presença consome.
+        function presencasQueConsomemCredito() {
+            return organizacaoAtual?.settings?.faltaCobradaConsomeCredito === true ? ['presente', 'falta_cobrada'] : ['presente'];
+        }
         async function registrarPresencaComCredito(aulaId, alunoId, presenca, dados) {
             const hoje = ymdLocal(new Date());
             const candidato = pacotes.filter(p => p.alunoId === alunoId && pacoteValido(p))
@@ -2775,7 +2777,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
                 const aulaSnap = await tx.get(aulaRef);
                 if(!aulaSnap.exists()) throw new Error('Aula não encontrada.');
                 const consumidoEm = aulaSnap.data().creditoConsumidoPacoteId || null;
-                const consome = PRESENCAS_QUE_CONSOMEM_CREDITO.includes(presenca);
+                const consome = presencasQueConsomemCredito().includes(presenca);
                 const patch = { ...dados };
                 let efeito = null;
                 if(consome && !consumidoEm && candidato) {
@@ -3020,6 +3022,7 @@ ${cfg.professor}`;
                 const ms = v => (v && typeof v.toMillis === 'function') ? v.toMillis() : (Number(v) || 0);
                 organizacaoAtual = d ? {
                     id: orgId, nome: d.nome || '', billingExempt: d.billingExempt === true, createdAtMs: ms(d.createdAt),
+                    settings: { faltaCobradaConsomeCredito: d.settings?.faltaCobradaConsomeCredito === true },
                     entitlement: d.entitlement ? { status: d.entitlement.status || '', plan: d.entitlement.plan || null, accessUntilMs: ms(d.entitlement.accessUntil), cancelAtPeriodEnd: !!d.entitlement.cancelAtPeriodEnd, temCliente: !!d.entitlement.customerId } : null
                 } : null;
                 document.dispatchEvent(new Event('profgestor:data'));
@@ -3033,6 +3036,10 @@ ${cfg.professor}`;
                 await addDoc(collection(db, 'auditLogs'), { organizationId: currentOrgId(), actorUid: usuarioAtual.uid, at: serverTimestamp(), action, alvo, detalhes });
             } catch(error) { console.warn('Falha ao registrar auditoria.', error?.code || error); }
         }
+        window.v5SalvarRegraCredito = async (consome) => {
+            await updateDoc(doc(db, 'organizations', currentOrgId()), { 'settings.faltaCobradaConsomeCredito': !!consome, updatedAt: nowLocalISO() });
+            registrarAuditoria('regra.credito', { tipo: 'organizacao', id: currentOrgId() }, { faltaCobradaConsome: !!consome });
+        };
         window.v5ListarAuditoria = async () => {
             const snap = await getDocs(query(collection(db, 'auditLogs'), where('organizationId', '==', currentOrgId()), orderBy('at', 'desc'), limit(30)));
             return snap.docs.map(d => { const x = d.data(); return { id: d.id, action: x.action, actorUid: x.actorUid, alvo: x.alvo || {}, detalhes: x.detalhes || {}, at: x.at?.toMillis ? x.at.toMillis() : null }; });

@@ -275,6 +275,14 @@
       linhas.push('<button type="button" class="btn btn-outline-primary btn-sm" data-pg-action="portal"><i class="fas fa-credit-card me-1"></i>Gerenciar assinatura</button>');
     }
     box.innerHTML = linhas.join('');
+    var regra = document.getElementById('v5RegraFaltaCobrada');
+    if (regra) {
+      regra.checked = !!(org && org.settings && org.settings.faltaCobradaConsomeCredito);
+      regra.disabled = !org || !st.perfil || st.perfil.role !== 'admin';
+      var info = document.getElementById('v5RegraFaltaInfo');
+      if (info) info.textContent = (regra.checked ? 'Ligado: presença e falta cobrada consomem crédito.' : 'Desligado: só a presença consome crédito.') +
+        (regra.disabled ? ' Somente o administrador da conta altera esta regra.' : ' A regra vale para os próximos registros; registros anteriores não são alterados.');
+    }
     var podeAssinar = !!plat.billingEnabled && d.tipo !== 'isenta' && d.tipo !== 'legado' && st.perfil && st.perfil.role === 'admin' && d.tipo !== 'assinante' && d.tipo !== 'pagamento_pendente';
     planos.innerHTML = '<div class="v5-plans">' + PLANOS.map(function (p) {
       var atual = d.plano === p.id && (d.tipo === 'assinante' || d.tipo === 'pagamento_pendente');
@@ -290,7 +298,7 @@
     'aula.pagamento': 'Pagamento de aula', 'aula.financeiro': 'Valor/status de aula alterado', 'aula.excluir': 'Aula excluída',
     'despesa.excluir': 'Despesa excluída', 'aluno.excluir': 'Aluno excluído', 'pacote.ajuste': 'Ajuste manual de crédito',
     'pacote.consumo': 'Crédito consumido', 'pacote.estorno': 'Crédito estornado', 'convite.liberar': 'Acesso ao portal liberado',
-    'dados.exportar': 'Exportação de dados'
+    'dados.exportar': 'Exportação de dados', 'regra.credito': 'Regra de pacotes alterada'
   };
   function detalheAuditoria(e) {
     var d = e.detalhes || {};
@@ -299,6 +307,7 @@
     if (e.action === 'aula.excluir' || e.action === 'despesa.excluir') return money(d.valor);
     if (e.action === 'pacote.ajuste') return (num(d.delta) < 0 ? 'consumo manual' : 'estorno manual');
     if (e.action === 'convite.liberar') return 'como ' + (d.papel || '');
+    if (e.action === 'regra.credito') return d.faltaCobradaConsome ? 'falta cobrada consome crédito' : 'só presença consome crédito';
     if (e.action === 'dados.exportar') return Object.keys(d).map(function (k) { return k + ': ' + d[k]; }).join(', ');
     return '';
   }
@@ -354,6 +363,13 @@
     }
   });
   document.addEventListener('change', function (ev) {
+    if (ev.target && ev.target.id === 'v5RegraFaltaCobrada' && window.v5SalvarRegraCredito) {
+      var chk = ev.target; chk.disabled = true;
+      window.v5SalvarRegraCredito(chk.checked).then(function () { toast('Regra de pacotes atualizada.', 'success'); })
+        .catch(function (e) { console.error(e); chk.checked = !chk.checked; toast('Não foi possível alterar a regra.', 'error'); })
+        .then(function () { chk.disabled = false; });
+      return;
+    }
     var sel = ev.target;
     if (!sel || sel.getAttribute('data-pg-action') !== 'etapa' || !window.v4UpdateLead) return;
     window.v4UpdateLead(sel.getAttribute('data-id'), { etapa: sel.value })

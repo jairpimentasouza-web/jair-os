@@ -160,6 +160,31 @@ describe('ProfGestor V5 — fluxos reais no navegador (emuladores)', () => {
     await ctx.close();
   });
 
+  it('regra configurável: com o interruptor ligado, falta cobrada também consome crédito', async () => {
+    const { ctx, page } = await login('prof.a@example.com');
+    await page.waitForSelector('#authGate', { state: 'hidden', timeout: 20000 });
+    await page.waitForFunction(() => window.__gestaoV4?.getState().pacotes.length === 1);
+    await page.evaluate(() => window.showSection('conta'));
+    await page.waitForSelector('#v5RegraFaltaCobrada:not([disabled])');
+    assert.equal(await page.isChecked('#v5RegraFaltaCobrada'), false);
+    await page.click('label[for=v5RegraFaltaCobrada]');
+    await eventually(async () => (await db.doc('organizations/org_a').get()).data().settings?.faltaCobradaConsomeCredito === true);
+    await page.waitForFunction(() => window.__gestaoV4.getState().organizacao?.settings?.faltaCobradaConsomeCredito === true);
+    const antes = (await db.doc('pacotes/pacA1').get()).data().creditosUsados;
+    await page.evaluate(async () => {
+      window.showSection('pedagogico');
+      const sel = document.getElementById('pedAula');
+      if (![...sel.options].some((o) => o.value === 'atrasada')) sel.add(new Option('atrasada', 'atrasada'));
+      sel.value = 'atrasada';
+      document.getElementById('pedPresenca').value = 'falta_cobrada';
+      document.getElementById('pedConteudo').value = 'Aluno faltou; aula cobrada';
+      await window.salvarRegistroPedagogico();
+    });
+    await eventually(async () => (await db.doc('pacotes/pacA1').get()).data().creditosUsados === antes + 1);
+    assert.equal((await db.doc('aulas/atrasada').get()).data().creditoConsumidoPacoteId, 'pacA1');
+    await ctx.close();
+  });
+
   it('professor B vê apenas o próprio tenant', async () => {
     const { ctx, page } = await login('prof.b@example.com');
     await page.waitForSelector('#wrapper', { state: 'visible' });

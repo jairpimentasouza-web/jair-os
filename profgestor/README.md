@@ -3,7 +3,7 @@
 Gestão de aulas particulares (agenda, alunos, financeiro, pacotes, CRM, acompanhamento
 pedagógico, portal da família) evoluindo do V4 pessoal para um SaaS multitenant.
 
-**Estado:** não publicado. 115 testes automatizados aprovados em emulador local. Ver [docs/STATUS.md](docs/STATUS.md).
+**Estado:** não publicado. 116 testes automatizados aprovados em emulador local. Ver [docs/STATUS.md](docs/STATUS.md).
 
 ## Estrutura
 

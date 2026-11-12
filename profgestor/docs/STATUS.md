@@ -6,8 +6,8 @@ sessão não tem credenciais de produção. Tudo o que foi testado rodou em **em
 (Firebase Emulator + Chromium), por isso nenhum item aparece como "verificado em homologação"
 ou "em produção".
 
-**Testes automatizados: 115, todos aprovados** — 9 unitários, 85 no emulador (43 regras do
-Firestore, 6 do Storage, 9 de migração, 27 de cobrança) e 21 E2E no Chromium.
+**Testes automatizados: 116, todos aprovados** — 9 unitários, 85 no emulador (43 regras do
+Firestore, 6 do Storage, 9 de migração, 27 de cobrança) e 22 E2E no Chromium.
 
 ## Entregas
 
@@ -27,6 +27,7 @@ Firestore, 6 do Storage, 9 de migração, 27 de cobrança) e 21 E2E no Chromium.
 | Exportação de dados (LGPD) | Implementado, aguardando teste | E2E com conferência de contagens |
 | Trilha de auditoria (pagamentos, valores, exclusões, créditos, convites) | Implementado, aguardando teste | E2E + teste de regra da consulta |
 | Pix de aula oculto até existir backend | Implementado, aguardando teste | E2E |
+| Regra "falta cobrada consome crédito" configurável por conta (padrão: desligada, como no V4) | Implementado, aguardando teste | E2E com o interruptor ligado |
 | Site comercial | Implementado, aguardando publicação | `site/index.html`; capturas reais com dados fictícios |
 | Minutas de termos, privacidade e contrato de operador | Pendente de revisão jurídica | `docs/legal/` |
 | CI | Implementado, aguardando primeira execução | `.github/workflows/profgestor-ci.yml` |
@@ -83,7 +84,7 @@ Comandos em `profgestor/`: `npm test` (unitário + emulador) e `npm run test:e2e
 | Financeiro consistente | Sim, no emulador |
 | Relatórios corretos | Parcial — PDF gerado; conteúdo não conferido por pessoa |
 | Backup e restauração testados | Sim, no emulador |
-| Testes automatizados passando | Sim (115) |
+| Testes automatizados passando | Sim (116) |
 | Monitoramento de falhas | Não |
 | Privacidade/contratos para revisão | Sim — minutas prontas para o advogado |
 | Sem vulnerabilidade crítica/alta conhecida sem mitigação | **Não** — A4: regras de produção não verificadas |
