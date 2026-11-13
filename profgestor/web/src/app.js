@@ -8,7 +8,10 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
         // Homologação local: em localhost com ?emulator=1 o app usa os emuladores e um projeto "demo-",
         // que o Firebase garante não corresponder a nenhum recurso real. Produção nunca é contatada.
         const USE_EMULATORS = ['localhost', '127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).has('emulator');
-        const firebaseConfig = USE_EMULATORS ? { apiKey: 'demo-key', authDomain: 'demo-profgestor.firebaseapp.com', projectId: 'demo-profgestor', appId: '1:000000000000:web:demo' } : {
+        // Configuração de produção, usada como reserva. Publicado no Firebase Hosting, o app lê a
+        // configuração do próprio projeto em /__/firebase/init.json, então o mesmo código roda em
+        // produção e em homologação sem alteração.
+        const PRODUCAO_CONFIG = {
           apiKey: "AIzaSyBA6M3uG6oqFmS8NEzoltlEqVwMnmXv13M",
           authDomain: "gestao-aulas-jair.firebaseapp.com",
           projectId: "gestao-aulas-jair",
@@ -17,6 +20,27 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
           appId: "1:597994541414:web:a57f2851372e4592f438a7",
           measurementId: "G-RZ0HZ8E1K0"
         };
+        async function configuracaoDoProjeto() {
+            if(USE_EMULATORS) return { apiKey: 'demo-key', authDomain: 'demo-profgestor.firebaseapp.com', projectId: 'demo-profgestor', appId: '1:000000000000:web:demo' };
+            try {
+                const r = await fetch('/__/firebase/init.json', { cache: 'no-store' });
+                if(r.ok) { const c = await r.json(); if(c && c.projectId && c.apiKey) return c; }
+            } catch(e) { /* fora do Firebase Hosting: usa a configuração de produção */ }
+            return PRODUCAO_CONFIG;
+        }
+        const firebaseConfig = await configuracaoDoProjeto();
+        if(!USE_EMULATORS && firebaseConfig.projectId !== PRODUCAO_CONFIG.projectId) {
+            document.title = '[HOMOLOGAÇÃO] ' + document.title;
+            const mostrarAviso = () => {
+                const aviso = document.createElement('div');
+                aviso.textContent = `Ambiente de homologação (${firebaseConfig.projectId}) — não é produção.`;
+                aviso.setAttribute('role', 'status');
+                aviso.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#92400e;color:#fff;text-align:center;font:600 13px/1.4 system-ui;padding:6px';
+                document.body.appendChild(aviso);
+            };
+            // Com await no topo do módulo, o DOMContentLoaded pode já ter ocorrido.
+            if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mostrarAviso, { once: true }); else mostrarAviso();
+        }
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
