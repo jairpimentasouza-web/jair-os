@@ -4,6 +4,7 @@
 //   node tools/homologacao.mjs copiar   --backup DIR --para PROJETO [--apply]
 //   node tools/homologacao.mjs conta    --para PROJETO --uid UID --email EMAIL --saida ARQUIVO
 //   node tools/homologacao.mjs criar-banco --para PROJETO [--local southamerica-east1]
+//   node tools/homologacao.mjs limpar   --para PROJETO --confirmar PROJETO --backup-antigo DIR
 //   node tools/homologacao.mjs verificar --para PROJETO --credencial ARQUIVO --saida ARQUIVO
 //
 // Credenciais do Admin SDK: GOOGLE_APPLICATION_CREDENTIALS (ADC).
@@ -12,7 +13,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
-import { readBackup, decode, commitInChunks } from './lib/firestore-io.mjs';
+import { readBackup, decode, commitInChunks, exportAll, writeBackup } from './lib/firestore-io.mjs';
 
 const PRODUCAO = 'gestao-aulas-jair';
 const a = {}; const argv = process.argv.slice(2); const cmd = argv[0];
@@ -86,6 +87,22 @@ async function verificar() {
   return r;
 }
 
-const run = { copiar, conta, 'criar-banco': criarBanco, verificar }[cmd];
+// Esvazia um projeto reaproveitado como homologação, guardando antes um backup do conteúdo antigo.
+async function limpar() {
+  if (a.confirmar !== a.para) throw new Error('Repita o nome do projeto em --confirmar para apagar.');
+  if (!a['backup-antigo']) throw new Error('--backup-antigo DIR obrigatório.');
+  initializeApp({ projectId: a.para });
+  const db = getFirestore(); const auth = getAuth();
+  const registros = await exportAll(db);
+  const manifest = await writeBackup(a['backup-antigo'], registros, { projectId: a.para, conteudoAntigo: true });
+  const contas = (await auth.listUsers(1000)).users;
+  await writeFile(`${a['backup-antigo']}/contas.json`, JSON.stringify(contas.map((u) => ({ uid: u.uid, email: u.email, criado: u.metadata.creationTime })), null, 2));
+  await commitInChunks(db, [...registros].reverse().map((r) => ({ type: 'delete', path: r.path })));
+  if (contas.length) await auth.deleteUsers(contas.map((u) => u.uid));
+  const sobra = await exportAll(db);
+  return { documentosApagados: registros.length, contasApagadas: contas.length, backupAntigo: manifest.sha256, documentosRestantes: sobra.length };
+}
+
+const run = { copiar, conta, 'criar-banco': criarBanco, verificar, limpar }[cmd];
 if (!run) { console.error(`Comando desconhecido: ${cmd}`); process.exit(2); }
 run().then((r) => console.log(JSON.stringify(r, null, 2))).catch((e) => { console.error('FALHA', e.message); process.exit(1); });
