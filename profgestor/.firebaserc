@@ -1,6 +1,6 @@
 {
   "projects": {
     "production": "gestao-aulas-jair",
-    "staging": "SUBSTITUIR-pelo-projeto-de-homologacao"
+    "staging": "gestao-pro-b85bf"
   }
 }

@@ -9,6 +9,26 @@ ou "em produção".
 **Testes automatizados: 116, todos aprovados** — 9 unitários, 85 no emulador (43 regras do
 Firestore, 6 do Storage, 9 de migração, 27 de cobrança) e 22 E2E no Chromium.
 
+## Homologação real — 13/11/2026 (gestao-pro-b85bf)
+
+Projeto antigo sem uso reaproveitado, com aprovação do proprietário: conteúdo anterior salvo em
+backup no Asus e removido. Executado a partir do Asus com o login do proprietário.
+
+| Etapa | Resultado |
+|---|---|
+| Backup de produção (somente leitura) | 379 documentos, SHA-256 `436c7db8…`, idêntico em duas coletas |
+| Cópia para a homologação | 379 documentos, mesmo SHA-256 |
+| Migração (plano → aplicação → verificação) | 1 operação: `billingExempt`, `ownerUid` e `nome` em `org_jair`; verificação sem problemas |
+| Publicação das regras V5 e do app | Concluída — https://gestao-pro-b85bf.web.app |
+| Proprietário lê e grava com as regras V5 | ✅ 23 alunos, 349 aulas, 1 pacote, 1 despesa; gravação e exclusão de aula de teste |
+| Conta nova tenta virar admin / ler alunos / recriar `sistema` | ✅ 403 em todas |
+| App no navegador (sem login) | ✅ carrega, sem erros de JavaScript, aviso de homologação visível |
+
+## Correção emergencial em produção — 12/11/2026
+
+Brecha crítica A23 (autocadastro de administrador) mitigada criando `sistema/configuracao`
+com o uid do proprietário. Nenhum outro dado de produção foi alterado.
+
 ## Entregas
 
 | Item | Estado | Evidência |
@@ -31,9 +51,9 @@ Firestore, 6 do Storage, 9 de migração, 27 de cobrança) e 22 E2E no Chromium.
 | Site comercial | Implementado, aguardando publicação | `site/index.html`; capturas reais com dados fictícios |
 | Minutas de termos, privacidade e contrato de operador | Pendente de revisão jurídica | `docs/legal/` |
 | CI | Implementado, aguardando primeira execução | `.github/workflows/profgestor-ci.yml` |
-| Regras atuais de produção | **Bloqueado** | sem credenciais do projeto |
+| Regras atuais de produção | Analisadas | `docs/evidencias/`; brecha A23 mitigada |
 | Publicação de qualquer item em produção | **Bloqueado** | sem credenciais; exige sua autorização |
-| Projeto de homologação | Pendente | criar projeto Firebase separado |
+| Projeto de homologação | **Verificado em homologação** | gestao-pro-b85bf (ver seção acima) |
 | Google Agenda com OAuth no servidor | Pendente | app indica "reconexão necessária" |
 | Cobrança Pix das aulas | Pendente | função não existe em produção |
 | Paginação/cache de leituras | Pendente | ver CUSTOS.md |
@@ -74,7 +94,7 @@ Comandos em `profgestor/`: `npm test` (unitário + emulador) e `npm run test:e2e
 |---|---|
 | Multiusuário funcionando | Parcial — pronto e testado; não publicado |
 | Isolamento de tenants aprovado | Sim, no emulador |
-| Migração validada | Não — falta ensaio com cópia real em homologação |
+| Migração validada | Sim — ensaio com cópia real em homologação |
 | Cobrança recorrente em ambiente de teste | Não — código testado com SDK oficial; falta conta Stripe de teste |
 | Webhooks seguros e idempotentes | Sim, no emulador |
 | Agenda sem conflitos indevidos | Sim, no emulador (sem Google) |
@@ -87,7 +107,7 @@ Comandos em `profgestor/`: `npm test` (unitário + emulador) e `npm run test:e2e
 | Testes automatizados passando | Sim (116) |
 | Monitoramento de falhas | Não |
 | Privacidade/contratos para revisão | Sim — minutas prontas para o advogado |
-| Sem vulnerabilidade crítica/alta conhecida sem mitigação | **Não** — A4: regras de produção não verificadas |
+| Sem vulnerabilidade crítica/alta conhecida sem mitigação | Sim — A23 mitigada; correção definitiva com a publicação das regras V5 |
 | Custos compatíveis com o preço | Sim, por estimativa |
 | Aprovação do responsável | Pendente |
 
