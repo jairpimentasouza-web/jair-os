@@ -9,7 +9,7 @@
 // Credenciais do Admin SDK: GOOGLE_APPLICATION_CREDENTIALS (ADC).
 import { randomBytes } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
-import { initializeApp } from 'firebase-admin/app';
+import { initializeApp, applicationDefault } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { readBackup, decode, commitInChunks } from './lib/firestore-io.mjs';
@@ -42,8 +42,7 @@ async function conta() {
 }
 
 async function criarBanco() {
-  initializeApp({ projectId: a.para });
-  const token = (await (await import('firebase-admin/app')).getApp().options.credential.getAccessToken()).access_token;
+  const token = (await applicationDefault().getAccessToken()).access_token;
   const r = await fetch(`https://firestore.googleapis.com/v1/projects/${a.para}/databases?databaseId=(default)`, {
     method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'x-goog-user-project': a.para },
     body: JSON.stringify({ type: 'FIRESTORE_NATIVE', locationId: a.local || 'southamerica-east1' }),
