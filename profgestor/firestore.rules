@@ -1,0 +1,272 @@
+rules_version = '2';
+
+// ProfGestor V5 — regras multitenant.
+//
+// Modelo: coleções planas com a chave de tenant `organizationId` em cada documento
+// (compatível com as consultas do cliente V4, que já filtram por organizationId).
+// Identidade e papel vêm de usuarios/{uid}; nada que o cliente envia é confiado para
+// decidir tenant ou papel.
+//
+// Papéis:
+//   admin, professor  → equipe que gerencia o tenant (CRUD)
+//   colaborador       → equipe somente leitura (até haver necessidade validada)
+//   aluno, responsavel→ portal da família, restrito ao próprio alunoId
+//   platformAdmins/{uid} → administração comercial do SaaS; NÃO recebe acesso ao
+//                          conteúdo dos tenants (alunos, aulas, financeiro).
+//
+// Direito de uso: escrita em dados do tenant exige organização isenta, em teste
+// (14 dias a partir de createdAt) ou com assinatura confirmada pelo backend.
+// Leitura e exclusão continuam permitidas após o vencimento (exportação e
+// eliminação de dados pelo titular).
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- identidade ----------
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+    function emailVerified() { return signedIn() && request.auth.token.email_verified == true; }
+    function profilePath(u) { return /databases/$(database)/documents/usuarios/$(u); }
+    function hasProfile() { return signedIn() && exists(profilePath(uid())); }
+    function me() { return get(profilePath(uid())).data; }
+    function active() { return hasProfile() && me().get('ativo', false) == true; }
+    function myOrg() { return me().get('organizationId', ''); }
+    function myRole() { return me().get('role', ''); }
+
+    function isStaffOf(org) {
+      return active() && org is string && org != '' && myOrg() == org
+        && myRole() in ['admin', 'professor', 'colaborador'];
+    }
+    function canManage(org) { return isStaffOf(org) && myRole() in ['admin', 'professor']; }
+    function isOrgAdmin(org) { return isStaffOf(org) && myRole() == 'admin'; }
+    function isFamily() { return active() && myRole() in ['aluno', 'responsavel']; }
+    function familyOwns(data) {
+      return isFamily() && data.get('organizationId', '') == myOrg()
+        && data.get('alunoId', '') == me().get('alunoId', '#');
+    }
+    function isPlatformAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/platformAdmins/$(uid()));
+    }
+
+    // ---------- direito de uso (assinatura) ----------
+    function orgPath(org) { return /databases/$(database)/documents/organizations/$(org); }
+    function orgWritable(org) {
+      let o = get(orgPath(org)).data;
+      let ent = o.get('entitlement', {});
+      return o.get('billingExempt', false) == true
+        || (o.get('createdAt', null) is timestamp
+            && request.time < o.createdAt + duration.value(14, 'd'))
+        || (ent.get('status', '') in ['active', 'past_due']
+            && ent.get('accessUntil', null) is timestamp
+            && request.time < ent.accessUntil);
+    }
+
+    // ---------- utilidades de validação ----------
+    function incoming() { return request.resource.data; }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+    function orgUnchanged() { return incoming().get('organizationId', '') == resource.data.get('organizationId', ''); }
+    function optNumber(field) {
+      return !(field in incoming()) || incoming()[field] == null || incoming()[field] is number;
+    }
+    function changedNumber(field) {
+      return !(field in changed()) || incoming()[field] == null || incoming()[field] is number;
+    }
+    function smallDoc() { return incoming().keys().size() <= 80; }
+
+    // Regra genérica para coleções do tenant geridas pela equipe.
+    function staffCreate() {
+      return canManage(incoming().get('organizationId', '')) && smallDoc()
+        && orgWritable(incoming().organizationId);
+    }
+    function staffUpdate() {
+      return canManage(resource.data.get('organizationId', '')) && orgUnchanged() && smallDoc()
+        && orgWritable(resource.data.organizationId);
+    }
+    function staffDelete() { return canManage(resource.data.get('organizationId', '')); }
+    function staffRead() { return isStaffOf(resource.data.get('organizationId', '')); }
+
+    // ================= perfis =================
+    match /usuarios/{userId} {
+      allow get: if signedIn() && (userId == uid()
+        || isOrgAdmin(resource.data.get('organizationId', '')));
+      allow list: if isOrgAdmin(resource.data.get('organizationId', ''));
+
+      // (a) Ativação do portal da família a partir de convite válido, com e-mail verificado.
+      // (b) Cadastro self-service de professor, criando a própria organização no mesmo lote.
+      allow create: if signedIn() && userId == uid() && emailVerified()
+        && incoming().email == request.auth.token.email
+        && incoming().ativo == true
+        && incoming().keys().hasOnly(['email', 'nome', 'role', 'alunoId', 'organizationId', 'ativo', 'createdAt', 'updatedAt'])
+        && (familyActivation() || teacherSelfSignup());
+
+      // O próprio usuário só altera o nome; o admin do tenant só ativa/desativa a família.
+      allow update: if signedIn() && (
+          (userId == uid() && changed().hasOnly(['nome', 'updatedAt']))
+          || (isOrgAdmin(resource.data.get('organizationId', ''))
+              && resource.data.get('role', '') in ['aluno', 'responsavel']
+              && changed().hasOnly(['ativo', 'updatedAt'])
+              && incoming().ativo is bool));
+      allow delete: if false;
+    }
+
+    function invitePath() {
+      return /databases/$(database)/documents/convites/$(request.auth.token.email);
+    }
+    function familyActivation() {
+      let inv = get(invitePath()).data;
+      return exists(invitePath())
+        && inv.get('ativo', false) == true
+        && inv.role in ['aluno', 'responsavel']
+        && incoming().role == inv.role
+        && incoming().alunoId == inv.alunoId
+        && incoming().organizationId == inv.organizationId;
+    }
+    function teacherSelfSignup() {
+      let cfg = /databases/$(database)/documents/platformConfig/public;
+      let newOrg = 'org_' + uid();
+      return exists(cfg) && get(cfg).data.get('selfSignupOpen', false) == true
+        && incoming().role == 'admin'
+        && incoming().organizationId == newOrg
+        && !('alunoId' in incoming())
+        && getAfter(orgPath(newOrg)).data.ownerUid == uid();
+    }
+
+    // ================= organizações (tenants) =================
+    match /organizations/{orgId} {
+      allow get: if isStaffOf(orgId) || isPlatformAdmin();
+      allow list: if isPlatformAdmin();
+
+      // Somente via cadastro self-service: org_{uid}, dono = próprio usuário, sem campos de cobrança.
+      allow create: if emailVerified() && orgId == 'org_' + uid()
+        && !exists(profilePath(uid()))
+        && incoming().keys().hasOnly(['nome', 'ownerUid', 'createdAt', 'timezone', 'settings'])
+        && incoming().ownerUid == uid()
+        && incoming().createdAt == request.time
+        && incoming().nome is string && incoming().nome.size() > 0 && incoming().nome.size() <= 120
+        && getAfter(profilePath(uid())).data.organizationId == orgId;
+
+      // Cobrança (billingExempt, entitlement), dono e data de criação só o backend altera.
+      allow update: if isOrgAdmin(orgId)
+        && changed().hasOnly(['nome', 'timezone', 'settings', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    // ================= convites do portal da família =================
+    // ID = e-mail em minúsculas. Um e-mail pertence a um único tenant por vez (limitação
+    // documentada; a V5 multi-organização substitui por memberships).
+    match /convites/{email} {
+      allow get: if (emailVerified() && request.auth.token.email == email)
+        || staffRead();
+      allow list: if staffRead();
+      allow create: if canManage(incoming().get('organizationId', '')) && validInvite(email)
+        && orgWritable(incoming().organizationId);
+      allow update: if canManage(resource.data.get('organizationId', '')) && orgUnchanged()
+        && validInvite(email);
+      allow delete: if staffDelete();
+    }
+    function validInvite(email) {
+      let aluno = /databases/$(database)/documents/alunos/$(incoming().alunoId);
+      return incoming().email == email
+        && incoming().role in ['aluno', 'responsavel']
+        && incoming().ativo is bool
+        && incoming().alunoId is string
+        && exists(aluno) && get(aluno).data.get('organizationId', '') == incoming().organizationId;
+    }
+
+    // ================= dados do tenant =================
+    match /alunos/{alunoId} {
+      allow get: if staffRead()
+        || (isFamily() && alunoId == me().get('alunoId', '#')
+            && resource.data.get('organizationId', '') == myOrg());
+      allow list: if staffRead();
+      allow create: if staffCreate();
+      allow update: if staffUpdate();
+      allow delete: if staffDelete();
+    }
+
+    match /aulas/{aulaId} {
+      allow read: if staffRead() || familyOwns(resource.data);
+      allow create: if staffCreate() && optNumber('valor');
+      allow update: if staffUpdate() && changedNumber('valor');
+      allow delete: if staffDelete();
+    }
+
+    match /pacotes/{pacoteId} {
+      allow read: if staffRead() || familyOwns(resource.data);
+      allow create: if staffCreate() && incoming().creditosTotal is int && incoming().creditosTotal > 0
+        && incoming().get('creditosUsados', 0) is int && incoming().get('creditosUsados', 0) >= 0;
+      allow update: if staffUpdate()
+        && incoming().get('creditosUsados', 0) is int
+        && incoming().get('creditosUsados', 0) >= 0
+        && incoming().get('creditosUsados', 0) <= incoming().get('creditosTotal', 0);
+      allow delete: if staffDelete();
+    }
+
+    match /materiais/{materialId} {
+      allow read: if staffRead() || familyOwns(resource.data);
+      allow create: if staffCreate();
+      allow update: if staffUpdate();
+      allow delete: if staffDelete();
+    }
+
+    match /solicitacoes/{solicitacaoId} {
+      allow read: if staffRead() || familyOwns(resource.data);
+      // A família abre solicitações apenas para o próprio aluno, sempre como pendentes.
+      allow create: if staffCreate() || (familyOwns(incoming())
+        && incoming().keys().hasOnly(['organizationId', 'alunoId', 'alunoNome', 'aulaId', 'tipo', 'mensagem', 'status', 'criadoPorUid', 'createdAt'])
+        && incoming().status == 'pendente'
+        && incoming().criadoPorUid == uid()
+        && incoming().mensagem is string && incoming().mensagem.size() <= 2000
+        && incoming().tipo is string && incoming().tipo.size() <= 40
+        && (incoming().get('aulaId', '') == '' || familyOwnsLesson(incoming().aulaId)));
+      allow update: if staffUpdate();
+      allow delete: if staffDelete();
+    }
+    function familyOwnsLesson(aulaId) {
+      let p = /databases/$(database)/documents/aulas/$(aulaId);
+      return aulaId is string && exists(p) && familyOwns(get(p).data);
+    }
+
+    match /despesas/{despesaId} {
+      allow read: if staffRead();
+      allow create: if staffCreate() && optNumber('valor');
+      allow update: if staffUpdate() && changedNumber('valor');
+      allow delete: if staffDelete();
+    }
+
+    match /leads/{leadId} {
+      allow read: if staffRead();
+      allow create: if staffCreate();
+      allow update: if staffUpdate();
+      allow delete: if staffDelete();
+    }
+
+    // Trilha de auditoria do tenant: somente inserção, lida pelo admin do tenant.
+    match /auditLogs/{logId} {
+      allow read: if isOrgAdmin(resource.data.get('organizationId', ''));
+      allow create: if isStaffOf(incoming().get('organizationId', ''))
+        && incoming().actorUid == uid() && incoming().at == request.time;
+      allow update, delete: if false;
+    }
+
+    // ================= plataforma (somente backend escreve) =================
+    match /platformConfig/{docId} {
+      allow read: if docId == 'public';
+      allow write: if false;
+    }
+    match /platformAdmins/{adminUid} {
+      allow get: if signedIn() && adminUid == uid();
+      allow list, write: if false;
+    }
+    match /billingEvents/{eventId} {
+      allow read: if isPlatformAdmin();
+      allow write: if false;
+    }
+    // Legado V4 (bootstrap da primeira conta). Não é mais usado pelo cliente.
+    match /sistema/{docId} {
+      allow read, write: if false;
+    }
+
+    // Qualquer outro caminho: negado.
+  }
+}

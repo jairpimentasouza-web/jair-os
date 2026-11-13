@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "production": "gestao-aulas-jair",
+    "staging": "gestao-pro-b85bf"
+  }
+}

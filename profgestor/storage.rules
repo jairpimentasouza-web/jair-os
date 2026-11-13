@@ -1,0 +1,57 @@
+rules_version = '2';
+
+// ProfGestor V5 — arquivos isolados por tenant.
+// O cliente V4 não usa Storage; este é o contrato para materiais e relatórios da V5.
+//
+//   orgs/{orgId}/materiais/{alunoId}/{arquivo}  → equipe do tenant lê/grava;
+//                                                  família lê apenas do próprio aluno.
+//   orgs/{orgId}/relatorios/{arquivo}           → somente equipe do tenant.
+//
+// Qualquer outro caminho é negado. Limite de 15 MB e tipos de conteúdo permitidos.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function profile() {
+      return firestore.get(/databases/(default)/documents/usuarios/$(request.auth.uid)).data;
+    }
+    function active() {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/usuarios/$(request.auth.uid))
+        && profile().get('ativo', false) == true;
+    }
+    function isStaffOf(orgId) {
+      return active() && profile().get('organizationId', '') == orgId
+        && profile().get('role', '') in ['admin', 'professor', 'colaborador'];
+    }
+    function canManage(orgId) {
+      return isStaffOf(orgId) && profile().get('role', '') in ['admin', 'professor'];
+    }
+    function isFamilyOf(orgId, alunoId) {
+      return active() && profile().get('organizationId', '') == orgId
+        && profile().get('role', '') in ['aluno', 'responsavel']
+        && profile().get('alunoId', '#') == alunoId;
+    }
+    function allowedUpload() {
+      return request.resource.size < 15 * 1024 * 1024
+        && (request.resource.contentType.matches('application/pdf')
+            || request.resource.contentType.matches('image/(png|jpeg|webp)')
+            || request.resource.contentType.matches('text/plain'));
+    }
+
+    match /orgs/{orgId}/materiais/{alunoId}/{fileName} {
+      allow read: if isStaffOf(orgId) || isFamilyOf(orgId, alunoId);
+      allow create, update: if canManage(orgId) && allowedUpload();
+      allow delete: if canManage(orgId);
+    }
+
+    match /orgs/{orgId}/relatorios/{fileName} {
+      allow read: if isStaffOf(orgId);
+      allow create, update: if canManage(orgId) && allowedUpload();
+      allow delete: if canManage(orgId);
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

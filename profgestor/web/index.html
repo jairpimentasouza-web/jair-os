@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProfGestor · Gestão de Aulas</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+    
+    <link rel="stylesheet" href="assets/app.css">
+    <link rel="stylesheet" href="assets/v4.css">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#0b1f4d">
+</head>
+<body>
+    <div class="auth-gate" id="authGate" aria-live="polite">
+        <form class="auth-card" id="loginForm">
+            <div class="auth-brand"><i class="fas fa-shield-alt"></i><span>ProfGestor</span></div>
+            <h1 class="h4 mb-2" id="authTitle">Acesso seguro</h1>
+            <p class="text-muted small mb-4" id="authSubtitle">Entre com seu usuário autorizado para acessar dados de alunos, aulas e financeiro.</p>
+            <div class="auth-persona" aria-label="Tipo de acesso">
+                <button type="button" id="personaProfessor" class="active" onclick="setAuthPersona('professor')"><i class="fas fa-chalkboard-teacher me-1"></i>Professor</button>
+                <button type="button" id="personaFamilia" onclick="setAuthPersona('familia')"><i class="fas fa-user-graduate me-1"></i>Aluno / Responsável</button>
+            </div>
+            <div class="mb-3" id="registerNameGroup" hidden><label class="form-label" for="registerName">Seu nome</label><input id="registerName" class="form-control" autocomplete="name"></div>
+            <div class="mb-3" id="registerSchoolGroup" hidden><label class="form-label" for="registerSchool">Nome do seu negócio (opcional)</label><input id="registerSchool" class="form-control" autocomplete="organization" maxlength="120" placeholder="Ex.: Aulas de Física da Ana"></div>
+            <div class="mb-3"><label class="form-label" for="loginEmail">E-mail</label><input id="loginEmail" type="email" class="form-control" autocomplete="email" required></div>
+            <div class="mb-3"><label class="form-label" for="loginPassword">Senha</label><input id="loginPassword" type="password" class="form-control" autocomplete="current-password" required></div>
+            <button class="btn btn-primary w-100" type="submit" id="loginButton"><i class="fas fa-lock me-1"></i>Entrar</button>
+            <button class="btn btn-link w-100 mt-2" type="button" id="authToggle">Criar a primeira conta</button>
+            <div id="loginMessage" class="auth-message" role="alert"></div>
+        </form>
+    </div>
+    <a class="skip-link" href="#content">Ir para o conteúdo principal</a>
+
+    <div id="loading" role="status" aria-live="polite">
+        <div class="loader"></div>
+        <div class="loading-text">Carregando sistema...</div>
+    </div>
+
+    <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="familyApp">
+        <main class="family-shell">
+            <div class="family-top"><div class="family-brand"><i class="fas fa-graduation-cap me-2"></i>ProfGestor · Portal</div><div class="user-chip"><i class="fas fa-user-circle"></i><span id="familyUserName">—</span><button class="btn btn-link btn-sm p-0" onclick="sairDoSistema()">Sair</button></div></div>
+            <section class="family-hero"><div class="small text-uppercase" style="opacity:.7;font-weight:700">Acompanhamento individual</div><h1 id="familyStudentName">Aluno</h1><p id="familyStudentSubject">Agenda, evolução, tarefas e financeiro em um só lugar.</p></section>
+            <nav class="family-tabs"><button class="family-tab active" data-family-tab="inicio">Início</button><button class="family-tab" data-family-tab="agenda">Agenda</button><button class="family-tab" data-family-tab="evolucao">Evolução</button><button class="family-tab" data-family-tab="materiais">Materiais</button><button class="family-tab" data-family-tab="tarefas">Tarefas</button><button class="family-tab" data-family-tab="financeiro">Financeiro</button><button class="family-tab" data-family-tab="solicitacoes">Solicitações</button></nav>
+            <section id="family-inicio" class="family-pane active"><div class="family-grid" id="familyMetrics"></div><div class="family-card mt-3"><h2 class="h6">Próximas aulas</h2><div id="familyNextLessons"></div></div></section>
+            <section id="family-agenda" class="family-pane"><div class="family-card"><h2 class="h6">Agenda</h2><div id="familyAgenda"></div></div></section>
+            <section id="family-evolucao" class="family-pane"><div class="family-card"><h2 class="h6">Evolução e pós-aula</h2><div id="familyProgress"></div></div></section>
+            <section id="family-materiais" class="family-pane"><div class="family-card"><h2 class="h6">Materiais</h2><div id="familyMaterials"></div></div></section>
+            <section id="family-tarefas" class="family-pane"><div class="family-card"><h2 class="h6">Tarefas</h2><div id="familyTasks"></div></div></section>
+            <section id="family-financeiro" class="family-pane"><div class="family-grid" id="familyFinanceMetrics"></div><div class="family-card mt-3"><h2 class="h6">Histórico financeiro</h2><div id="familyFinanceList"></div></div></section>
+            <section id="family-solicitacoes" class="family-pane"><div class="family-card"><h2 class="h6">Solicitar ajuste de aula</h2><p class="text-muted small">A solicitação vai para o professor. O horário não é alterado automaticamente.</p><select id="familyRequestLesson" class="form-select mb-2"></select><select id="familyRequestType" class="form-select mb-2"><option value="confirmacao">Confirmar aula</option><option value="reagendamento">Solicitar reagendamento</option><option value="cancelamento">Solicitar cancelamento</option></select><textarea id="familyRequestMessage" class="form-control mb-2" rows="3" placeholder="Mensagem opcional"></textarea><button class="btn btn-primary" onclick="enviarSolicitacaoFamilia()">Enviar solicitação</button><div id="familyRequests" class="mt-3"></div></div></section>
+        </main>
+    </div>
+    <div id="wrapper">
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+        <nav id="sidebar" aria-label="Navegação principal">
+    <div class="sidebar-brand">
+        <div class="brand-icon"><i class="fas fa-layer-group"></i></div>
+        <div><span class="brand-name">ProfGestor</span> <small class="brand-version">· Gestão de Aulas</small></div>
+    </div>
+    <ul>
+        <li class="nav-group-label">VISÃO GERAL</li>
+        <li><a onclick="showSection('dashboard')" onkeydown="navKey(event,'dashboard')" role="button" tabindex="0" class="active" id="link-dashboard"><span class="nav-icon"><i class="fas fa-gauge-high"></i></span> Início</a></li>
+        <li class="nav-group-label">OPERAÇÃO</li>
+        <li><a onclick="showSection('agenda')" onkeydown="navKey(event,'agenda')" role="button" tabindex="0" id="link-agenda"><span class="nav-icon"><i class="fas fa-calendar-alt"></i></span> Agenda</a></li>
+        <li><a onclick="showSection('aulas-operacao')" onkeydown="navKey(event,'aulas-operacao')" role="button" tabindex="0" id="link-aulas-operacao"><span class="nav-icon"><i class="fas fa-person-chalkboard"></i></span> Aulas</a></li>
+        <li><a onclick="showSection('alunos')" onkeydown="navKey(event,'alunos')" role="button" tabindex="0" id="link-alunos"><span class="nav-icon"><i class="fas fa-users"></i></span> Alunos <span class="sidebar-badge" id="badgeAlunos">0</span></a></li>
+        <li class="nav-group-label">NEGÓCIO</li>
+        <li><a onclick="showSection('financeiro')" onkeydown="navKey(event,'financeiro')" role="button" tabindex="0" id="link-financeiro"><span class="nav-icon"><i class="fas fa-wallet"></i></span> Financeiro</a></li>
+        <li><a onclick="showSection('pacotes')" onkeydown="navKey(event,'pacotes')" role="button" tabindex="0" id="link-pacotes"><span class="nav-icon"><i class="fas fa-layer-group"></i></span> Planos e Pacotes</a></li>
+        <li><a onclick="showSection('crm')" onkeydown="navKey(event,'crm')" role="button" tabindex="0" id="link-crm"><span class="nav-icon"><i class="fas fa-filter-circle-dollar"></i></span> CRM</a></li>
+        <li class="nav-group-label">ACOMPANHAMENTO</li>
+        <li><a onclick="showSection('pedagogico')" onkeydown="navKey(event,'pedagogico')" role="button" tabindex="0" id="link-pedagogico"><span class="nav-icon"><i class="fas fa-chart-line"></i></span> Pedagógico</a></li>
+        <li><a onclick="showSection('relatorios')" onkeydown="navKey(event,'relatorios')" role="button" tabindex="0" id="link-relatorios"><span class="nav-icon"><i class="fas fa-file-lines"></i></span> Relatórios</a></li>
+        <li class="nav-group-label">COMUNICAÇÃO</li>
+        <li><a onclick="showSection('comunicacao')" onkeydown="navKey(event,'comunicacao')" role="button" tabindex="0" id="link-comunicacao"><span class="nav-icon"><i class="fab fa-whatsapp"></i></span> Mensagens & Automações</a></li>
+        <li class="nav-group-label">SISTEMA</li>
+        <li><a onclick="showSection('conta')" onkeydown="navKey(event,'conta')" role="button" tabindex="0" id="link-conta"><span class="nav-icon"><i class="fas fa-id-card"></i></span> Conta e plano</a></li>
+        <li><a href="#" data-bs-toggle="modal" data-bs-target="#modalConfig"><span class="nav-icon"><i class="fas fa-plug"></i></span> Integrações & Config.</a></li>
+    </ul>
+</nav>
+
+        <div id="content-wrapper">
+            <div class="topbar">
+                <button id="hamburger" onclick="toggleSidebar()" aria-label="Abrir menu" aria-controls="sidebar"><i class="fas fa-bars"></i></button>
+                <span class="page-title" id="pageTitle">Dashboard</span>
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    <div class="topbar-search">
+                        <i class="fas fa-search search-icon" aria-hidden="true"></i>
+                        <input id="globalSearch" class="form-control form-control-sm" type="search" placeholder="Buscar ou executar ação..." aria-label="Busca global" autocomplete="off">
+                        <kbd>Ctrl K</kbd>
+                    </div>
+                    <span class="user-chip" id="userChip"><i class="fas fa-user-shield"></i><span id="userName">—</span><button class="btn btn-link btn-sm p-0" type="button" onclick="sairDoSistema()" title="Sair">Sair</button></span>
+                    <span class="text-muted" style="font-size:0.78rem" id="clockDisplay"></span>
+                    <button class="btn btn-ghost btn-sm theme-toggle" type="button" onclick="toggleTheme()" aria-label="Alternar tema" title="Alternar tema"><i class="fas fa-moon" id="themeIcon"></i></button>
+                    <button class="btn btn-primary btn-sm topbar-action" type="button" onclick="abrirNovaAulaHoje()">
+                        <i class="fas fa-plus me-1"></i><span class="action-label">Nova aula</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="content">
+                <div id="v5Banner" class="v5-banner" role="status" hidden></div>
+                <!-- ========== DASHBOARD ========== -->
+                <div id="dashboard" class="section-view active">
+                    <div class="v4-dashboard-hero">
+  <div><div class="v4-date" id="v4HeroDate">Hoje</div><h1>Seu dia de aulas em uma única visão</h1><p>Agenda, financeiro, pendências e acompanhamento pedagógico priorizados automaticamente.</p></div>
+  <div class="v4-hero-actions"><button class="btn btn-light btn-sm" onclick="abrirNovaAulaHoje()"><i class="fas fa-calendar-plus me-1"></i>Nova aula</button><button class="btn btn-outline-light btn-sm" onclick="showSection('financeiro')"><i class="fas fa-wallet me-1"></i>Financeiro</button><button class="btn btn-outline-light btn-sm" onclick="showSection('aulas-operacao')"><i class="fas fa-person-chalkboard me-1"></i>Sala da aula</button></div>
+</div>
+<div class="v4-kpi-strip">
+ <div class="v4-kpi"><span>Aulas hoje</span><strong id="v4TodayLessons">0</strong><small>programadas</small></div>
+ <div class="v4-kpi"><span>Em atraso</span><strong id="v4OverdueAmount">R$ 0</strong><small>cobranças vencidas</small></div>
+ <div class="v4-kpi"><span>Despesas do mês</span><strong id="v4ExpensesMonth">R$ 0</strong><small>saídas registradas</small></div>
+ <div class="v4-kpi"><span>Resultado do mês</span><strong id="v4NetMonth">R$ 0</strong><small>recebido − despesas</small></div>
+ <div class="v4-kpi"><span>Relatórios pendentes</span><strong id="v4ReportsPending">0</strong><small>pós-aula</small></div>
+</div>
+<div id="v5Onboarding"></div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-6 col-lg-3">
+                            <div class="stat-card blue">
+                                <div class="stat-icon"><i class="fas fa-users"></i></div>
+                                <div class="stat-label">Alunos Ativos</div>
+                                <div class="stat-value" id="dashAlunos">0</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="stat-card green">
+                                <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                                <div class="stat-label">Aulas este Mês</div>
+                                <div class="stat-value" id="dashAulasMes">0</div>
+                                <div class="stat-sub" id="dashAulasRealizadas"></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="stat-card green">
+                                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                                <div class="stat-label">Recebido (Mês)</div>
+                                <div class="stat-value" id="dashRecebido">R$ 0</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="stat-card yellow">
+                                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                                <div class="stat-label">Pendente (Mês)</div>
+                                <div class="stat-value" id="dashPendente">R$ 0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel mb-3"><div class="panel-header"><span class="panel-title"><i class="fas fa-bolt me-2 text-warning"></i>Central de ações</span><span class="filter-count" id="dashAcoesCount">0 pendências</span></div><div class="panel-body" id="dashAcoes"><div class="empty-state"><i class="fas fa-check-circle"></i><p>Nenhuma ação urgente.</p></div></div></div>
+                    <div class="panel calendar-ops-panel mb-3" aria-labelledby="calendarOpsTitle">
+                        <div class="calendar-ops-head">
+                            <h2 id="calendarOpsTitle"><i class="fab fa-google me-2"></i>Central Google Calendar</h2>
+                            <p>Espelhamento das aulas, indisponibilidades externas e recuperação de sincronizações.</p>
+                            <span class="calendar-ops-status" id="dashGoogleStatus"><span class="status-led"></span><span id="dashGoogleStatusText">Google desconectado</span></span>
+                        </div>
+                        <div class="calendar-ops-metrics" aria-live="polite">
+                            <div class="calendar-ops-metric"><span>Última atualização</span><strong id="dashGoogleLastSync">—</strong></div>
+                            <div class="calendar-ops-metric"><span>Aulas sincronizadas</span><strong id="dashGoogleSynced">0</strong></div>
+                            <div class="calendar-ops-metric"><span>Compromissos / bloqueios</span><strong id="dashGoogleBlocks">0</strong></div>
+                            <div class="calendar-ops-metric"><span>Conflitos / falhas</span><strong id="dashGoogleAlerts">0 / 0</strong></div>
+                        </div>
+                        <div class="calendar-ops-footer">
+                            <p class="calendar-ops-note" id="dashGoogleNote">Conecte sua conta para atualizar indisponibilidades e sincronizar aulas futuras.</p>
+                            <div class="calendar-ops-actions">
+                                <button type="button" class="btn btn-primary btn-sm" id="btnDashGoogleConnect" onclick="conectarGoogleCalendar()"><i class="fab fa-google me-1"></i>Conectar Google</button>
+                                <button type="button" class="btn btn-ghost btn-sm" id="btnDashGoogleRefresh" onclick="atualizarGoogleAgora()" style="display:none"><i class="fas fa-redo me-1"></i>Atualizar Google</button>
+                                <button type="button" class="btn btn-ghost btn-sm" id="btnDashGoogleSync" onclick="sincronizarGoogleCalendar()" style="display:none"><i class="fas fa-cloud-upload-alt me-1"></i>Sincronizar agora</button>
+                                <button type="button" class="btn btn-ghost btn-sm" id="btnDashGoogleRecover" onclick="recuperarFalhasGoogle()" style="display:none"><i class="fas fa-wrench me-1"></i>Recuperar falhas</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-lg-7">
+                            <div class="panel">
+                                <div class="panel-header">
+                                    <span class="panel-title"><i class="fas fa-clock me-2 text-primary"></i>Próximas Aulas</span>
+                                </div>
+                                <div class="panel-body p-0">
+                                    <div id="dashProximasAulas" class="p-3">
+                                        <div class="empty-state"><i class="fas fa-calendar-day"></i><p>Nenhuma aula agendada</p></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-5">
+                            <div class="panel">
+                                <div class="panel-header">
+                                    <span class="panel-title"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Pagamentos Pendentes</span>
+                                </div>
+                                <div class="panel-body p-0">
+                                    <div id="dashPendentes" class="p-3">
+                                        <div class="empty-state"><i class="fas fa-check-double"></i><p>Tudo em dia!</p></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== AGENDA ========== -->
+                <div id="agenda" class="section-view">
+                    <div class="filter-bar">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                            <div class="legend-badges">
+                                <div class="legend-item"><span class="legend-dot" style="background:var(--primary)"></span> Agendada</div>
+                                <div class="legend-item"><span class="legend-dot" style="background:var(--success)"></span> Realizada</div>
+                                <div class="legend-item"><span class="legend-dot" style="background:var(--danger)"></span> Cancelada</div>
+                                <div class="legend-item"><span class="legend-dot" style="background:var(--warning)"></span> Remarcada</div>
+                                <div class="legend-item"><span class="legend-dot" style="background:var(--gray-600)"></span> Faltou</div>
+                                <div class="legend-item"><span class="legend-dot" style="background:var(--gray-800)"></span> Bloqueio local</div>
+                                <div class="legend-item"><span class="legend-dot" style="background:#15aabf"></span> Google Calendar</div>
+                                <div class="legend-item"><span class="legend-dot" style="background:#3b5bdb;border:2px solid #fff;box-shadow:0 0 0 2px #3b5bdb"></span> Aula vinculada</div>
+                                <div class="legend-item"><span class="legend-dot" style="background:var(--danger)"></span> Falha de sync</div>
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap align-items-center">
+                                <span class="google-calendar-status" id="googleCalendarStatus"><span class="status-led"></span><span id="googleCalendarStatusText">Google desconectado</span></span>
+                                <button type="button" class="btn btn-ghost btn-sm" id="btnGoogleConnect" onclick="conectarGoogleCalendar()"><i class="fab fa-google me-1"></i>Conectar Google</button>
+                                <button type="button" class="btn btn-ghost btn-sm" id="btnGoogleRefresh" onclick="atualizarGoogleAgora()" style="display:none" title="Buscar alterações feitas diretamente no Google Calendar"><i class="fas fa-redo me-1"></i>Atualizar Google</button>
+                                <button type="button" class="btn btn-ghost btn-sm" id="btnGoogleSync" onclick="sincronizarGoogleCalendar()" style="display:none" title="Enviar aulas futuras do sistema para o Google Calendar"><i class="fas fa-cloud-upload-alt me-1"></i>Sincronizar aulas</button>
+                                <button type="button" class="btn btn-ghost btn-sm" id="btnMigrarHorariosGoogle" onclick="migrarHorariosPresosParaGoogle()" style="display:none" title="Transformar bloqueios locais em compromissos recorrentes no Google Calendar"><i class="fas fa-exchange-alt me-1"></i>Migrar bloqueios</button>
+                                <button type="button" class="btn btn-ghost btn-sm" onclick="abrirHorariosPresos()"><i class="fas fa-lock me-1"></i>Bloqueios locais <span class="badge bg-dark ms-1" id="horariosPresosBadge">0</span></button>
+                                <button type="button" class="btn btn-ghost btn-sm" onclick="exportAgendaPDF()"><i class="fas fa-download me-1"></i>PDF Semanal</button>
+                            </div>
+                        </div>
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label">Aluno</label>
+                                <select id="calAlunoFiltro" class="form-select form-select-sm" onchange="renderCalendario()"></select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Situação</label>
+                                <select id="calSitFiltro" class="form-select form-select-sm" onchange="renderCalendario()">
+                                    <option value="todos" selected>Todas</option>
+                                    <option value="agendada">Agendada</option>
+                                    <option value="realizada">Realizada</option>
+                                    <option value="remarcada">Remarcada</option>
+                                    <option value="cancelada">Cancelada</option>
+                                    <option value="faltou">Faltou</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Pagamento</label>
+                                <select id="calPagFiltro" class="form-select form-select-sm" onchange="renderCalendario()">
+                                    <option value="todos" selected>Todos</option>
+                                    <option value="pago">Pago</option>
+                                    <option value="pendente">Pendente</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Modalidade</label>
+                                <select id="calModalidadeFiltro" class="form-select form-select-sm" onchange="renderCalendario()">
+                                    <option value="todos" selected>Todas</option>
+                                    <option value="online">Online</option>
+                                    <option value="presencial">Presencial</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Buscar</label>
+                                <input id="calBuscaFiltro" type="search" class="form-control form-control-sm" placeholder="Aluno, matéria, local..." oninput="renderCalendario()">
+                            </div>
+                            <div class="col-md-1 d-grid">
+                                <button class="btn btn-ghost btn-sm" onclick="limparFiltrosCalendario()"><i class="fas fa-eraser me-1"></i>Limpar</button>
+                            </div>
+                        </div>
+                        <div class="filter-meta">
+                            <span>Os filtros atuam juntos e não alteram os registros.</span>
+                            <span class="filter-count" id="calFiltroResumo" aria-live="polite"><i class="fas fa-filter"></i> 0 aulas</span>
+                        </div>
+                    </div>
+                    <div id="calendar"></div>
+                </div>
+
+                <!-- ========== ALUNOS ========== -->
+                <div id="alunos" class="section-view">
+                    <div class="panel mb-3">
+                        <div class="panel-header">
+                            <span class="panel-title"><i class="fas fa-user-plus me-2"></i>Novo Aluno</span>
+                        </div>
+                        <div class="panel-body">
+                            <form id="formAluno" class="row g-2 align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label">Nome Completo</label>
+                                    <input type="text" class="form-control" id="alunoNome" placeholder="Ex.: Maria Silva" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">WhatsApp</label>
+                                    <input type="text" class="form-control" id="alunoTel" placeholder="DDD + Número" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Matéria</label>
+                                    <input type="text" class="form-control" id="alunoMateria" placeholder="Ex.: Matemática">
+                                </div>
+                                <div class="col-md-2 d-grid">
+                                    <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Salvar</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title"><i class="fas fa-users me-2"></i>Lista de Alunos</span>
+                            <div class="d-flex gap-2">
+                                <input type="text" class="form-control form-control-sm" id="buscaAluno" placeholder="Buscar aluno..." style="max-width:220px;" oninput="renderAlunos()">
+                            </div>
+                        </div>
+                        <div class="panel-body p-0 table-responsive">
+                            <table class="table-clean table">
+                                <thead><tr><th>Aluno</th><th>WhatsApp</th><th>Matéria</th><th>Aulas</th><th class="text-end">Ações</th></tr></thead>
+                                <tbody id="tabelaAlunos"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="panel mt-3">
+                        <div class="panel-header"><span class="panel-title"><i class="fas fa-key me-2 text-primary"></i>Liberar acesso ao portal</span></div>
+                        <div class="panel-body"><div class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">Aluno</label><select id="inviteAluno" class="form-select"></select></div><div class="col-md-4"><label class="form-label">E-mail de acesso</label><input id="inviteEmail" type="email" class="form-control" placeholder="responsavel@email.com"></div><div class="col-md-2"><label class="form-label">Perfil</label><select id="inviteRole" class="form-select"><option value="responsavel">Responsável</option><option value="aluno">Aluno</option></select></div><div class="col-md-2 d-grid"><button class="btn btn-primary" type="button" onclick="salvarConviteAcesso()"><i class="fas fa-paper-plane me-1"></i>Liberar</button></div></div><div class="premium-note mt-3"><i class="fas fa-shield-alt"></i><span>O e-mail liberado poderá criar a própria senha. As regras do Firebase restringem a conta somente ao aluno vinculado.</span></div><div id="inviteStatus" class="small text-muted mt-2"></div></div>
+                    </div>
+                </div>
+
+                <!-- ========== FINANCEIRO ========== -->
+                <div id="financeiro" class="section-view">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="stat-card green">
+                                <div class="stat-icon"><i class="fas fa-arrow-down"></i></div>
+                                <div class="stat-label">Recebido (Confirmado)</div>
+                                <div class="stat-value" id="totalRecebido">R$ 0,00</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card yellow">
+                                <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+                                <div class="stat-label">A Receber (Pendente)</div>
+                                <div class="stat-value" id="totalPendente">R$ 0,00</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card blue">
+                                <div class="stat-icon"><i class="fas fa-balance-scale"></i></div>
+                                <div class="stat-label">Saldo Geral</div>
+                                <div class="stat-value" id="saldoGeral">R$ 0,00</div>
+                                <div class="stat-sub" id="saldoPrevisto"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mb-3">
+                        <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalDespesa">
+                            <i class="fas fa-minus-circle me-1"></i>Registrar Despesa
+                        </button>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <span class="panel-title">Extrato de Movimentações</span>
+                                <span class="filter-count ms-2" id="finFiltroResumo" aria-live="polite">0 lançamentos</span>
+                            </div>
+                            <div class="d-flex gap-2 align-items-center">
+                                <button class="btn btn-ghost btn-sm" type="button" onclick="exportarFinanceiroCSV()" title="Exportar o resultado filtrado">
+                                    <i class="fas fa-file-csv me-1"></i>CSV
+                                </button>
+                                <select id="filtroMesFin" class="form-select form-select-sm" style="width:auto" onchange="setFinanceMonthFilter()">
+                                    <option value="todos">Todos os Períodos</option>
+                                </select>
+                                <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#finFiltrosAvancados" aria-expanded="false">
+                                    <i class="fas fa-filter me-1"></i>Filtros
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="collapse" id="finFiltrosAvancados">
+                            <div class="p-3 border-bottom" style="background:var(--gray-50)">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-2">
+                                        <label class="form-label">De</label>
+                                        <input type="date" id="finIni" class="form-control form-control-sm" onchange="setFinanceDateFilter()">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Até</label>
+                                        <input type="date" id="finFim" class="form-control form-control-sm" onchange="setFinanceDateFilter()">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Aluno</label>
+                                        <select id="finAluno" class="form-select form-select-sm" onchange="renderFinanceiro()"></select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Tipo</label>
+                                        <select id="finTipo" class="form-select form-select-sm" onchange="renderFinanceiro()">
+                                            <option value="todos" selected>Todos</option>
+                                            <option value="entrada">Entradas</option>
+                                            <option value="saida">Saídas</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Pagamento</label>
+                                        <select id="finStatusPag" class="form-select form-select-sm" onchange="renderFinanceiro()">
+                                            <option value="todos" selected>Todos</option>
+                                            <option value="pago">Pago</option>
+                                            <option value="pendente">Pendente</option>
+                                            <option value="atrasado">Em atraso</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="form-label">Aula</label>
+                                        <select id="finStatusAula" class="form-select form-select-sm" onchange="renderFinanceiro()">
+                                            <option value="todos" selected>—</option>
+                                            <option value="agendada">Agendada</option>
+                                            <option value="realizada">Realizada</option>
+                                            <option value="remarcada">Remarcada</option>
+                                            <option value="cancelada">Cancelada</option>
+                                            <option value="faltou">Faltou</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Busca</label>
+                                        <input type="text" id="finBusca" class="form-control form-control-sm" placeholder="Aluno, descrição..." oninput="renderFinanceiro()">
+                                    </div>
+                                </div>
+                                <div class="quick-range mt-2">
+                                    <button class="btn btn-ghost" onclick="setFinQuickRange('hoje')">Hoje</button>
+                                    <button class="btn btn-ghost" onclick="setFinQuickRange('semana')">Esta semana</button>
+                                    <button class="btn btn-ghost" onclick="setFinQuickRange('mes')">Este mês</button>
+                                    <button class="btn btn-ghost" onclick="setFinQuickRange('30d')">Últimos 30 dias</button>
+                                    <button class="btn btn-ghost" onclick="limparFiltrosFinanceiro()"><i class="fas fa-eraser me-1"></i>Limpar</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel-body p-0 table-responsive">
+                            <table class="table-clean table" id="tabelaFinanceiro">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Descrição</th>
+                                        <th>Tipo</th>
+                                        <th>Valor</th>
+                                        <th>Situação</th>
+                                        <th>Pagamento</th>
+                                        <th class="text-end">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== RELATÓRIOS ========== -->
+                <div id="relatorios" class="section-view">
+                    <div class="row g-3">
+                        <div class="col-lg-6">
+                            <div class="panel h-100">
+                                <div class="panel-header" style="background:var(--primary);color:#fff;border-radius:var(--radius) var(--radius) 0 0;">
+                                    <span class="panel-title" style="color:#fff"><i class="fas fa-file-invoice-dollar me-2"></i>Relatório do Aluno</span>
+                                    <span style="font-size:0.75rem;opacity:0.7">Para Pais</span>
+                                </div>
+                                <div class="panel-body">
+                                    <p class="text-muted" style="font-size:0.82rem">Lista de aulas com horários, situação, pagamento e totais no período.</p>
+                                    <div class="mb-3">
+                                        <label class="form-label">Aluno</label>
+                                        <select id="relatorioAluno" class="form-select"></select>
+                                    </div>
+                                    <div class="row g-2 mb-2">
+                                        <div class="col"><label class="form-label">De</label><input type="date" id="relatorioInicio" class="form-control"></div>
+                                        <div class="col"><label class="form-label">Até</label><input type="date" id="relatorioFim" class="form-control"></div>
+                                    </div>
+                                    <div class="quick-range mb-3">
+                                        <button class="btn btn-ghost" onclick="setRelatorioQuickRange('mes')">Este mês</button>
+                                        <button class="btn btn-ghost" onclick="setRelatorioQuickRange('30d')">Últimos 30 dias</button>
+                                        <button class="btn btn-ghost" onclick="setRelatorioQuickRange('mesAnterior')">Mês anterior</button>
+                                    </div>
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-md-6">
+                                            <div class="form-check"><input class="form-check-input" type="checkbox" id="relIncluirAgendadas" checked><label class="form-check-label" for="relIncluirAgendadas">Incluir agendadas</label></div>
+                                            <div class="form-check"><input class="form-check-input" type="checkbox" id="relIncluirRemarcadas" checked><label class="form-check-label" for="relIncluirRemarcadas">Incluir remarcadas</label></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check"><input class="form-check-input" type="checkbox" id="relIncluirCanceladas"><label class="form-check-label" for="relIncluirCanceladas">Incluir canceladas</label></div>
+                                            <div class="form-check"><input class="form-check-input" type="checkbox" id="relIncluirObs" checked><label class="form-check-label" for="relIncluirObs">Mostrar observações</label></div>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary w-100" onclick="gerarRelatorioPaisAvancado()"><i class="fas fa-file-pdf me-1"></i>Gerar Relatório (PDF)</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="panel h-100">
+                                <div class="panel-header" style="background:var(--success);color:#fff;border-radius:var(--radius) var(--radius) 0 0;">
+                                    <span class="panel-title" style="color:#fff"><i class="fas fa-calendar-check me-2"></i>Agenda do Aluno</span>
+                                    <span style="font-size:0.75rem;opacity:0.7">Próximas aulas</span>
+                                </div>
+                                <div class="panel-body">
+                                    <p class="text-muted" style="font-size:0.82rem">Envie ao aluno/pais com os próximos horários confirmados.</p>
+                                    <div class="mb-3">
+                                        <label class="form-label">Aluno</label>
+                                        <select id="agendaAluno" class="form-select"></select>
+                                    </div>
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Semanas à frente</label>
+                                            <select id="agendaSemanas" class="form-select">
+                                                <option value="2">2 semanas</option>
+                                                <option value="4" selected>4 semanas</option>
+                                                <option value="8">8 semanas</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Incluir</label>
+                                            <select id="agendaSit" class="form-select">
+                                                <option value="agendada_remarcada" selected>Agendadas + Remarcadas</option>
+                                                <option value="somente_agendada">Somente agendadas</option>
+                                                <option value="todas">Todas</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-success w-100" onclick="gerarAgendaAlunoPDF()"><i class="fas fa-file-pdf me-1"></i>Gerar Agenda (PDF)</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="panel">
+                                <div class="panel-header">
+                                    <span class="panel-title"><i class="fas fa-calendar-alt me-2"></i>Agenda Semanal (geral)</span>
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <input type="date" id="agendaSemanaRef" class="form-control form-control-sm" style="max-width:170px;">
+                                        <button class="btn btn-primary btn-sm" onclick="exportAgendaPDFRef()"><i class="fas fa-file-pdf me-1"></i>Gerar PDF</button>
+                                    </div>
+                                </div>
+                                <div class="panel-body">
+                                    <p class="text-muted" style="font-size:0.85rem;margin-bottom:0">Escolha qualquer dia e gere a agenda daquela semana (segunda–domingo).</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== PEDAGÓGICO ========== -->
+                <div id="pedagogico" class="section-view">
+                    <div class="module-hero mb-3"><h3>Central pedagógica</h3><p>Transforme cada aula em acompanhamento claro para aluno e responsável.</p></div>
+                    <div class="row g-3">
+                        <div class="col-lg-5">
+                            <div class="panel h-100">
+                                <div class="panel-header"><span class="panel-title"><i class="fas fa-clipboard-check me-2 text-primary"></i>Registrar pós-aula</span></div>
+                                <div class="panel-body">
+                                    <form id="formPedagogico">
+                                        <div class="mb-3"><label class="form-label" for="pedAula">Aula</label><select id="pedAula" class="form-select" required></select></div>
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-md-6"><label class="form-label" for="pedPresenca">Presença</label><select id="pedPresenca" class="form-select"><option value="presente">Presente</option><option value="falta_justificada">Falta justificada</option><option value="falta_cobrada">Falta cobrada</option></select></div>
+                                            <div class="col-md-6"><label class="form-label" for="pedProgresso">Evolução</label><select id="pedProgresso" class="form-select"><option value="excelente">Excelente</option><option value="boa" selected>Boa</option><option value="atencao">Precisa de atenção</option></select></div>
+                                        </div>
+                                        <div class="mb-3"><label class="form-label" for="pedConteudo">Conteúdo aplicado</label><textarea id="pedConteudo" class="form-control" rows="3" placeholder="Tema, habilidade e resultado da aula" required></textarea></div>
+                                        <div class="mb-3"><label class="form-label" for="pedTarefa">Tarefa / material</label><textarea id="pedTarefa" class="form-control" rows="2" placeholder="O que o aluno deve praticar até a próxima aula"></textarea></div>
+                                        <div class="mb-3"><label class="form-label" for="pedProxima">Próxima ação</label><input id="pedProxima" class="form-control" placeholder="Ex.: revisar frações e aplicar lista 3"></div>
+                                        <button class="btn btn-primary w-100" type="button" onclick="salvarRegistroPedagogico()"><i class="fas fa-save me-1"></i>Salvar acompanhamento</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-7">
+                            <div class="panel h-100">
+                                <div class="panel-header"><span class="panel-title"><i class="fas fa-chart-line me-2 text-success"></i>Visão de acompanhamento</span><select id="pedAlunoFiltro" class="form-select form-select-sm" style="width:auto" onchange="renderPedagogico()"></select></div>
+                                <div class="panel-body"><div class="metric-grid mb-3"><div class="metric-tile"><span>Frequência</span><strong id="pedFrequencia">—</strong></div><div class="metric-tile"><span>Aulas concluídas</span><strong id="pedConcluidas">0</strong></div><div class="metric-tile"><span>Em atenção</span><strong id="pedAtencao">0</strong></div></div><div id="pedHistorico"><div class="empty-state"><i class="fas fa-book-reader"></i><p>Selecione um aluno para visualizar o acompanhamento.</p></div></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== PACOTES ========== -->
+                <div id="pacotes" class="section-view">
+                    <div class="module-hero mb-3"><h3>Pacotes e créditos</h3><p>Controle saldo, validade e consumo de aulas sem depender de cobranças automáticas.</p></div>
+                    <div class="row g-3">
+                        <div class="col-lg-4"><div class="panel"><div class="panel-header"><span class="panel-title"><i class="fas fa-layer-group me-2 text-primary"></i>Novo pacote</span></div><div class="panel-body"><form id="formPacote"><div class="mb-3"><label class="form-label" for="pacoteAluno">Aluno</label><select id="pacoteAluno" class="form-select" required></select></div><div class="mb-3"><label class="form-label" for="pacoteNome">Nome do pacote</label><input id="pacoteNome" class="form-control" placeholder="Ex.: 8 aulas de Matemática" required></div><div class="row g-2"><div class="col-6"><label class="form-label" for="pacoteCreditos">Créditos</label><input id="pacoteCreditos" type="number" min="1" class="form-control" value="8" required></div><div class="col-6"><label class="form-label" for="pacoteValidade">Validade</label><input id="pacoteValidade" type="date" class="form-control" required></div></div><button type="button" class="btn btn-primary w-100 mt-3" onclick="salvarPacote()">Criar pacote</button></form></div></div></div>
+                        <div class="col-lg-8"><div class="panel"><div class="panel-header"><span class="panel-title"><i class="fas fa-ticket-alt me-2 text-success"></i>Saldo por aluno</span><span class="filter-count" id="pacoteResumo">0 pacotes</span></div><div class="panel-body p-0"><div id="listaPacotes" class="p-3"><div class="empty-state"><i class="fas fa-layer-group"></i><p>Nenhum pacote cadastrado.</p></div></div></div></div></div>
+                    </div>
+                </div>
+
+
+                <!-- ========== AULAS / SALA DA AULA V4 ========== -->
+                <div id="aulas-operacao" class="section-view">
+                    <div class="module-hero mb-3"><h3>Sala da Aula</h3><p>Prepare, conduza e finalize cada aula ligando presença, conteúdo, tarefa, relatório e cobrança.</p></div>
+                    <div class="v4-kpi-strip">
+                      <div class="v4-kpi"><span>Aulas hoje</span><strong id="v4AulasHoje">0</strong><small>na agenda</small></div>
+                      <div class="v4-kpi"><span>Esta semana</span><strong id="v4AulasSemana">0</strong><small>aulas previstas</small></div>
+                      <div class="v4-kpi"><span>Relatórios pendentes</span><strong id="v4AulasRelPend">0</strong><small>precisam de fechamento</small></div>
+                    </div>
+                    <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fas fa-person-chalkboard me-2 text-primary"></i>Fila operacional de aulas</span><div class="d-flex gap-2"><select id="v4AulaFiltro" class="form-select form-select-sm" onchange="renderAulasOperacao()"><option value="proximas">Próximas</option><option value="hoje">Hoje</option><option value="pendentes">Relatório pendente</option><option value="todas">Todas</option></select><button class="btn btn-primary btn-sm" onclick="abrirNovaAulaHoje()"><i class="fas fa-plus me-1"></i>Nova aula</button></div></div><div class="panel-body p-0"><div class="table-responsive"><table class="table table-clean mb-0"><thead><tr><th>Data</th><th>Aluno</th><th>Status</th><th>Pagamento</th><th>Pedagógico</th><th class="text-end">Ação</th></tr></thead><tbody id="v4AulasOperacaoBody"></tbody></table></div></div></div>
+                </div>
+
+                <!-- ========== CRM V4 ========== -->
+                <div id="crm" class="section-view">
+                    <div class="module-hero mb-3"><h3>CRM de novos alunos</h3><p>Organize interessados desde o primeiro contato até a conversão em aluno ativo.</p></div>
+                    <div class="v4-kpi-strip">
+                      <div class="v4-kpi"><span>Leads abertos</span><strong id="v4CrmOpen">0</strong><small>em acompanhamento</small></div>
+                      <div class="v4-kpi"><span>Experimentais</span><strong id="v4CrmTrial">0</strong><small>aula experimental</small></div>
+                      <div class="v4-kpi"><span>Propostas</span><strong id="v4CrmProposal">0</strong><small>aguardando decisão</small></div>
+                      <div class="v4-kpi"><span>Convertidos</span><strong id="v4CrmWon">0</strong><small>alunos ganhos</small></div>
+                    </div>
+                    <div class="row g-3"><div class="col-lg-4"><div class="panel"><div class="panel-header"><span class="panel-title"><i class="fas fa-user-plus me-2 text-primary"></i>Novo lead</span></div><div class="panel-body"><form id="v4CrmForm"><div class="mb-2"><label class="form-label">Nome</label><input id="v4CrmNome" class="form-control" required></div><div class="mb-2"><label class="form-label">WhatsApp</label><input id="v4CrmTel" class="form-control"></div><div class="mb-2"><label class="form-label">Interesse</label><input id="v4CrmInteresse" class="form-control" placeholder="Ex.: Matemática · ENEM"></div><div class="mb-2"><label class="form-label">Origem</label><select id="v4CrmOrigem" class="form-select"><option>Indicação</option><option>Instagram</option><option>Google</option><option>WhatsApp</option><option>Outro</option></select></div><div class="mb-3"><label class="form-label">Etapa</label><select id="v4CrmEtapa" class="form-select"><option value="lead">Lead</option><option value="experimental">Aula experimental</option><option value="proposta">Proposta</option><option value="convertido">Convertido</option><option value="perdido">Perdido</option></select></div><button class="btn btn-primary w-100" type="submit">Salvar lead</button></form></div></div></div><div class="col-lg-8"><div class="panel"><div class="panel-header"><span class="panel-title"><i class="fas fa-filter me-2 text-primary"></i>Pipeline</span><select id="v4CrmFiltro" class="form-select form-select-sm" style="width:auto" onchange="renderCRM()"><option value="todos">Todas as etapas</option><option value="lead">Lead</option><option value="experimental">Experimental</option><option value="proposta">Proposta</option><option value="convertido">Convertido</option><option value="perdido">Perdido</option></select></div><div class="panel-body p-0"><div class="table-responsive"><table class="table table-clean mb-0"><thead><tr><th>Contato</th><th>Interesse</th><th>Origem</th><th>Etapa</th><th class="text-end">Ações</th></tr></thead><tbody id="v4CrmBody"></tbody></table></div></div></div></div></div>
+                </div>
+
+                <!-- ========== CONTA E PLANO (V5) ========== -->
+                <div id="conta" class="section-view">
+                    <div class="module-hero mb-3"><h3>Conta e plano</h3><p>Situação da assinatura, seus dados e o histórico de alterações importantes.</p></div>
+                    <div class="row g-3">
+                        <div class="col-lg-5"><div class="panel h-100"><div class="panel-header"><span class="panel-title"><i class="fas fa-id-card me-2 text-primary"></i>Situação da conta</span></div><div class="panel-body" id="v5ContaStatus">Carregando…</div></div></div>
+                        <div class="col-lg-7"><div class="panel h-100"><div class="panel-header"><span class="panel-title"><i class="fas fa-tags me-2 text-primary"></i>Planos</span></div><div class="panel-body" id="v5Planos"></div></div></div>
+                        <div class="col-12"><div class="panel"><div class="panel-header"><span class="panel-title"><i class="fas fa-layer-group me-2 text-primary"></i>Regras de pacotes</span></div><div class="panel-body"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="v5RegraFaltaCobrada" data-pg-action="regra-credito"><label class="form-check-label" for="v5RegraFaltaCobrada">Falta cobrada também consome 1 crédito do pacote</label></div><p class="small text-muted mb-0 mt-2" id="v5RegraFaltaInfo">Desligado: só a presença consome crédito. A regra vale para os próximos registros; registros anteriores não são alterados.</p></div></div></div>
+                        <div class="col-lg-5"><div class="panel h-100"><div class="panel-header"><span class="panel-title"><i class="fas fa-file-export me-2 text-primary"></i>Seus dados</span></div><div class="panel-body"><p class="text-muted small">Baixe uma cópia completa dos dados da sua conta (alunos, aulas, pacotes, financeiro, CRM e convites) em formato estruturado (JSON). Disponível mesmo após o fim do teste.</p><button type="button" class="btn btn-outline-primary w-100" data-pg-action="exportar"><i class="fas fa-download me-1"></i>Exportar meus dados</button><div class="small text-muted mt-2" id="v5ExportStatus" role="status"></div></div></div></div>
+                        <div class="col-lg-7"><div class="panel h-100"><div class="panel-header"><span class="panel-title"><i class="fas fa-clock-rotate-left me-2 text-primary"></i>Histórico de alterações</span><button type="button" class="btn btn-sm btn-ghost" data-pg-action="auditoria">Atualizar</button></div><div class="panel-body p-0"><div class="table-responsive"><table class="table table-clean mb-0"><thead><tr><th>Quando</th><th>Ação</th><th>Detalhes</th></tr></thead><tbody id="v5Auditoria"><tr><td colspan="3" class="text-muted text-center py-3">Clique em Atualizar para carregar.</td></tr></tbody></table></div></div></div></div>
+                    </div>
+                </div>
+
+                <!-- ========== COMUNICAÇÃO E PORTAL ========== -->
+                <div id="comunicacao" class="section-view">
+                    <div class="module-hero mb-3"><h3>Comunicação e portal</h3><p>Gere mensagens profissionais, envie por WhatsApp e compartilhe uma visão clara para responsáveis.</p></div>
+                    <div class="row g-3">
+                        <div class="col-lg-7"><div class="panel h-100"><div class="panel-header"><span class="panel-title"><i class="fab fa-whatsapp me-2 text-success"></i>Central de mensagens</span></div><div class="panel-body"><div class="row g-2 mb-3"><div class="col-md-6"><label class="form-label" for="msgAluno">Aluno</label><select id="msgAluno" class="form-select" onchange="atualizarMensagem()"></select></div><div class="col-md-6"><label class="form-label" for="msgModelo">Modelo</label><select id="msgModelo" class="form-select" onchange="atualizarMensagem()"><option value="lembrete">Lembrete de aula</option><option value="confirmacao">Confirmação de aula</option><option value="cancelamento">Cancelamento / reagendamento</option><option value="resumo">Resumo pós-aula</option><option value="pendencia">Lembrete de pendência</option><option value="pagamento">Pagamento recebido</option><option value="relatorio">Relatório disponível</option><option value="agenda">Agenda da semana</option></select></div></div><div class="message-preview mb-3" id="msgPreview">Selecione um aluno para preparar uma mensagem.</div><div class="d-flex gap-2"><button type="button" class="btn btn-success" onclick="enviarWhatsApp()"><i class="fab fa-whatsapp me-1"></i>Abrir WhatsApp</button><button type="button" class="btn btn-ghost" onclick="copiarMensagem()"><i class="fas fa-copy me-1"></i>Copiar</button></div><div class="premium-note mt-3"><i class="fas fa-info-circle"></i><span>O envio é iniciado por você no WhatsApp; a automação oficial será conectada depois, com consentimento do responsável.</span></div></div></div></div>
+                        <div class="col-lg-5"><div class="panel portal-card h-100"><div class="panel-header"><span class="panel-title"><i class="fas fa-user-shield me-2 text-primary"></i>Portal do responsável</span></div><div class="panel-body"><p class="text-muted">Gere uma página-resumo local para compartilhar agenda, presença, progresso e saldo do aluno.</p><div class="mb-3"><label class="form-label" for="portalAluno">Aluno</label><select id="portalAluno" class="form-select"></select></div><button type="button" class="btn btn-primary w-100" onclick="abrirPortalResponsavel()"><i class="fas fa-external-link-alt me-1"></i>Abrir visão do responsável</button><p class="small text-muted mt-3 mb-0">O acesso externo é autenticado e cada aluno/responsável visualiza apenas os dados vinculados ao próprio estudante.</p></div></div></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========== FICHA 360 DO ALUNO V4 ========== -->
+    <div class="modal fade v4-student-modal" id="modalAluno360" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-xl"><div class="modal-content">
+        <div class="v4-student-head"><div class="v4-student-head-row"><div class="v4-student-identity"><div class="v4-student-avatar" id="v4StudentAvatar">AL</div><div><h2 id="v4StudentName">Aluno</h2><p id="v4StudentMeta">Acompanhamento 360°</p></div></div><button class="btn btn-sm btn-light" data-bs-dismiss="modal"><i class="fas fa-xmark me-1"></i>Fechar</button></div></div>
+        <div class="v4-student-body"><div class="v4-360-grid"><div class="v4-360-metric"><span>Próxima aula</span><strong id="v4StudentNext">—</strong></div><div class="v4-360-metric"><span>Frequência</span><strong id="v4StudentAttendance">—</strong></div><div class="v4-360-metric"><span>Financeiro</span><strong id="v4StudentFinance">—</strong></div><div class="v4-360-metric"><span>Créditos</span><strong id="v4StudentCredits">—</strong></div></div><div class="v4-360-cols"><div class="v4-360-card"><h3>Histórico recente</h3><div id="v4StudentTimeline"></div></div><div class="v4-360-card"><h3>Ações rápidas</h3><button class="v4-action-link" id="v4StudentNewLesson"><i class="fas fa-calendar-plus me-2"></i>Agendar nova aula</button><button class="v4-action-link" id="v4StudentPayment"><i class="fas fa-wallet me-2"></i>Abrir financeiro</button><button class="v4-action-link" id="v4StudentPed"><i class="fas fa-chart-line me-2"></i>Acompanhamento pedagógico</button><button class="v4-action-link" id="v4StudentMessage"><i class="fab fa-whatsapp me-2"></i>Preparar mensagem</button><button class="v4-action-link" id="v4StudentInvite"><i class="fas fa-user-shield me-2"></i>Liberar acesso à família</button></div></div></div>
+      </div></div>
+    </div>
+
+    <!-- ========== MODAL EVENTO ========== -->
+    <div class="modal fade" id="modalEvento" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-book-open me-2 text-primary"></i>Detalhes da Aula</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formEvento">
+                        <input type="hidden" id="eventoId">
+                        
+                        <div class="form-section-title">Informações da Aula</div>
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Aluno</label>
+                                <select id="eventoAluno" class="form-select" required></select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Situação</label>
+                                <select id="eventoStatusAula" class="form-select">
+                                    <option value="agendada" selected>Agendada</option>
+                                    <option value="realizada">Realizada</option>
+                                    <option value="cancelada">Cancelada</option>
+                                    <option value="remarcada">Remarcada</option>
+                                    <option value="faltou">Faltou</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col"><label class="form-label">Data</label><input type="date" id="eventoData" class="form-control" required></div>
+                            <div class="col"><label class="form-label">Início</label><input type="time" id="eventoHora" class="form-control" required></div>
+                            <div class="col"><label class="form-label">Fim</label><input type="time" id="eventoFim" class="form-control" required></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Valor (R$)</label>
+                            <input type="number" id="eventoValor" class="form-control" step="0.01" required>
+                        </div>
+
+                        <div class="form-section-title mt-4">Pagamento</div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label class="form-label">Status</label>
+                                <select id="eventoStatus" class="form-select">
+                                    <option value="pendente">Pendente</option>
+                                    <option value="pago">Pago</option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <label class="form-label">Forma</label>
+                                <select id="eventoForma" class="form-select">
+                                    <option value="-">-</option>
+                                    <option value="pix">Pix</option>
+                                    <option value="dinheiro">Dinheiro</option>
+                                    <option value="cartao">Cartão</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-section-title mt-4">Detalhes</div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Modalidade</label>
+                                <select id="eventoModalidade" class="form-select">
+                                    <option value="online" selected>Online</option>
+                                    <option value="presencial">Presencial</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Local / Plataforma</label>
+                                <input type="text" id="eventoLocal" class="form-control" placeholder="Ex.: Google Meet, Zoom...">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Observações</label>
+                            <textarea id="eventoObs" class="form-control" rows="2" placeholder="Conteúdo da aula, exercícios..."></textarea>
+                        </div>
+
+                        <div class="recurrence-box" id="recorrenciaBox">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="eventoRecorrente">
+                                <label class="form-check-label fw-semibold" for="eventoRecorrente">Repetir esta aula semanalmente</label>
+                            </div>
+                            <div id="recorrenciaCampos" class="mt-3" hidden>
+                                <div class="row g-3">
+                                    <div class="col-md-8">
+                                        <label class="form-label">Dias da semana</label>
+                                        <div class="weekday-grid" id="eventoDiasSemana">
+                                            <div><input type="checkbox" id="recDia1" value="1"><label for="recDia1">Seg</label></div>
+                                            <div><input type="checkbox" id="recDia2" value="2"><label for="recDia2">Ter</label></div>
+                                            <div><input type="checkbox" id="recDia3" value="3"><label for="recDia3">Qua</label></div>
+                                            <div><input type="checkbox" id="recDia4" value="4"><label for="recDia4">Qui</label></div>
+                                            <div><input type="checkbox" id="recDia5" value="5"><label for="recDia5">Sex</label></div>
+                                            <div><input type="checkbox" id="recDia6" value="6"><label for="recDia6">Sáb</label></div>
+                                            <div><input type="checkbox" id="recDia0" value="0"><label for="recDia0">Dom</label></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label" for="eventoRecorrenciaFim">Repetir até</label>
+                                        <input type="date" id="eventoRecorrenciaFim" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="recurrence-summary" id="recorrenciaResumo">Selecione os dias e a data final.</div>
+                                <div class="data-safety-note">
+                                    <i class="fas fa-shield-alt text-primary mt-1"></i>
+                                    <span>Cada ocorrência será criada como uma aula comum, usando a coleção e os campos atuais, com pagamento pendente. Horários já existentes para o mesmo aluno serão ignorados.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger me-auto" id="btnExcluirEvento" style="display:none;" onclick="excluirEvento()"><i class="fas fa-trash me-1"></i>Excluir</button>
+                    <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnSalvarEvento" onclick="salvarEvento()"><i class="fas fa-save me-1"></i>Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MODAL HORÁRIOS PRESOS (SOMENTE LOCAL) ========== -->
+    <div class="modal fade" id="modalHorariosPresos" tabindex="-1" aria-labelledby="modalHorariosPresosTitulo">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalHorariosPresosTitulo"><i class="fas fa-lock me-2 text-primary"></i>Horários presos</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="data-safety-note mb-3">
+                        <i class="fas fa-laptop text-primary mt-1"></i>
+                        <span>Estes bloqueios ficam somente neste navegador. Eles não criam registros no banco, não alteram aulas existentes e não interferem na autenticação.</span>
+                    </div>
+                    <form id="formHorarioPreso">
+                        <input type="hidden" id="horarioPresoId">
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <label class="form-label" for="horarioPresoTitulo">Compromisso fixo</label>
+                                <input type="text" id="horarioPresoTitulo" class="form-control" maxlength="80" placeholder="Ex.: Colégio São Conrado" required>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label">Horário</label>
+                                <div class="input-group">
+                                    <input type="time" id="horarioPresoInicio" class="form-control" aria-label="Início" required>
+                                    <span class="input-group-text">até</span>
+                                    <input type="time" id="horarioPresoFim" class="form-control" aria-label="Fim" required>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Dias da semana</label>
+                                <div class="weekday-grid" id="horarioPresoDias">
+                                    <div><input type="checkbox" id="fixDia1" value="1"><label for="fixDia1">Seg</label></div>
+                                    <div><input type="checkbox" id="fixDia2" value="2"><label for="fixDia2">Ter</label></div>
+                                    <div><input type="checkbox" id="fixDia3" value="3"><label for="fixDia3">Qua</label></div>
+                                    <div><input type="checkbox" id="fixDia4" value="4"><label for="fixDia4">Qui</label></div>
+                                    <div><input type="checkbox" id="fixDia5" value="5"><label for="fixDia5">Sex</label></div>
+                                    <div><input type="checkbox" id="fixDia6" value="6"><label for="fixDia6">Sáb</label></div>
+                                    <div><input type="checkbox" id="fixDia0" value="0"><label for="fixDia0">Dom</label></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="horarioPresoInicioData">Válido a partir de <span class="fw-normal text-muted">(opcional)</span></label>
+                                <input type="date" id="horarioPresoInicioData" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="horarioPresoFimData">Válido até <span class="fw-normal text-muted">(opcional)</span></label>
+                                <input type="date" id="horarioPresoFimData" class="form-control">
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+                        <div class="form-section-title mb-0">Bloqueios cadastrados</div>
+                        <span class="badge bg-light text-dark" id="horariosPresosResumo">0 horários</span>
+                    </div>
+                    <div class="horarios-presos-lista" id="horariosPresosLista">
+                        <div class="empty-state"><i class="fas fa-unlock-alt"></i><p>Nenhum horário preso.</p></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost me-auto" onclick="novoHorarioPreso()"><i class="fas fa-plus me-1"></i>Novo</button>
+                    <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary" id="btnSalvarHorarioPreso" onclick="salvarHorarioPreso()"><i class="fas fa-lock me-1"></i>Prender horário</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MODAL DESPESA ========== -->
+    <div class="modal fade" id="modalDespesa" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-minus-circle me-2 text-danger"></i>Registrar Despesa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formDespesa">
+                        <div class="mb-3"><label class="form-label">Descrição</label><input type="text" id="despesaDesc" class="form-control" placeholder="Ex.: Apostila, transporte..." required></div>
+                        <div class="mb-3"><label class="form-label">Valor (R$)</label><input type="number" id="despesaValor" class="form-control" step="0.01" required></div>
+                        <div class="mb-3"><label class="form-label">Data</label><input type="date" id="despesaData" class="form-control" required></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="salvarDespesa()"><i class="fas fa-save me-1"></i>Registrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MODAL EDITAR ALUNO ========== -->
+    <div class="modal fade" id="modalEditAluno" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-edit me-2 text-primary"></i>Editar Aluno</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editAlunoId">
+                    <div class="mb-3"><label class="form-label">Nome Completo</label><input type="text" id="editAlunoNome" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label">WhatsApp</label><input type="text" id="editAlunoTel" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label">Matéria</label><input type="text" id="editAlunoMateria" class="form-control"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="salvarEdicaoAluno()"><i class="fas fa-save me-1"></i>Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MODAL PIX ========== -->
+    <div class="modal fade" id="modalPix" tabindex="-1" aria-labelledby="modalPixTitulo">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" id="modalPixTitulo"><i class="fas fa-qrcode me-2 text-primary"></i>Cobrança Pix</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+                <div class="modal-body text-center"><p class="text-muted small" id="pixValor"></p><img id="pixQrImage" class="img-fluid mb-3" alt="QR Code Pix" style="max-width:230px;display:none"><label class="form-label text-start w-100" for="pixCopiaCola">Pix Copia e Cola</label><textarea id="pixCopiaCola" class="form-control" rows="4" readonly></textarea><a id="pixLink" class="btn btn-primary w-100 mt-3" target="_blank" rel="noopener noreferrer" style="display:none"><i class="fas fa-external-link-alt me-1"></i>Abrir pagamento seguro</a></div>
+                <div class="modal-footer"><button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Fechar</button><button type="button" class="btn btn-primary" onclick="copiarPix()"><i class="fas fa-copy me-1"></i>Copiar código</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== COMMAND PALETTE ========== -->
+    <div class="modal fade" id="modalComandos" tabindex="-1" aria-labelledby="modalComandosTitulo" aria-describedby="modalComandosAjuda">
+        <div class="modal-dialog modal-dialog-centered command-palette">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title" id="modalComandosTitulo"><i class="fas fa-bolt me-2 text-primary"></i>Ações rápidas</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body pt-2">
+                    <p class="text-muted small mb-2" id="modalComandosAjuda">Use a busca global ou escolha uma ação.</p>
+                    <button type="button" class="command-item" data-command="new-lesson"><i class="fas fa-calendar-plus"></i><span>Agendar nova aula</span><small>N</small></button>
+                    <button type="button" class="command-item" data-command="agenda"><i class="fas fa-calendar-alt"></i><span>Abrir agenda</span><small>G A</small></button>
+                    <button type="button" class="command-item" data-command="student"><i class="fas fa-user-plus"></i><span>Cadastrar aluno</span><small>G L</small></button>
+                    <button type="button" class="command-item" data-command="finance"><i class="fas fa-wallet"></i><span>Abrir financeiro</span><small>G F</small></button>
+                    <div class="premium-note mt-3"><i class="fas fa-shield-alt"></i><span>Este atalho é local e não altera nenhuma configuração de acesso ao banco de dados.</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MODAL CONFIG ========== -->
+    <div class="modal fade" id="modalConfig" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-cog me-2"></i>Configurações</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formConfig">
+                        <p class="text-muted" style="font-size:0.82rem">Essas informações aparecem nos PDFs gerados.</p>
+                        <div class="mb-3"><label class="form-label">Nome/Marca</label><input type="text" id="cfgEscola" class="form-control" placeholder="Ex.: Aulas Particulares - Prof. Jair"></div>
+                        <div class="mb-3"><label class="form-label">Professor</label><input type="text" id="cfgProfessor" class="form-control" placeholder="Ex.: Jair Pimenta"></div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6"><label class="form-label">WhatsApp</label><input type="text" id="cfgWhats" class="form-control" placeholder="21999998888"></div>
+                            <div class="col-md-6"><label class="form-label">E-mail</label><input type="email" id="cfgEmail" class="form-control" placeholder="voce@email.com"></div>
+                        </div>
+                        <div class="mb-3"><label class="form-label">Chave Pix</label><input type="text" id="cfgPix" class="form-control" placeholder="CPF, e-mail ou aleatória"></div>
+                        <div class="mb-3"><label class="form-label">Mensagem rodapé</label><textarea id="cfgMsg" class="form-control" rows="3" placeholder="Qualquer dúvida, estou à disposição."></textarea></div>
+                        <div class="form-section-title mt-4">Google Calendar</div>
+                        <div class="mb-3">
+                            <label class="form-label" for="cfgGoogleClientId">OAuth Client ID (Aplicativo Web)</label>
+                            <input type="text" id="cfgGoogleClientId" class="form-control" placeholder="000000000000-xxxxxxxx.apps.googleusercontent.com" autocomplete="off">
+                            <div class="form-text">O Client ID é público. Não coloque Client Secret neste HTML.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="cfgGoogleCalendarId">Calendário</label>
+                            <input type="text" id="cfgGoogleCalendarId" class="form-control" value="primary" placeholder="primary">
+                            <div class="form-text">Use <strong>primary</strong> para a agenda principal da conta conectada.</div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="cfgGoogleAutoRefresh">Atualização automática</label>
+                                <select id="cfgGoogleAutoRefresh" class="form-select">
+                                    <option value="0">Somente manual</option>
+                                    <option value="2">A cada 2 minutos</option>
+                                    <option value="5" selected>A cada 5 minutos</option>
+                                    <option value="10">A cada 10 minutos</option>
+                                    <option value="15">A cada 15 minutos</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 d-flex flex-column justify-content-end gap-2 pb-1">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="cfgGoogleAutoSync" checked>
+                                    <label class="form-check-label" for="cfgGoogleAutoSync">Sincronizar aulas automaticamente</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="cfgGoogleBlockExternal" checked>
+                                    <label class="form-check-label" for="cfgGoogleBlockExternal">Bloquear compromissos externos</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="premium-note"><i class="fas fa-shield-alt"></i><span>O token do Google fica somente na memória desta sessão do navegador. O Firestore continua sendo a fonte principal das aulas. Compromissos externos podem bloquear horários sem copiar dados financeiros para o Google.</span></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-ghost" data-bs-dismiss="modal">Fechar</button>
+                    <button class="btn btn-primary" type="button" onclick="salvarConfig()"><i class="fas fa-save me-1"></i>Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <script type="module" src="src/app.js"></script>
+    <script src="src/v4.js"></script>
+    <script src="src/v4-features.js"></script>
+</body>
+</html>
+

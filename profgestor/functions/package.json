@@ -1,0 +1,16 @@
+{
+  "name": "profgestor-functions",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "engines": {
+    "node": "22"
+  },
+  "description": "Backend confiável do ProfGestor V5: assinaturas, webhooks e reconciliação.",
+  "dependencies": {
+    "firebase-admin": "^14.5.0",
+    "firebase-functions": "^7.4.0",
+    "mercadopago": "^3.6.1",
+    "stripe": "^23.1.0"
+  }
+}

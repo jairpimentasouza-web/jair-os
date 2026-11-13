@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ProfGestor · Gestão de aulas particulares</title>
+<meta name="description" content="Agenda, alunos, pacotes, recebimentos, acompanhamento pedagógico e portal da família para professores particulares. Teste grátis de 14 dias, sem cartão.">
+<meta name="theme-color" content="#0b1f4d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f8fc;--surface:#ffffff;--ink:#0f172a;--muted:#5b6475;--line:#e3e8f2;
+    --brand:#0b1f4d;--accent:#3b5bdb;--accent-ink:#ffffff;--accent-soft:#eef2ff;
+    --ok:#047857;--soon:#92400e;--soon-bg:#fff7e6;--radius:18px;--shadow:0 18px 50px rgba(15,23,42,.10);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#0b1020;--surface:#121a2e;--ink:#e7ecf7;--muted:#a3adc2;--line:#24304a;
+    --brand:#0b1f4d;--accent:#7b93ff;--accent-ink:#0b1020;--accent-soft:#1b2544;--ok:#34d399;--soon:#fbbf24;--soon-bg:#2a2210;
+    --shadow:0 18px 50px rgba(0,0,0,.45);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#0b1020;--surface:#121a2e;--ink:#e7ecf7;--muted:#a3adc2;--line:#24304a;
+    --brand:#0b1f4d;--accent:#7b93ff;--accent-ink:#0b1020;--accent-soft:#1b2544;--ok:#34d399;--soon:#fbbf24;--soon-bg:#2a2210;
+    --shadow:0 18px 50px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.6 "DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+  img{max-width:100%;height:auto;display:block}
+  a{color:var(--accent)}
+  .wrap{width:min(1120px,100% - 32px);margin-inline:auto}
+  .skip{position:absolute;left:-9999px}.skip:focus{left:16px;top:16px;z-index:10;background:var(--surface);padding:8px 12px;border-radius:8px}
+  header.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem;color:var(--ink);text-decoration:none}
+  .logo span.mark{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--brand);color:#fff;font-size:.95rem}
+  nav.links{display:flex;gap:22px}
+  nav.links a{color:var(--muted);text-decoration:none;font-weight:500}
+  nav.links a:hover{color:var(--ink)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;border-radius:12px;font-weight:700;text-decoration:none;border:1px solid transparent;transition:transform .15s ease}
+  .btn:hover{transform:translateY(-1px)}
+  .btn.primary{background:var(--accent);color:var(--accent-ink)}
+  .btn.ghost{border-color:var(--line);color:var(--ink);background:var(--surface)}
+  .actions{display:flex;gap:10px;flex-wrap:wrap}
+  .hero{padding:72px 0 40px}
+  .hero .grid{display:grid;grid-template-columns:1.05fr 1fr;gap:48px;align-items:center}
+  .eyebrow{display:inline-block;font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:6px 12px;border-radius:99px}
+  h1{font-size:clamp(2rem,4.2vw,3.25rem);line-height:1.08;letter-spacing:-.02em;margin:16px 0 18px}
+  .lead{font-size:1.15rem;color:var(--muted);margin:0 0 26px;max-width:36em}
+  .fine{font-size:.88rem;color:var(--muted);margin-top:14px}
+  .shot{border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);background:var(--surface)}
+  .shot figcaption{font-size:.8rem;color:var(--muted);padding:8px 14px;border-top:1px solid var(--line)}
+  section{padding:64px 0}
+  h2{font-size:clamp(1.6rem,3vw,2.3rem);line-height:1.15;letter-spacing:-.015em;margin:0 0 14px}
+  .sub{color:var(--muted);max-width:44em;margin:0 0 34px}
+  .questions{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .q{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+  .q strong{display:block;margin-bottom:6px;font-size:1.02rem}
+  .q p{margin:0;color:var(--muted);font-size:.95rem}
+  .feature{display:grid;grid-template-columns:1fr 1.15fr;gap:44px;align-items:center;margin-bottom:64px}
+  .feature.rev{grid-template-columns:1.15fr 1fr}.feature.rev .text{order:2}
+  .feature h3{font-size:1.45rem;margin:0 0 10px}
+  .feature ul{margin:14px 0 0;padding-left:20px;color:var(--muted)}
+  .feature li{margin:6px 0}
+  .feature .phone{max-width:300px;margin-inline:auto}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+  .card h3{margin:0 0 6px;font-size:1.08rem}.card p{margin:0;color:var(--muted);font-size:.95rem}
+  .tag{display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:6px;margin-bottom:10px}
+  .tag.ok{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
+  .tag.soon{background:var(--soon-bg);color:var(--soon)}
+  .plans{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:stretch}
+  .plan{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;gap:8px}
+  .plan.highlight{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .plan .price{font-size:2rem;font-weight:800;letter-spacing:-.02em}
+  .plan .price small{font-size:.95rem;font-weight:500;color:var(--muted)}
+  .plan ul{margin:6px 0 14px;padding-left:18px;color:var(--muted);font-size:.93rem;flex:1}
+  .plan .btn{width:100%}
+  .plan.disabled{opacity:.75}
+  details{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:10px}
+  summary{cursor:pointer;font-weight:700}
+  details p{color:var(--muted);margin:10px 0 0}
+  .cta{background:var(--brand);color:#fff;border-radius:28px;padding:48px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
+  .cta h2{color:#fff;margin:0 0 6px}.cta p{margin:0;color:#c7d2fe}
+  .cta .btn.primary{background:#fff;color:var(--brand)}
+  footer{padding:40px 0 56px;color:var(--muted);font-size:.9rem;border-top:1px solid var(--line)}
+  footer .row{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  @media (max-width:960px){
+    .hero .grid,.feature,.feature.rev{grid-template-columns:1fr}.feature.rev .text{order:0}
+    .questions,.plans{grid-template-columns:repeat(2,1fr)}.cards{grid-template-columns:1fr 1fr}
+    nav.links{display:none}
+  }
+  @media (max-width:600px){
+    .questions,.plans,.cards{grid-template-columns:1fr}
+    .hero{padding-top:40px}.cta{padding:32px 24px}
+    .bar .actions{gap:6px}.bar .actions .btn{min-height:40px;padding:0 12px;font-size:.92rem}
+    .logo{font-size:1rem}
+  }
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn{transition:none}}
+</style>
+</head>
+<body>
+<a class="skip" href="#conteudo">Ir para o conteúdo</a>
+<header class="top">
+  <div class="wrap bar">
+    <a class="logo" href="#" aria-label="ProfGestor, início"><span class="mark" aria-hidden="true">PG</span>ProfGestor</a>
+    <nav class="links" aria-label="Seções">
+      <a href="#recursos">Recursos</a><a href="#planos">Planos</a><a href="#seguranca">Segurança</a><a href="#perguntas">Perguntas</a>
+    </nav>
+    <div class="actions">
+      <a class="btn ghost" href="https://gestao-aulas-jair.web.app/">Entrar</a>
+      <a class="btn primary" href="https://gestao-aulas-jair.web.app/?cadastro=professor">Criar conta</a>
+    </div>
+  </div>
+</header>
+
+<main id="conteudo">
+  <section class="hero">
+    <div class="wrap grid">
+      <div>
+        <span class="eyebrow">Para professores particulares</span>
+        <h1>Suas aulas, seus alunos e seus recebimentos no mesmo lugar.</h1>
+        <p class="lead">O ProfGestor organiza a agenda, controla pacotes de aulas e pagamentos, registra o que foi trabalhado em cada aula e dá à família um acesso seguro ao acompanhamento do aluno.</p>
+        <div class="actions">
+          <a class="btn primary" href="https://gestao-aulas-jair.web.app/?cadastro=professor">Começar teste de 14 dias</a>
+          <a class="btn ghost" href="#recursos">Ver como funciona</a>
+        </div>
+        <p class="fine">Sem cartão durante o teste. Cadastro aberto em fase piloto, com vagas limitadas.</p>
+      </div>
+      <figure class="shot">
+        <img src="img/painel.jpg" width="2560" height="1600" alt="Painel inicial do ProfGestor com aulas de hoje, valores em atraso, despesas e resultado do mês e a lista de pendências" fetchpriority="high">
+        <figcaption>Tela real do produto, com dados fictícios.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="perguntas-do-dia">
+    <div class="wrap">
+      <h2 id="perguntas-do-dia">Abra o app e saiba, em segundos:</h2>
+      <p class="sub">A tela inicial responde às perguntas que todo professor particular faz antes de começar o dia.</p>
+      <div class="questions">
+        <div class="q"><strong>O que preciso fazer hoje?</strong><p>Aulas do dia e registros pós-aula pendentes, em ordem.</p></div>
+        <div class="q"><strong>Quanto tenho a receber?</strong><p>Valores em atraso separados do que ainda vai vencer.</p></div>
+        <div class="q"><strong>Quais aulas estão marcadas?</strong><p>Agenda diária, semanal e mensal, com aulas recorrentes.</p></div>
+        <div class="q"><strong>O que pede atenção?</strong><p>Cobranças vencidas, pacotes no fim e pedidos das famílias.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="recursos" aria-labelledby="recursos-titulo">
+    <div class="wrap">
+      <h2 id="recursos-titulo">Recursos disponíveis</h2>
+      <p class="sub">Tudo o que aparece nesta seção já funciona e foi testado com testes automatizados no navegador.</p>
+
+      <div class="feature">
+        <div class="text">
+          <h3>Agenda que evita conflito</h3>
+          <p>Marque uma aula em poucos segundos ou crie uma recorrência semanal de uma vez.</p>
+          <ul>
+            <li>Bloqueio automático de horários sobrepostos.</li>
+            <li>Recorrência por dias da semana, que pula horários já ocupados.</li>
+            <li>Aulas online, presenciais e híbridas; remarcação e cancelamento.</li>
+            <li>Agenda semanal em PDF para enviar ao aluno.</li>
+          </ul>
+        </div>
+        <figure class="shot"><img src="img/agenda.jpg" width="2560" height="1600" loading="lazy" alt="Agenda semanal do ProfGestor com aulas de diferentes alunos e filtros por aluno, situação, pagamento e modalidade"><figcaption>Dados fictícios.</figcaption></figure>
+      </div>
+
+      <div class="feature rev">
+        <div class="text">
+          <h3>Financeiro do seu trabalho, sem planilha</h3>
+          <p>Cada aula já entra com valor. Você marca o pagamento com um toque.</p>
+          <ul>
+            <li>Recebido, a receber, em atraso, despesas e resultado do mês.</li>
+            <li>Pacotes de aulas com consumo automático de crédito pela presença e estorno se a presença for corrigida.</li>
+            <li>Recibo em PDF e extrato em CSV.</li>
+            <li>Histórico das alterações de valores e pagamentos.</li>
+          </ul>
+        </div>
+        <figure class="shot"><img src="img/financeiro.jpg" width="2560" height="1600" loading="lazy" alt="Tela financeira do ProfGestor com totais recebido, a receber e saldo, e o extrato de aulas com situação e pagamento"><figcaption>Dados fictícios.</figcaption></figure>
+      </div>
+
+      <div class="feature">
+        <div class="text">
+          <h3>Portal da família</h3>
+          <p>Responsáveis acompanham próximas aulas, frequência, evolução e créditos, sem você precisar mandar mensagem a cada aula.</p>
+          <ul>
+            <li>Acesso só por convite seu e com e-mail confirmado.</li>
+            <li>Cada família vê exclusivamente o próprio aluno.</li>
+            <li>Pedidos de remarcação chegam organizados para você aprovar.</li>
+          </ul>
+        </div>
+        <figure class="shot phone"><img src="img/portal-familia.jpg" width="780" height="1688" loading="lazy" alt="Portal da família no celular mostrando frequência, aulas concluídas, créditos ativos e próximas aulas do aluno"><figcaption>Dados fictícios.</figcaption></figure>
+      </div>
+
+      <div class="feature rev">
+        <div class="text">
+          <h3>Novos alunos sem perder ninguém</h3>
+          <p>Um funil simples do primeiro contato à matrícula: interessado, aula experimental, proposta e aluno ativo.</p>
+          <ul>
+            <li>Origem de cada contato, para saber o que traz alunos.</li>
+            <li>Matrícula com um clique: o interessado vira aluno.</li>
+            <li>Mensagens prontas para WhatsApp; o envio é feito por você.</li>
+          </ul>
+        </div>
+        <figure class="shot"><img src="img/crm.jpg" width="2560" height="1600" loading="lazy" alt="Funil de novos alunos com interessados por etapa e botão de matrícula"><figcaption>Dados fictícios.</figcaption></figure>
+      </div>
+
+      <h3 style="margin:8px 0 14px">Também incluído</h3>
+      <div class="cards">
+        <div class="card"><span class="tag ok">Disponível</span><h3>Registro pós-aula</h3><p>Presença, conteúdo, tarefa e próximo passo de cada aula, com histórico por aluno.</p></div>
+        <div class="card"><span class="tag ok">Disponível</span><h3>Relatórios em PDF</h3><p>Relatório do período para a família e agenda do aluno, prontos para enviar.</p></div>
+        <div class="card"><span class="tag ok">Disponível</span><h3>Seus dados, quando quiser</h3><p>Exportação completa em arquivo, inclusive depois do fim do teste.</p></div>
+      </div>
+
+      <h3 style="margin:40px 0 14px">Em desenvolvimento</h3>
+      <p class="sub" style="margin-bottom:16px">Ainda não estão disponíveis e não fazem parte dos planos até serem lançados.</p>
+      <div class="cards">
+        <div class="card"><span class="tag soon">Em breve</span><h3>Google Agenda</h3><p>Sincronização contínua das aulas com o Google Agenda.</p></div>
+        <div class="card"><span class="tag soon">Em breve</span><h3>Cobrança por Pix</h3><p>Geração de cobrança Pix das aulas direto pelo app.</p></div>
+        <div class="card"><span class="tag soon">Em breve</span><h3>Lembretes automáticos</h3><p>Lembrete de aula e de pagamento enviados com o consentimento da família.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="planos" aria-labelledby="planos-titulo">
+    <div class="wrap">
+      <h2 id="planos-titulo">Planos</h2>
+      <p class="sub">Todos começam com 14 dias grátis, sem cartão. Pagamento mensal por cartão ou Pix Automático, em página segura do provedor de pagamento. Valores do lançamento, sujeitos a ajuste durante o piloto.</p>
+      <div class="plans">
+        <article class="plan">
+          <h3>Essencial</h3>
+          <div class="price">R$ 29,90 <small>/mês</small></div>
+          <ul><li>Até 25 alunos ativos</li><li>Agenda, financeiro, pacotes e CRM</li><li>Portal da família e relatórios</li></ul>
+          <a class="btn ghost" href="https://gestao-aulas-jair.web.app/?cadastro=professor">Testar grátis</a>
+        </article>
+        <article class="plan highlight">
+          <h3>Profissional</h3>
+          <div class="price">R$ 49,90 <small>/mês</small></div>
+          <ul><li>Alunos ilimitados</li><li>Tudo do Essencial</li></ul>
+          <a class="btn primary" href="https://gestao-aulas-jair.web.app/?cadastro=professor">Testar grátis</a>
+        </article>
+        <article class="plan">
+          <h3>Fundador</h3>
+          <div class="price">R$ 39,90 <small>/mês</small></div>
+          <ul><li>Tudo do Profissional</li><li>Preço nos 12 primeiros meses; depois, o do Profissional</li><li>Limitado aos 100 primeiros assinantes</li></ul>
+          <a class="btn ghost" href="https://gestao-aulas-jair.web.app/?cadastro=professor">Testar grátis</a>
+        </article>
+        <article class="plan disabled" aria-describedby="equipe-nota">
+          <h3>Equipe</h3>
+          <div class="price">R$ 119,90 <small>/mês</small></div>
+          <ul><li>Vários professores na mesma conta</li></ul>
+          <p class="fine" id="equipe-nota" style="margin:0 0 10px"><span class="tag soon">Em breve</span><br>Não está à venda até o recurso multiusuário estar pronto.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="seguranca" aria-labelledby="seguranca-titulo">
+    <div class="wrap">
+      <h2 id="seguranca-titulo">Segurança e privacidade</h2>
+      <p class="sub">Você lida com dados de alunos, muitos deles menores de idade. O ProfGestor foi construído para que esses dados fiquem só com quem deve vê-los.</p>
+      <div class="cards">
+        <div class="card"><h3>Cada professor só vê o que é seu</h3><p>O isolamento é aplicado no servidor, não apenas escondido na tela, e é verificado por testes automatizados a cada mudança.</p></div>
+        <div class="card"><h3>Família vê só o próprio aluno</h3><p>Acesso por convite, com e-mail confirmado, restrito ao aluno vinculado. Você pode revogar quando quiser.</p></div>
+        <div class="card"><h3>Sem dados de cartão aqui</h3><p>O pagamento acontece na página do provedor. O ProfGestor não recebe nem guarda número de cartão.</p></div>
+        <div class="card"><h3>Seus dados são seus</h3><p>Exporte tudo a qualquer momento. Se o teste terminar, sua conta fica em modo de consulta, sem apagar nada.</p></div>
+        <div class="card"><h3>Histórico de alterações</h3><p>Mudanças em pagamentos, valores, créditos e exclusões ficam registradas, com data e autor.</p></div>
+        <div class="card"><h3>LGPD</h3><p>Desenvolvido com a LGPD como referência. Termos de uso, política de privacidade e contrato de tratamento de dados estão em revisão jurídica.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="perguntas" aria-labelledby="perguntas-titulo">
+    <div class="wrap">
+      <h2 id="perguntas-titulo">Perguntas frequentes</h2>
+      <details><summary>Preciso de cartão para testar?</summary><p>Não. O teste dura 14 dias e não pede forma de pagamento. Se assinar com mais de 2 dias de teste restantes, a primeira cobrança só acontece quando o teste termina.</p></details>
+      <details><summary>O que acontece quando o teste acaba e eu não assino?</summary><p>Sua conta entra em modo de consulta: você continua vendo e exportando seus dados, mas não registra aulas novas. Nada é apagado automaticamente.</p></details>
+      <details><summary>Funciona no celular?</summary><p>Sim. O app funciona no navegador do celular e do computador, e pode ser adicionado à tela inicial.</p></details>
+      <details><summary>Os pais dos meus alunos precisam pagar alguma coisa?</summary><p>Não. O portal da família está incluído na sua assinatura. Você decide quem recebe o convite.</p></details>
+      <details><summary>O ProfGestor recebe os pagamentos dos meus alunos?</summary><p>Não. O dinheiro das aulas continua indo direto para você, pela forma que já usa. O app só organiza o que foi pago e o que está pendente.</p></details>
+      <details><summary>Posso cancelar quando quiser?</summary><p>Sim. O cancelamento é feito pelo próprio app e vale ao fim do período já pago.</p></details>
+      <details><summary>Como funciona o suporte?</summary><p>Durante o piloto, o atendimento é feito diretamente pelo responsável pelo produto, pelo canal combinado na entrada no piloto.</p></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap cta">
+      <div><h2>Comece pela próxima aula.</h2><p>Crie a conta, cadastre um aluno e marque a primeira aula em poucos minutos.</p></div>
+      <a class="btn primary" href="https://gestao-aulas-jair.web.app/?cadastro=professor">Começar teste de 14 dias</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap row">
+    <span>© 2026 ProfGestor</span>
+    <span>Termos de uso e Política de privacidade em revisão jurídica, publicados antes da abertura comercial.</span>
+    <a href="https://gestao-aulas-jair.web.app/">Entrar no app</a>
+  </div>
+</footer>
+</body>
+</html>
