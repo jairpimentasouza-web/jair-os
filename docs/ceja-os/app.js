@@ -1481,8 +1481,41 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
       "equipe"
     );
   }
+  const fmtBytes = (n) => n >= 1e9 ? `${(n / 1e9).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} GB` : `${(n / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: n < 1e7 ? 1 : 0 })} MB`;
+  const PARTE_ALERTA = 0.8;
+  function barraUso(rotulo, usado, limite, detalhe) {
+    const frac = limite ? usado / limite : 0;
+    const pct = Math.round(frac * 100);
+    const nivel2 = frac >= PARTE_ALERTA ? "critico" : frac >= 0.6 ? "atencao" : "ok";
+    return `<div class="indicador uso-item ${nivel2}"><div class="linha-uso"><span class="rotulo">${esc(rotulo)}</span><span class="valor-uso">${pct}%</span></div>
+    <meter min="0" max="${limite}" low="${0.6 * limite}" high="${PARTE_ALERTA * limite}" optimum="0" value="${Math.min(usado, limite)}">${pct}%</meter>
+    <div class="detalhe">${esc(fmtBytes(usado))} de ${esc(fmtBytes(limite))}${detalhe ? ` · ${detalhe}` : ""}</div></div>`;
+  }
+  function cartaoUso(u) {
+    if (!u) return `<section class="cartao">${aviso("alerta", "Não foi possível medir o uso do plano agora. Tente atualizar a página.")}</section>`;
+    const { banco, arquivos: arq, trafego: tr } = u;
+    const dep = (n) => arq.depositos?.[n]?.bytes || 0;
+    const alertas = [];
+    if (banco.usado >= PARTE_ALERTA * banco.limite) alertas.push(`banco de dados em ${Math.round(100 * banco.usado / banco.limite)}% — ao chegar a 100%, o sistema fica somente leitura e não grava chamadas nem notas`);
+    if (arq.usado >= PARTE_ALERTA * arq.limite) alertas.push(`arquivos em ${Math.round(100 * arq.usado / arq.limite)}% — novos envios de provas podem ser recusados`);
+    if (tr.backups_mes >= PARTE_ALERTA * tr.limite) alertas.push(`tráfego dos backups em ${Math.round(100 * tr.backups_mes / tr.limite)}% do limite do mês`);
+    const cabem = Math.max(0, Math.floor((PARTE_ALERTA * banco.limite - banco.usado) / 5e5));
+    const ultimo = (b) => b ? `${fmtData(b.dia)} · ${TIPO_BACKUP[b.tipo] || esc(b.tipo)} · ${b.status === "concluido" ? etq("verde", "concluído") : b.status === "falhou" ? etq("vermelha", "falhou") : etq("amarela", "gravando")}` : "—";
+    return `<section class="cartao" id="uso-plano"><h2>Uso do plano ${u.plano === "gratuito" ? "gratuito " : ""}do Supabase</h2>
+    ${alertas.length ? aviso("erro", `<strong>Atenção — limite perto do fim:</strong> ${esc(alertas.join("; "))}. Passe o projeto para o plano Pro (cerca de US$ 25/mês) antes de chegar a 100%.`) : ""}
+    <div class="grade grade-3">
+      ${barraUso("Banco de dados", banco.usado, banco.limite, `cabem ainda cerca de ${cabem.toLocaleString("pt-BR")} estudantes-ano`)}
+      ${barraUso("Arquivos (provas e backups)", arq.usado, arq.limite, `provas ${fmtBytes(dep("provas"))}, backups ${fmtBytes(dep("backups"))}`)}
+      ${barraUso("Tráfego dos backups no mês", tr.backups_mes, tr.limite, "medido pelo CEJA OS")}
+    </div>
+    <div class="tabela-rolagem mt-1"><table class="tabela"><thead><tr><th>Escola</th><th class="num">Estudantes ativos</th><th class="num">Professores</th><th class="num">Registros de frequência</th><th>Último backup</th></tr></thead><tbody>
+      ${(u.escolas || []).map((e) => `<tr><td>${esc(e.nome)}${e.demonstracao ? ` ${etq("azul", "demonstração")}` : ""}</td><td class="num">${e.estudantes}</td><td class="num">${e.professores}</td>
+        <td class="num">${Number(e.frequencias).toLocaleString("pt-BR")}</td><td class="pequeno">${ultimo(e.ultimo_backup)}</td></tr>`).join("")}
+    </tbody></table></div>
+    <p class="pequeno muted">Medido em ${esc(fmtDataHora(u.medido_em))}. Esta tela avisa ao chegar a 80% de qualquer limite. A estimativa de capacidade usa ≈ 0,5 MB por estudante por ano letivo e mantém 20% de folga. O tráfego total (inclui o uso diário do sistema) aparece no painel do Supabase, em Organização → Usage.</p></section>`;
+  }
   async function telaPlataforma(rq) {
-    const r = await acessos("escolas_listar");
+    const [r, uso] = await Promise.all([acessos("escolas_listar"), rpc("plataforma_uso_painel").catch(() => null)]);
     const cred = credencialRecente;
     credencialRecente = null;
     const ver = rq.get("escola");
@@ -1502,6 +1535,7 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     return shell(
       `${cabecalho("Escolas", "Cadastro de escolas e de suas contas da direção")}
     ${cred ? cred.html || cartaoCredencial(cred.dados, cred.titulo) : ""}${equipe}
+    ${ver ? "" : cartaoUso(uso)}
     <section class="cartao"><div class="tabela-rolagem"><table class="tabela"><thead><tr><th>Escola</th><th>Código</th><th>Situação</th><th>2º fator na gestão</th><th class="num">Usuários</th><th class="num">Turmas</th><th class="num">Estudantes</th><th>Direção</th><th>Ações</th></tr></thead><tbody>
     ${r.escolas.map((e) => `<tr><td><strong>${esc(e.nome)}</strong>${e.demonstracao ? ` ${etq("azul", "demonstração")}` : ""}<br><span class="pequeno muted">${esc([e.cidade, e.uf].filter(Boolean).join(" / "))}</span></td><td><code>${esc(e.codigo)}</code></td>
       <td>${e.status === "ativa" ? etq("verde", "ativa") : etq("vermelha", "suspensa")}</td><td>${e.exige_mfa_gestao ? "obrigatório" : "opcional"}</td><td class="num">${e.usuarios}</td><td class="num">${e.turmas}</td><td class="num">${e.alunos}</td>
@@ -1740,13 +1774,18 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     "prova_envios",
     "auditoria"
   ];
+  const TIPO_BACKUP = { completa: "Completa", alteracoes: "Só o que mudou" };
+  const doisDig = (n) => String(n).padStart(2, "0");
   async function telaSeguranca() {
     const escola = S.ctx.escola;
-    const [lista, eq] = await Promise.all([
+    const [execs, raiz, eq] = await Promise.all([
+      sb.from("backup_execucoes").select("id, dia, tipo, base_id, status, total_partes, partes_ok, linhas, bytes, criado_em, concluido_em, erro").order("criado_em", { ascending: false }).limit(60),
       sb.storage.from("backups").list(escola.id, { limit: 100, sortBy: { column: "name", order: "desc" } }),
       acessos("equipe_listar")
     ]);
-    const backups = (lista.data || []).filter((f) => /\.json(\.gz)?$/.test(f.name));
+    const copias = execs.data || [];
+    const porId2 = new Map(copias.map((x) => [x.id, x]));
+    const antigas = (raiz.data || []).filter((f) => /^\d{4}-\d{2}-\d{2}\.json\.gz$/.test(f.name));
     const equipe = eq.equipe || [];
     const gestao = equipe.filter((p) => p.ativo && (p.papeis.includes("diretor") || p.papeis.includes("coordenador")));
     const semMfa = gestao.filter((p) => !p.mfa);
@@ -1754,24 +1793,38 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     const limite = Date.now() - 60 * 864e5;
     const parados = equipe.filter((p) => p.ativo && !p.deve_trocar_senha && (!p.ultimo_acesso || new Date(p.ultimo_acesso).getTime() < limite));
     const nomes = (l) => l.length ? `<ul class="pequeno">${l.map((p) => `<li>${esc(p.nome)} <span class="muted">(${esc(p.usuario)})</span></li>`).join("")}</ul>` : "";
-    const ultimo = backups[0];
-    const ultimoDia = ultimo ? ultimo.name.slice(0, 10) : null;
+    const ultimoDia = [copias.find((x) => x.status === "concluido")?.dia, antigas[0]?.name.slice(0, 10)].filter(Boolean).sort().pop() || null;
     const atrasado = !ultimoDia || Date.now() - (/* @__PURE__ */ new Date(`${ultimoDia}T12:00:00-03:00`)).getTime() > 2 * 864e5;
+    const falhas = copias.filter((x) => x.status === "falhou" && x.dia === copias[0]?.dia);
+    const situacao = (x) => x.status === "concluido" ? etq("verde", "concluído") : x.status === "falhou" ? etq("vermelha", "falhou") : etq("amarela", `gravando ${x.partes_ok.length}/${x.total_partes}`);
+    const linhaCopia = (x) => {
+      const base2 = x.base_id ? porId2.get(x.base_id) : null;
+      const pronta = x.status === "concluido" && (!x.base_id || base2?.status === "concluido");
+      const total = (x.bytes || 0) + (base2 ? base2.bytes || 0 : 0);
+      return `<tr><td>${fmtData(x.dia)}</td><td>${TIPO_BACKUP[x.tipo] || esc(x.tipo)}${base2 ? `<br><span class="pequeno muted">+ completa de ${fmtData(base2.dia)}</span>` : ""}</td>
+      <td>${situacao(x)}</td><td class="num">${pronta ? esc(fmtTamanho(total)) : "—"}</td>
+      <td>${pronta ? `<button type="button" class="btn pequeno secundario" data-acao="backup-copia-baixar" data-id="${esc(x.id)}">Baixar</button>` : ""}</td></tr>`;
+    };
+    const linhaAntiga = (f) => `<tr><td>${fmtData(f.name.slice(0, 10))}</td><td>Completa <span class="pequeno muted">(formato anterior)</span></td><td>${etq("verde", "concluído")}</td>
+    <td class="num">${esc(fmtTamanho(f.metadata?.size || 0))}</td>
+    <td><button type="button" class="btn pequeno secundario" data-acao="backup-baixar" data-arquivo="${esc(`${escola.id}/${f.name}`)}" data-nome="${esc(`ceja-os-${escola.codigo}-${f.name}`)}">Baixar</button></td></tr>`;
+    const temCopias = copias.length || antigas.length;
     return shell(
       `${cabecalho("Backup e segurança", esc(escola.nome))}
     <div class="grade grade-4 mb-2">
-      ${indicador("Último backup automático", ultimoDia ? fmtData(ultimoDia) : "nenhum", "diário, às 03h17", atrasado ? "atencao" : "ok")}
+      ${indicador("Último backup automático", ultimoDia ? fmtData(ultimoDia) : "nenhum", "todo dia às 03h17 · completa aos domingos", atrasado || falhas.length ? "atencao" : "ok")}
       ${indicador("Gestão sem 2º fator", semMfa.length, escola.exige_mfa_gestao ? "o 2º fator é obrigatório na escola" : "2º fator opcional nesta escola", semMfa.length ? "critico" : "ok")}
       ${indicador("Senhas provisórias", provisorias.length, "ainda não fizeram o 1º acesso", provisorias.length ? "atencao" : "ok")}
       ${indicador("Sem acesso há 60+ dias", parados.length, "avalie desativar", parados.length ? "atencao" : "ok")}
     </div>
     <section class="cartao"><h2>Backups automáticos</h2>
-      <p class="pequeno">Todo dia, de madrugada, o sistema grava uma cópia completa dos dados da escola (turmas, estudantes, diários, frequência, notas, médias, provas enviadas e auditoria) num depósito privado. Ficam guardados os últimos 35 dias. Só a direção consegue baixar.</p>
-      ${backups.length ? `<div class="tabela-rolagem"><table class="tabela"><thead><tr><th>Data</th><th class="num">Tamanho</th><th></th></tr></thead><tbody>
-        ${backups.map((f) => `<tr><td>${fmtData(f.name.slice(0, 10))}</td><td class="num">${esc(fmtTamanho(f.metadata?.size || 0))}</td>
-          <td><button type="button" class="btn pequeno secundario" data-acao="backup-baixar" data-arquivo="${esc(`${escola.id}/${f.name}`)}" data-nome="${esc(`ceja-os-${escola.codigo}-${f.name}`)}">Baixar</button></td></tr>`).join("")}
+      <p class="pequeno">Todo dia, de madrugada, o sistema grava uma cópia dos dados da escola (turmas, estudantes, diários, frequência, notas, médias, provas enviadas e auditoria) num depósito privado: <strong>completa aos domingos</strong> e, nos outros dias, <strong>só o que mudou</strong> desde a completa. O botão “Baixar” de qualquer dia entrega um arquivo único com a completa + as alterações daquele dia, isto é, os dados como estavam naquele dia. Ficam guardados os últimos 7 dias. Só a direção consegue baixar.</p>
+      ${falhas.length ? aviso("alerta", "O backup desta madrugada não terminou. O sistema tenta de novo na próxima madrugada; enquanto isso, use “Baixar cópia completa” abaixo.") : ""}
+      ${temCopias ? `<div class="tabela-rolagem"><table class="tabela"><thead><tr><th>Data</th><th>Tipo</th><th>Situação</th><th class="num">Tamanho</th><th></th></tr></thead><tbody>
+        ${copias.map(linhaCopia).join("")}${antigas.map(linhaAntiga).join("")}
       </tbody></table></div>` : aviso("alerta", "Ainda não há backup automático desta escola. O primeiro é gerado na próxima madrugada.")}
-      ${lista.error ? aviso("erro", "Não foi possível listar os backups.") : ""}</section>
+      <span id="status-backup-auto" class="status-salvamento" role="status"></span>
+      ${execs.error || raiz.error ? aviso("erro", "Não foi possível listar os backups.") : ""}</section>
     <section class="cartao"><h2>Cópia completa agora</h2>
       <p class="pequeno">Gera agora, no seu computador, um arquivo com todos os dados da escola. Guarde em local seguro — por exemplo, numa pasta do Google Drive institucional com acesso restrito à direção. <strong>O arquivo contém dados pessoais de estudantes (LGPD)</strong>: não envie por WhatsApp nem deixe em computadores compartilhados.</p>
       <button type="button" class="btn" data-acao="backup-agora">Baixar cópia completa</button> <span id="status-backup" class="status-salvamento" role="status"></span></section>
@@ -1782,11 +1835,48 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     <section class="cartao"><h2>Como os dados estão protegidos</h2><ul class="pequeno">
       <li>Cada pessoa só vê o que lhe cabe (professor: as próprias turmas; coordenação: o seu segmento; direção: a escola). A regra está no banco de dados, não só na tela.</li>
       <li>Senhas pessoais, segundo fator para a gestão, encerramento da sessão por inatividade e revogação imediata ao desativar alguém.</li>
-      <li>Toda alteração de nota, frequência, aula, avaliação, prova e acesso fica registrada na auditoria, que não pode ser apagada.</li>
+      <li>Toda alteração e exclusão de nota, frequência, aula, avaliação, prova e acesso fica registrada na auditoria, que não pode ser apagada. O primeiro lançamento de chamada e de nota já guarda, no próprio registro, quem lançou e quando.</li>
       <li>Provas enviadas ficam em depósito privado; ninguém altera nem apaga pelo sistema — cada reenvio vira uma nova versão.</li>
-      <li>Backup automático diário (35 dias) + cópia completa sob demanda. No plano Pro do Supabase, há também o backup diário do banco inteiro.</li></ul></section>`,
+      <li>Backup automático diário (7 dias; completa aos domingos e alterações nos outros dias) + cópia completa sob demanda. No plano Pro do Supabase, há também o backup diário do banco inteiro.</li></ul></section>`,
       "seguranca"
     );
+  }
+  function salvarArquivoLocal(blob, nome) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = nome;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      URL.revokeObjectURL(a.href);
+      a.remove();
+    }, 2e3);
+  }
+  async function baixarCopiaAutomatica(id) {
+    const st = document.getElementById("status-backup-auto");
+    const { data, error } = await sb.from("backup_execucoes").select("id, dia, tipo, base_id, status, total_partes, pasta").eq("id", id).maybeSingle();
+    if (error || !data) throw new Error("Cópia não encontrada.");
+    const lista = [data];
+    if (data.base_id) {
+      const b = await sb.from("backup_execucoes").select("id, dia, tipo, base_id, status, total_partes, pasta").eq("id", data.base_id).maybeSingle();
+      if (b.error || !b.data || b.data.status !== "concluido") throw new Error("A cópia completa de referência deste dia não está mais disponível.");
+      lista.unshift(b.data);
+    }
+    const caminhos = lista.flatMap((x) => Array.from({ length: x.total_partes }, (_, i) => `${x.pasta}/parte-${doisDig(i + 1)}-de-${doisDig(x.total_partes)}.json.gz`));
+    const partes = [];
+    for (const [i, c] of caminhos.entries()) {
+      st.className = "status-salvamento pendente";
+      st.textContent = `Baixando parte ${i + 1} de ${caminhos.length}…`;
+      const r = await sb.storage.from("backups").download(c);
+      if (r.error) throw erroArmazenamento(r.error);
+      partes.push(r.data);
+    }
+    const blob = new Blob(partes, { type: "application/gzip" });
+    salvarArquivoLocal(blob, `ceja-os-${S.ctx.escola.codigo}-${data.dia}.json.gz`);
+    await rpc("registrar_documento", { p_tipo: "backup_baixado", p_referencia: data.id }).catch(() => {
+    });
+    st.className = "status-salvamento ok";
+    st.textContent = `Arquivo de ${fmtData(data.dia)} baixado (${fmtTamanho(blob.size)}).`;
   }
   async function baixarCopiaCompleta() {
     const st = document.getElementById("status-backup");
@@ -1807,15 +1897,7 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
       tabelas
     };
     const blob = new Blob([JSON.stringify(conteudo)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `ceja-os-${S.ctx.escola.codigo}-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      URL.revokeObjectURL(a.href);
-      a.remove();
-    }, 2e3);
+    salvarArquivoLocal(blob, `ceja-os-${S.ctx.escola.codigo}-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.json`);
     await rpc("registrar_documento", { p_tipo: "backup_manual", p_referencia: null }).catch(() => {
     });
     st.className = "status-salvamento ok";
@@ -1988,6 +2070,7 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     "prova-baixar": (el) => baixarArquivo("provas", el.dataset.arquivo, el.dataset.nome),
     "backup-baixar": (el) => baixarArquivo("backups", el.dataset.arquivo, el.dataset.nome),
     "backup-agora": (el) => executar(null, () => baixarCopiaCompleta(), el),
+    "backup-copia-baixar": (el) => executar(null, () => baixarCopiaAutomatica(el.dataset.id), el),
     "prova-aprovar": (el) => executar(null, async () => {
       await rpc("prova_avaliar", { p_envio: el.dataset.id, p_situacao: "aprovada", p_parecer: "" });
       sucesso("Prova aprovada.");

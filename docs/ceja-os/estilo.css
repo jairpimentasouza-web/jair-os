@@ -436,3 +436,8 @@ details > summary.btn::-webkit-details-marker { display: none; }
 
 /* elementos marcados como ocultos nunca aparecem (o estilo de .campo não pode anular) */
 [hidden] { display: none !important; }
+
+/* medidor de uso do plano (tela da plataforma) */
+.uso-item .linha-uso { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.uso-item .valor-uso { font-size: 1.6rem; font-weight: 800; color: var(--cinza-950); }
+.uso-item meter { display: block; width: 100%; height: 16px; margin: 6px 0 4px; }
