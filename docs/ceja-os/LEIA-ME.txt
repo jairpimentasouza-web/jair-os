@@ -1,0 +1,22 @@
+CEJA OS — site (versão 0.1.0)
+=================================
+
+Publique TODO o conteúdo desta pasta na raiz de uma hospedagem estática com HTTPS.
+Não há servidor próprio: o site conversa diretamente com o Supabase (https://kxeqdgfucebmqkyiuktw.supabase.co).
+
+Hospedagens testadas/recomendadas:
+- Netlify ou Cloudflare Pages: arraste a pasta (o arquivo _headers aplica os cabeçalhos de segurança).
+- Vercel: o arquivo vercel.json aplica os cabeçalhos.
+- Apache (Hostinger, Locaweb etc.): o arquivo .htaccess aplica os cabeçalhos e força HTTPS.
+- GitHub Pages: crie um repositório público, envie todos os arquivos desta pasta (inclusive .nojekyll) e ative
+  Settings > Pages > Deploy from a branch (main, /root). Não permite cabeçalhos próprios; a CSP do index.html e a
+  proteção contra o site ser embutido em outra página continuam valendo.
+- Cloudflare Pages: Workers & Pages > Create > Pages > Upload assets > envie esta pasta (o _headers é aplicado).
+
+Depois de publicar:
+1. No painel do Supabase > Authentication > URL Configuration, informe o endereço do site em "Site URL".
+2. (Opcional) Restrinja a Edge Function ao seu domínio: Edge Functions > Secrets > CEJA_ORIGENS_PERMITIDAS = https://seu-dominio
+3. Para mudar de projeto Supabase, edite config.js (url e chavePublica — NUNCA a chave secreta).
+
+Arquivos: index.html, app.js (aplicativo), motor.js (prévia das médias), vendor/supabase.js (supabase-js 2.118.0),
+estilo.css, config.js, marca/ceja-logo.png (logomarca oficial, sem alterações).
