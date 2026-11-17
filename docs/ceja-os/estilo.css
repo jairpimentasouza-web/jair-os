@@ -409,6 +409,12 @@ input:not([type]) {
   background: var(--branco); color: var(--cinza-950); font: inherit; font-size: 1rem;
 }
 input:not([type]):focus-visible { border-color: var(--azul-800); }
+/* campo de data e hora (prazo das provas) com o mesmo visual dos demais */
+input[type='datetime-local'] {
+  width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid var(--cinza-400); border-radius: var(--raio-sm);
+  background: var(--branco); color: var(--cinza-950); font: inherit; font-size: 1rem;
+}
+input[type='datetime-local']:focus-visible { border-color: var(--azul-800); }
 /* caixa de seleção isolada com texto ao lado (ex.: "Manter conectado", "Exigir segundo fator") */
 label.checks { display: flex; align-items: flex-start; gap: 8px; margin: 10px 0; font-weight: 500; }
 label.checks input { flex: none; margin-top: 2px; }
