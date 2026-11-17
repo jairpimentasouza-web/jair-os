@@ -575,3 +575,91 @@ details > summary.btn::-webkit-details-marker { display: none; }
   .lista-presenca .selo { min-width: 0; padding: 5px 8px; font-size: 0.8rem; }
   .lista-presenca .mais { width: 44px; }
 }
+
+/* ===================== portal da família ===================== */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip-nav { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px; border: 1px solid var(--cinza-300); border-radius: 999px; background: var(--branco); color: var(--cinza-950); font-weight: 600; text-decoration: none; }
+.chip-nav:hover { border-color: var(--verde-500); background: var(--verde-50); color: var(--cinza-950); }
+.chip-nav.ativo { background: var(--verde-800); border-color: var(--verde-800); color: var(--branco); }
+.bolinha { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: var(--erro); color: var(--branco); font-size: 0.75rem; font-weight: 800; }
+.lista-simples { list-style: none; margin: 0; padding: 0; }
+.lista-simples li { display: flex; justify-content: space-between; gap: 6px 12px; flex-wrap: wrap; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--cinza-200); }
+.lista-simples li:last-child { border-bottom: 0; }
+.lista-simples li.em-coluna { flex-direction: column; gap: 2px; }
+.nota-familia { font-weight: 800; font-size: 1.1rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nota-familia small { font-weight: 500; font-size: 0.8rem; color: var(--cinza-600); }
+.conteudo-familia { color: var(--cinza-700); white-space: pre-line; }
+.cartao-estudante .nome-estudante { font-size: 1.2rem; }
+.disciplina-familia h2 { font-size: 1.1rem; }
+.media-familia { display: grid; justify-items: center; min-width: 76px; padding: 6px 10px; border-radius: var(--raio-sm); background: var(--cinza-100); }
+.media-familia .valor { font-size: 1.6rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.media-familia .rotulo { font-size: 0.75rem; color: var(--cinza-700); font-weight: 600; }
+.media-familia.ok { background: var(--sucesso-fundo); color: var(--sucesso); }
+.media-familia.abaixo { background: var(--erro-fundo); color: var(--erro); }
+.lista-freq { list-style: none; margin: 0; padding: 0; }
+.lista-freq li { display: grid; gap: 4px; padding: 10px 0; border-bottom: 1px solid var(--cinza-200); }
+.lista-freq li:last-child { border-bottom: 0; }
+.lista-freq progress { width: 100%; height: 12px; accent-color: var(--verde-500); }
+.lista-freq li.abaixo strong { color: var(--erro); }
+.lista-freq li.abaixo progress { accent-color: var(--erro); }
+.dia-horario { font-size: 1rem; margin: 14px 0 2px; color: var(--verde-800); }
+.item-familia { padding: 0; overflow: hidden; }
+.item-familia > summary { display: grid; gap: 4px; padding: 14px 16px; cursor: pointer; list-style: none; }
+.item-familia > summary::-webkit-details-marker { display: none; }
+.item-familia > summary::after { content: 'ver mais ▾'; font-size: 0.8rem; color: var(--verde-800); font-weight: 700; }
+.item-familia[open] > summary::after { content: 'fechar ▴'; }
+.item-familia.novo { border-left: 5px solid var(--verde-800); }
+.item-familia .titulo-item { font-weight: 800; font-size: 1.05rem; }
+.item-familia .meta-item { font-size: 0.85rem; color: var(--cinza-600); }
+.item-familia .corpo-item { padding: 0 16px 16px; display: grid; gap: 10px; }
+.texto-item { white-space: pre-line; margin: 6px 0; line-height: 1.5; }
+.selo-novo { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--verde-800); color: var(--branco); font-size: 0.75rem; font-weight: 800; vertical-align: middle; }
+.ok-ciente { color: var(--sucesso); font-weight: 600; }
+.acoes-item .btn { min-height: 48px; width: 100%; max-width: 320px; }
+.responder { display: grid; gap: 6px; }
+.responder textarea { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px solid var(--cinza-400); border-radius: var(--raio-sm); font: inherit; }
+.responder .btn { justify-self: start; }
+.conversa { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.conversa li { display: grid; gap: 2px; max-width: 88%; padding: 8px 12px; border-radius: 12px; background: var(--cinza-100); }
+.conversa li.escola { justify-self: start; background: var(--verde-50); border: 1px solid #cfe7d8; }
+.conversa li.familia { justify-self: end; background: var(--info-fundo); border: 1px solid #c5d0f0; }
+.conversa .quem { font-size: 0.75rem; font-weight: 800; color: var(--cinza-700); }
+.conversa .msg { white-space: pre-line; }
+.conversa .quando { font-size: 0.72rem; color: var(--cinza-600); justify-self: end; }
+/* escola */
+.destaque-conversas { border: 2px solid var(--verde-800); }
+.conversa-familia { padding: 12px 0; border-bottom: 1px solid var(--cinza-200); display: grid; gap: 8px; }
+.conversa-familia:last-child { border-bottom: 0; }
+.campo-alvo { margin: 8px 0 12px; }
+.campo-alvo .grade-4 label.checks { margin: 2px 0; }
+.ocorrencia-escola.aguardando { border-left: 5px solid #d08a00; }
+.ocorrencia-escola.liberada { border-left: 5px solid var(--verde-500); }
+.ocorrencia-escola.arquivada { opacity: 0.8; }
+.resp-familia { padding: 6px 0; border-bottom: 1px dashed var(--cinza-200); display: grid; gap: 4px; }
+.grade-cartoes { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; margin-top: 10px; }
+.cartao-acesso { border: 2px dashed var(--cinza-400); border-radius: var(--raio); padding: 12px 14px; background: var(--branco); break-inside: avoid; page-break-inside: avoid; }
+.cartao-acesso .ca-cab { display: flex; gap: 8px; align-items: center; font-size: 0.85rem; }
+.cartao-acesso .ca-titulo { margin-top: 6px; font-weight: 800; color: var(--verde-800); }
+.cartao-acesso .ca-aluno { font-weight: 700; }
+.cartao-acesso dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; margin: 8px 0; font-size: 0.9rem; }
+.cartao-acesso dt { color: var(--cinza-700); font-weight: 600; }
+.cartao-acesso dd { margin: 0; word-break: break-all; }
+.cartao-acesso code { font-size: 1rem; font-weight: 700; white-space: nowrap; word-break: normal; }
+.cartao-acesso .ca-rodape { font-size: 0.75rem; color: var(--cinza-600); }
+.cartao-acesso .ca-aviso { margin-top: 6px; font-size: 0.8rem; color: var(--alerta); }
+@media print {
+  body.imprimir-cartoes main.conteudo > *:not(.cartoes-familia) { display: none !important; }
+  body.imprimir-cartoes .cartoes-familia { border: 0; box-shadow: none; padding: 0; }
+  body.imprimir-cartoes .grade-cartoes { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .conversa li { max-width: 100%; }
+  .acoes-item .btn { max-width: none; }
+}
+.indicadores-familia { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 640px) {
+  .indicadores-familia .indicador { padding: 10px 10px; }
+  .indicadores-familia .indicador .valor { font-size: 1.45rem; }
+  .indicadores-familia .indicador .rotulo { font-size: 0.8rem; line-height: 1.2; }
+  .indicadores-familia .indicador .detalhe { display: none; }
+}

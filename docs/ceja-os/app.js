@@ -92,6 +92,11 @@
   }
   const fmtPct = (v) => v === null || v === void 0 ? "—" : `${Number(v).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
   const NOMES_PAPEL = { professor: "Professor(a)", coordenador: "Coordenação", diretor: "Direção" };
+  function rotuloPerfil(sep) {
+    if (S.ctx.plataforma) return "Plataforma";
+    if (S.ctx.familia) return S.ctx.tipo_familia === "estudante" ? "Estudante" : "Responsável";
+    return papeis().map((p) => NOMES_PAPEL[p]).join(sep);
+  }
   const ROTULO_FREQ = { P: "Presente", F: "Falta", A: "Atraso", J: "Falta justificada" };
   const SEGMENTOS = { EI: "Educação Infantil", EF1: "Ensino Fundamental I", EF2: "Ensino Fundamental II", EM: "Ensino Médio", EJA: "EJA", TEC: "Técnico" };
   const TURNOS = { manha: "Manhã", tarde: "Tarde", noite: "Noite", integral: "Integral" };
@@ -125,11 +130,11 @@
     return count !== void 0 && count !== null && data === null ? count : data;
   }
   const rpc = (fn, args) => q(sb.rpc(fn, args || {}));
-  async function acessos(acao, dados2) {
+  async function funcaoServidor(nome, acao, dados2) {
     const { data } = await sb.auth.getSession();
     let r;
     try {
-      r = await fetch(`${CFG.url}/functions/v1/acessos`, {
+      r = await fetch(`${CFG.url}/functions/v1/${nome}`, {
         method: "POST",
         headers: { "content-type": "application/json", apikey: CFG.chavePublica, ...data.session ? { authorization: `Bearer ${data.session.access_token}` } : {} },
         body: JSON.stringify({ acao, ...dados2 || {} })
@@ -141,6 +146,8 @@
     if (!r.ok || !j.ok) throw new ErroUsuario(j.mensagem || "Não foi possível concluir a operação.", j.codigo);
     return j;
   }
+  const acessos = (acao, dados2) => funcaoServidor("acessos", acao, dados2);
+  const familias = (acao, dados2) => funcaoServidor("familias", acao, dados2);
   const S = {
     ctx: null,
     // meu_contexto
@@ -153,9 +160,10 @@
   const papeis = () => S.ctx && S.ctx.papeis || [];
   const tem = (...p) => p.some((x) => papeis().includes(x));
   const gestor = () => tem("coordenador", "diretor");
+  const familia = () => !!(S.ctx && S.ctx.familia);
   const hoje = () => S.ctx && S.ctx.hoje || (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
   function invalidar(...chaves) {
-    for (const k of chaves.length ? chaves : ["base", "tds"]) S[k] = null;
+    for (const k of chaves.length ? chaves : ["base", "tds", "portalInicio", "alunoFamilia"]) S[k] = null;
   }
   async function base() {
     if (S.base) return S.base;
@@ -213,6 +221,16 @@
       add("conta", "Minha conta");
       return it;
     }
+    if (familia()) {
+      add("familia", "Início");
+      add("familia/notas", "Notas");
+      add("familia/frequencia", "Frequência");
+      add("familia/recados", "Recados");
+      add("familia/ocorrencias", "Ocorrências");
+      add("familia/escola", "Horário e escola");
+      add("conta", "Minha conta");
+      return it;
+    }
     if (tem("diretor")) add("painel", "Painel da direção");
     else if (tem("coordenador")) add("painel", "Painel da coordenação");
     if (tem("professor")) add("professor", gestor() ? "Minhas aulas" : "Início");
@@ -225,6 +243,9 @@
     }
     add("provas", "Provas");
     add("retificacoes", gestor() ? "Retificações" : "Pedidos de correção");
+    add("recados", "Recados às famílias");
+    add("ocorrencias", "Ocorrências");
+    if (gestor()) add("familias", "Acessos das famílias");
     if (tem("diretor")) {
       add("equipe", "Equipe e acessos");
       add("seguranca", "Backup e segurança");
@@ -241,7 +262,7 @@
     return `<div class="faixa-ambiente" role="note">Escola de demonstração — dados 100% fictícios — data de referência ${esc(fmtData(S.ctx.hoje))}</div>`;
   }
   function shell(conteudo, ativo) {
-    const pap = S.ctx.plataforma ? "Plataforma" : papeis().map((p) => NOMES_PAPEL[p]).join(" · ");
+    const pap = rotuloPerfil(" · ");
     return `${faixa()}<a href="#conteudo" class="pular-conteudo">Pular para o conteúdo</a>
 <header class="topo"><div class="topo-interno">
   <a href="#/" class="marca-link" aria-label="CEJA OS — início">${marca(46, "marca-img")}
@@ -404,7 +425,7 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     if (!atual) return alvo.innerHTML = aviso("erro", "Informe a senha atual.");
     const email = (await sb.auth.getSession()).data.session?.user?.email;
     try {
-      await acessos("minha_senha", { atual, nova: d.nova });
+      await (familia() ? familias : acessos)("minha_senha", { atual, nova: d.nova });
     } catch (e) {
       alvo.innerHTML = aviso("erro", esc(e.message));
       return;
@@ -480,7 +501,7 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     if (await iniciarSessao()) render();
   }
   async function telaConta() {
-    const { data } = await sb.auth.mfa.listFactors();
+    const { data } = familia() ? { data: null } : await sb.auth.mfa.listFactors();
     const fator = (data?.totp || []).find((x) => x.status === "verified");
     const esc_ = S.ctx.escola;
     return shell(
@@ -488,14 +509,14 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     <div class="grade grade-2">
     <section class="cartao"><h2>Dados de acesso</h2><dl class="dados-credencial">
       <dt>Código da escola</dt><dd><code>${esc(esc_ ? esc_.codigo : "plataforma")}</code></dd><dt>Usuário</dt><dd><code>${esc(S.ctx.usuario)}</code></dd>
-      <dt>Perfil</dt><dd>${esc(S.ctx.plataforma ? "Administração da plataforma" : papeis().map((p) => NOMES_PAPEL[p]).join(", "))}${S.ctx.escopos?.length ? ` (${esc(S.ctx.escopos.map((s) => SEGMENTOS[s] || s).join(", "))})` : ""}</dd>
+      <dt>Perfil</dt><dd>${esc(S.ctx.plataforma ? "Administração da plataforma" : rotuloPerfil(", "))}${S.ctx.escopos?.length ? ` (${esc(S.ctx.escopos.map((s) => SEGMENTOS[s] || s).join(", "))})` : ""}</dd>
       <dt>Escola</dt><dd>${esc(nomeEscola())}</dd></dl></section>
-    <section class="cartao"><h2>Segundo fator</h2>
+    ${familia() ? "" : `<section class="cartao"><h2>Segundo fator</h2>
       ${fator ? `<p>${etq("verde", "Ativo")} aplicativo autenticador configurado.</p>` : `<p>${etq("cinza", "Não configurado")}</p>`}
       ${S.ctx.precisa_mfa ? '<p class="pequeno muted">Obrigatório para o seu perfil.</p>' : ""}
       ${!fator ? '<button type="button" class="btn" data-acao="configurar-mfa">Configurar aplicativo autenticador</button>' : ""}
       ${fator && !S.ctx.precisa_mfa ? `<button type="button" class="btn secundario" data-acao="remover-mfa" data-fator="${esc(fator.id)}">Remover segundo fator</button>` : ""}
-    </section>
+    </section>`}
     <section class="cartao"><h2>Trocar senha</h2><p class="pequeno muted">${regrasSenha()}</p>
       <form data-form="minha-senha"><div id="msg-conta"></div>
       <div class="campo"><label for="c-atual">Senha atual</label><input id="c-atual" name="atual" type="password" autocomplete="current-password" required></div>
@@ -1387,6 +1408,15 @@ ${t}` : t;
     <tbody>${itens.map(linha).join("")}</tbody></table></div></details>
     <p class="pequeno muted mt-1">Atualizado às ${esc(agora)}. Atualize a página para ver novas chamadas.</p></section>`;
   }
+  async function cartaoPortalFamilias() {
+    const r = await rpc("escola_pendencias_portal");
+    const oc = Number(r.ocorrencias_aguardando || 0);
+    const msg = Number(r.mensagens_sem_resposta || 0);
+    if (!oc && !msg) return "";
+    return `<section class="cartao portal-pendencias"><h2>Portal das famílias</h2><div class="linha">
+    ${oc ? `<a class="btn secundario" href="#/ocorrencias?status=aguardando">${oc} ocorrência(s) aguardando sua revisão</a>` : ""}
+    ${msg ? `<span class="pequeno">${etq("azul", `${msg} mensagem(ns) de famílias sem resposta`)} — abra em <a href="#/recados">Recados</a> ou <a href="#/ocorrencias?status=liberada">Ocorrências</a></span>` : ""}</div></section>`;
+  }
   async function telaPainel(rq) {
     const b = await base();
     const p = porId(b.periodos, rq.get("periodo")) || periodoAtual(b);
@@ -1405,6 +1435,7 @@ ${t}` : t;
       `${cabecalho(tem("diretor") ? "Painel da direção" : "Painel da coordenação", `${esc(p.nome)} ${p.ano} · ${esc(p.status)} · situação até ${fmtData(r.limite)}${!tem("diretor") ? ` · ${esc((S.ctx.escopos || []).map((s) => SEGMENTOS[s] || s).join(", "))}` : ""}`, seletorPeriodo(b, p, "#/painel"))}
     ${(r.periodos_proximos || []).map((x) => aviso("alerta", `<strong>${esc(x.nome)}</strong>: termina em ${fmtData(x.fim)}${x.prazo ? `; prazo de lançamento ${fmtData(x.prazo)}` : ""}.`)).join("")}
     ${p.id === periodoAtual(b)?.id ? await cartaoHojeNaEscola(b).catch(() => "") : ""}
+    ${await cartaoPortalFamilias().catch(() => "")}
     <div class="grade grade-4">
       ${indicador("Professores", t.professores, `${t.turmas} turmas · ${t.vinculos} vínculos`, "ok")}
       ${indicador("Chamadas pendentes", t.frequencias_pendentes, "aulas da grade sem chamada até ontem", nivel(t.frequencias_pendentes, 20))}
@@ -2249,10 +2280,353 @@ ${t}` : t;
     st.className = "status-salvamento ok";
     st.textContent = `Cópia gerada: ${Object.values(conteudo.contagens).reduce((s, n) => s + n, 0)} registros, ${fmtTamanho(blob.size)}.`;
   }
+  async function familiaInicio(forcar) {
+    if (!S.portalInicio || forcar) S.portalInicio = await rpc("familia_inicio");
+    return S.portalInicio;
+  }
+  function alunoSelecionado(ini, rq) {
+    const id = rq.get("aluno") || S.alunoFamilia;
+    const a = ini.alunos.find((x) => x.id === id) || ini.alunos[0] || null;
+    if (a) S.alunoFamilia = a.id;
+    return a;
+  }
+  const NOMES_DIA = ["", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+  const TIPO_OCORRENCIA = { disciplinar: ["vermelha", "Disciplinar"], academica: ["amarela", "Acadêmica"], elogio: ["verde", "Elogio"] };
+  const fmtMedia = (v) => v === null || v === void 0 ? "—" : fmtNota(v);
+  const pctFreq = (fr) => Number(fr?.tempos || 0) ? 100 * (Number(fr.tempos) - Number(fr.faltas || 0)) / Number(fr.tempos) : null;
+  function nomeCurto(n) {
+    const p = String(n || "").trim().split(/\s+/);
+    return p.length > 1 ? `${p[0]} ${p[p.length - 1]}` : p[0] || "";
+  }
+  function seletorAluno(ini, a, rota2) {
+    if (ini.alunos.length < 2) return "";
+    return `<nav class="chips mb-2" aria-label="Estudante">${ini.alunos.map((x) => {
+      const n = x.recados_novos + x.ocorrencias_novas;
+      return `<a href="#/${rota2}?aluno=${x.id}" class="chip-nav ${x.id === a.id ? "ativo" : ""}" ${x.id === a.id ? 'aria-current="true"' : ""}>${esc(nomeCurto(x.nome))}${n ? ` <span class="bolinha">${n}</span>` : ""}</a>`;
+    }).join("")}</nav>`;
+  }
+  function semAlunos(ini) {
+    return `${ini.aguardando_autorizacao.length ? aviso("alerta", `<strong>Aguardando autorização:</strong> ${esc(ini.aguardando_autorizacao.join(", "))}. Para estudantes com 18 anos ou mais (ou sem data de nascimento cadastrada), o responsável só vê os dados com a autorização do estudante, registrada pela escola (LGPD).`) : ""}
+    ${aviso("info", "Nenhum estudante disponível no seu acesso. Procure a secretaria ou a coordenação da escola.")}`;
+  }
+  function conversaHtml(c, visaoEscola) {
+    if (!c.mensagens.length) return "";
+    return `<ul class="conversa">${c.mensagens.map((m) => `<li class="${m.de}"><span class="quem">${esc(m.de === "escola" ? m.autor : visaoEscola ? m.autor : "Você")}</span>
+    <span class="msg">${esc(m.texto)}</span><span class="quando">${esc(fmtDataHora(m.em))}</span></li>`).join("")}</ul>`;
+  }
+  function itemFamilia(tipo, r) {
+    const novo = !r.conversa.ciente_em;
+    const meta = tipo === "recado" ? `${esc(r.autor)} · ${esc(fmtDataHora(r.criado_em))} · ${r.alvo === "turma" ? `Turma ${esc(r.turma || "")}` : r.alvo === "escola" ? "Para toda a escola" : "Recado individual"}` : `${etq(...TIPO_OCORRENCIA[r.tipo])} ${esc(fmtData(r.data))} · ${esc(r.autor)}${r.disciplina ? ` · ${esc(r.disciplina)}` : ""}`;
+    const pode = tipo === "ocorrencia" || r.permite_resposta;
+    const aberto = novo || S.itemAberto === r.id;
+    return `<details class="cartao item-familia ${novo ? "novo" : ""}" ${aberto ? "open" : ""} id="item-${r.id}">
+    <summary><span class="titulo-item">${novo ? '<span class="selo-novo">Novo</span> ' : ""}${esc(r.titulo)}</span><span class="meta-item">${meta}</span></summary>
+    <div class="corpo-item"><p class="texto-item">${esc(tipo === "recado" ? r.texto : r.descricao)}</p>
+    ${tipo === "ocorrencia" && r.providencias ? `<p class="pequeno"><strong>Providências:</strong> ${esc(r.providencias)}</p>` : ""}
+    ${conversaHtml(r.conversa)}
+    <div class="acoes-item">${novo ? `<button type="button" class="btn" data-acao="familia-ciente" data-tipo="${tipo}" data-id="${r.id}">Estou ciente</button>` : `<span class="pequeno ok-ciente">✓ Você confirmou a leitura em ${esc(fmtDataHora(r.conversa.ciente_em))}</span>`}</div>
+    ${pode ? `<form data-form="familia-responder" data-tipo="${tipo}" data-id="${r.id}" class="responder"><div id="msg-resp-${r.id}"></div>
+        <label for="resp-${r.id}" class="pequeno"><strong>Responder à escola</strong></label>
+        <textarea id="resp-${r.id}" name="texto" rows="2" maxlength="2000" required placeholder="Escreva sua mensagem…"></textarea>
+        <button class="btn secundario" type="submit">Enviar mensagem</button></form>` : '<p class="pequeno muted">Este recado é só informativo (não aceita respostas).</p>'}
+    </div></details>`;
+  }
+  async function telaFamiliaInicio(rq) {
+    const ini = await familiaInicio(true);
+    const ola = `${saudacao()}, ${primeiroNome(S.ctx.nome)}!`;
+    if (!ini.alunos.length) return shell(`${cabecalho(ola, esc(fmtLonga(ini.hoje)))}${semAlunos(ini)}`, "familia");
+    const a = alunoSelecionado(ini, rq);
+    const d = await rpc("familia_aluno", { p_aluno: a.id });
+    const tempos = d.disciplinas.reduce((s, x) => s + Number(x.frequencia?.tempos || 0), 0);
+    const faltas = d.disciplinas.reduce((s, x) => s + Number(x.frequencia?.faltas || 0), 0);
+    const pct = tempos ? 100 * (tempos - faltas) / tempos : null;
+    const notas = d.disciplinas.flatMap((x) => x.avaliacoes.filter((v) => v.situacao).map((v) => ({ ...v, disciplina: x.disciplina }))).sort((p, q2) => String(q2.data || "").localeCompare(String(p.data || ""))).slice(0, 6);
+    const abaixo = d.disciplinas.filter((x) => x.media?.completa && Number(x.media.valor) < Number(d.media_referencia));
+    const semAula = d.calendario.filter((c) => c.tipo !== "evento").slice(0, 4);
+    return shell(
+      `${cabecalho(ola, esc(fmtLonga(ini.hoje)))}
+    ${seletorAluno(ini, a, "familia")}
+    ${ini.aguardando_autorizacao.length ? aviso("alerta", `Aguardando autorização do estudante: ${esc(ini.aguardando_autorizacao.join(", "))}.`) : ""}
+    <section class="cartao cartao-estudante"><strong class="nome-estudante">${esc(a.nome)}</strong>
+      <div class="muted">${a.turma ? `Turma ${esc(a.turma.codigo)} · ${esc(a.turma.serie)}` : ""}${d.periodo ? ` · ${esc(d.periodo.nome)}` : ""}</div></section>
+    <div class="grade indicadores-familia mb-2">
+      ${indicador("Frequência", pct === null ? "—" : fmtPct(pct), `mínimo exigido ${fmtPct(d.frequencia_minima)}`, pct !== null && pct < Number(d.frequencia_minima) ? "critico" : "ok", `#/familia/frequencia?aluno=${a.id}`)}
+      ${indicador("Recados novos", a.recados_novos, a.recados_novos ? "toque para ler" : "nenhum novo", a.recados_novos ? "atencao" : "ok", `#/familia/recados?aluno=${a.id}`)}
+      ${indicador("Ocorrências novas", a.ocorrencias_novas, a.ocorrencias_novas ? "toque para ver" : "nenhuma nova", a.ocorrencias_novas ? "atencao" : "ok", `#/familia/ocorrencias?aluno=${a.id}`)}
+    </div>
+    ${abaixo.length ? aviso("alerta", `Média abaixo de ${esc(fmtNota(d.media_referencia))} em: <strong>${esc(abaixo.map((x) => x.disciplina).join(", "))}</strong>. Vale conversar com a escola sobre como ajudar.`) : ""}
+    <section class="cartao"><h2>Últimas notas</h2>
+      ${notas.length ? `<ul class="lista-simples">${notas.map((v) => `<li><span><strong>${esc(v.disciplina)}</strong> · ${esc(v.nome)}</span>
+        <span class="nota-familia">${v.situacao === "falta" ? etq("amarela", "Faltou") : v.situacao === "dispensado" ? etq("cinza", "Dispensado") : `${esc(fmtNota(v.nota))} <small>de ${esc(fmtNota(v.vale))}</small>`}</span></li>`).join("")}</ul>` : '<p class="muted">Nenhuma nota lançada ainda neste período.</p>'}
+      <a class="btn secundario mt-1" href="#/familia/notas?aluno=${a.id}">Ver todas as notas</a></section>
+    <section class="cartao"><h2>O que estudou nas últimas aulas</h2>
+      ${d.conteudos.length ? `<ul class="lista-simples">${d.conteudos.slice(0, 6).map((c) => `<li class="em-coluna"><span><strong>${esc(c.disciplina)}</strong> · ${esc(fmtDiaCurto(c.data))}</span>
+        <span class="conteudo-familia">${esc(c.conteudo || "")}</span></li>`).join("")}</ul>` : '<p class="muted">Nenhum conteúdo registrado ainda.</p>'}</section>
+    ${semAula.length ? `<section class="cartao"><h2>Próximos dias sem aula</h2><ul class="lista-simples">${semAula.map((c) => `<li><span>${esc(fmtLonga(c.data))}</span><span>${esc(c.descricao || c.tipo)}</span></li>`).join("")}</ul></section>` : ""}`,
+      "familia"
+    );
+  }
+  async function telaFamiliaNotas(rq) {
+    const ini = await familiaInicio();
+    if (!ini.alunos.length) return shell(`${cabecalho("Notas", "")}${semAlunos(ini)}`, "familia/notas");
+    const a = alunoSelecionado(ini, rq);
+    const d = await rpc("familia_aluno", { p_aluno: a.id, p_periodo: rq.get("periodo") || null });
+    const ref = Number(d.media_referencia);
+    const cartao = (x) => {
+      const v = x.media?.valor ?? null;
+      const cls = v === null ? "" : Number(v) < ref ? "abaixo" : "ok";
+      return `<section class="cartao disciplina-familia"><div class="linha"><div><h2 class="sem-margem">${esc(x.disciplina)}</h2>
+      <div class="pequeno muted">${x.professor ? `Prof. ${esc(x.professor)}` : ""}</div></div><span class="espaco"></span>
+      <div class="media-familia ${cls}"><span class="valor">${esc(fmtMedia(v))}</span><span class="rotulo">${x.media ? x.media.completa ? "média" : "parcial" : "sem notas"}</span></div></div>
+      ${x.avaliacoes.length ? `<ul class="lista-simples">${x.avaliacoes.map((av) => `<li><span>${esc(av.nome)} <small class="muted">vale ${esc(fmtNota(av.vale))}${av.data ? ` · ${esc(fmtData(av.data).slice(0, 5))}` : ""}</small></span>
+        <span class="nota-familia">${av.situacao === "lancada" ? esc(fmtNota(av.nota)) : av.situacao === "falta" ? etq("amarela", "Faltou") : av.situacao === "dispensado" ? etq("cinza", "Dispensado") : '<span class="muted">aguardando</span>'}</span></li>`).join("")}</ul>` : '<p class="muted pequeno">Nenhuma avaliação neste período.</p>'}</section>`;
+    };
+    return shell(
+      `${cabecalho("Notas", `${esc(a.nome)}${d.periodo ? ` · ${esc(d.periodo.nome)}` : ""}`)}
+    ${seletorAluno(ini, a, "familia/notas")}
+    ${d.periodos.length > 1 ? `<nav class="chips mb-2" aria-label="Período">${d.periodos.map((p) => `<a href="#/familia/notas?aluno=${a.id}&periodo=${p.id}" class="chip-nav ${p.id === d.periodo?.id ? "ativo" : ""}">${esc(p.nome)}</a>`).join("")}</nav>` : ""}
+    <p class="pequeno muted">Média de referência da escola: <strong>${esc(fmtNota(ref))}</strong>. “Parcial” quer dizer que ainda faltam notas do período.</p>
+    <div class="grade grade-2">${d.disciplinas.map(cartao).join("") || '<p class="muted">Nenhuma disciplina encontrada.</p>'}</div>`,
+      "familia/notas"
+    );
+  }
+  async function telaFamiliaFrequencia(rq) {
+    const ini = await familiaInicio();
+    if (!ini.alunos.length) return shell(`${cabecalho("Frequência", "")}${semAlunos(ini)}`, "familia/frequencia");
+    const a = alunoSelecionado(ini, rq);
+    const d = await rpc("familia_aluno", { p_aluno: a.id, p_periodo: rq.get("periodo") || null });
+    const min = Number(d.frequencia_minima);
+    return shell(
+      `${cabecalho("Frequência", `${esc(a.nome)}${d.periodo ? ` · ${esc(d.periodo.nome)}` : ""}`)}
+    ${seletorAluno(ini, a, "familia/frequencia")}
+    <p class="pequeno muted">Frequência mínima exigida: <strong>${esc(fmtPct(min))}</strong> das aulas de cada disciplina.</p>
+    <section class="cartao"><ul class="lista-freq">${d.disciplinas.map((x) => {
+        const p = pctFreq(x.frequencia);
+        return `<li class="${p !== null && p < min ? "abaixo" : ""}"><div class="linha"><strong>${esc(x.disciplina)}</strong><span class="espaco"></span><strong>${esc(p === null ? "—" : fmtPct(p))}</strong></div>
+        <progress max="100" value="${p === null ? 0 : p.toFixed(1)}">${p === null ? "" : fmtPct(p)}</progress>
+        <span class="pequeno muted">${Number(x.frequencia?.faltas || 0)} falta(s) em ${Number(x.frequencia?.tempos || 0)} aula(s)${Number(x.frequencia?.justificadas || 0) ? ` · ${Number(x.frequencia.justificadas)} justificada(s)` : ""}</span></li>`;
+      }).join("")}</ul></section>
+    <section class="cartao"><h2>Faltas recentes</h2>${d.faltas_recentes.length ? `<ul class="lista-simples">${d.faltas_recentes.map((f) => `<li><span>${esc(fmtLonga(f.data))} · ${esc(f.disciplina)}</span>
+      ${f.status === "J" ? etq("azul", "Justificada") : etq("amarela", "Falta")}</li>`).join("")}</ul>` : '<p class="muted">Nenhuma falta registrada. 👏</p>'}</section>`,
+      "familia/frequencia"
+    );
+  }
+  async function telaFamiliaRecados(rq) {
+    const ini = await familiaInicio(true);
+    if (!ini.alunos.length) return shell(`${cabecalho("Recados", "")}${semAlunos(ini)}`, "familia/recados");
+    const a = alunoSelecionado(ini, rq);
+    const lista = await rpc("familia_recados", { p_aluno: a.id });
+    return shell(
+      `${cabecalho("Recados", `${esc(a.nome)} · toque em “Estou ciente” para avisar a escola que você leu`)}
+    ${seletorAluno(ini, a, "familia/recados")}
+    ${lista.length ? lista.map((r) => itemFamilia("recado", r)).join("") : '<p class="muted">Nenhum recado ainda.</p>'}`,
+      "familia/recados"
+    );
+  }
+  async function telaFamiliaOcorrencias(rq) {
+    const ini = await familiaInicio(true);
+    if (!ini.alunos.length) return shell(`${cabecalho("Ocorrências", "")}${semAlunos(ini)}`, "familia/ocorrencias");
+    const a = alunoSelecionado(ini, rq);
+    const lista = await rpc("familia_ocorrencias", { p_aluno: a.id });
+    return shell(
+      `${cabecalho("Ocorrências", `${esc(a.nome)} · registros disciplinares, acadêmicos e elogios`)}
+    ${seletorAluno(ini, a, "familia/ocorrencias")}
+    ${lista.length ? lista.map((o) => itemFamilia("ocorrencia", o)).join("") : '<p class="muted">Nenhuma ocorrência registrada.</p>'}`,
+      "familia/ocorrencias"
+    );
+  }
+  async function telaFamiliaEscola(rq) {
+    const ini = await familiaInicio();
+    if (!ini.alunos.length) return shell(`${cabecalho("Horário", "")}${semAlunos(ini)}`, "familia/escola");
+    const a = alunoSelecionado(ini, rq);
+    const d = await rpc("familia_aluno", { p_aluno: a.id });
+    const porDia = agrupar(d.horario, (h) => h.dia);
+    return shell(
+      `${cabecalho("Horário e escola", `${esc(a.nome)}${a.turma ? ` · Turma ${esc(a.turma.codigo)} · ${esc(TURNOS[a.turma.turno] || a.turma.turno || "")}` : ""}`)}
+    ${seletorAluno(ini, a, "familia/escola")}
+    <section class="cartao"><h2>Horário da semana</h2>${d.horario.length ? [...porDia.entries()].map(([dia, hs]) => `<h3 class="dia-horario">${esc(NOMES_DIA[dia] || "")}</h3>
+      <ul class="lista-simples">${hs.map((h) => `<li><span><strong>${esc(fmtHora(h.inicio))}–${esc(fmtHora(h.fim))}</strong> ${esc(h.disciplina)}</span><span class="muted pequeno">${esc(h.professor || "")}</span></li>`).join("")}</ul>`).join("") : '<p class="muted">Horário ainda não cadastrado.</p>'}</section>
+    <section class="cartao"><h2>Professores</h2><ul class="lista-simples">${d.disciplinas.map((x) => `<li><span>${esc(x.disciplina)}</span><span>${esc(x.professor || "—")}</span></li>`).join("")}</ul></section>
+    <section class="cartao"><h2>Calendário (próximos meses)</h2>${d.calendario.length ? `<ul class="lista-simples">${d.calendario.map((c) => `<li><span>${esc(fmtLonga(c.data))}</span><span>${esc(c.descricao || "")} ${etq(c.tipo === "evento" ? "azul" : "cinza", c.tipo)}</span></li>`).join("")}</ul>` : '<p class="muted">Nenhum feriado ou evento cadastrado para os próximos meses.</p>'}</section>
+    ${d.periodo ? `<p class="pequeno muted">Período atual: ${esc(d.periodo.nome)} (${esc(fmtData(d.periodo.inicio))} a ${esc(fmtData(d.periodo.fim))}).</p>` : ""}`,
+      "familia/escola"
+    );
+  }
+  async function turmasDoProfissional() {
+    const lista = (await tds()).filter((t) => t.ativo && (leciona(t) || gestor()));
+    const m = /* @__PURE__ */ new Map();
+    for (const t of lista) if (t.turmas && !m.has(t.turma_id)) m.set(t.turma_id, { id: t.turma_id, codigo: t.turmas.codigo, serie: t.turmas.serie, segmento: t.turmas.segmento });
+    return ordenarPor([...m.values()], (t) => t.codigo);
+  }
+  function painelConversas(tipo, titulo, conversas, podeResponder) {
+    return `<section class="cartao destaque-conversas" id="conversas"><div class="linha"><h2 class="sem-margem">Respostas das famílias — ${esc(titulo)}</h2><span class="espaco"></span>
+    <a class="btn pequeno fantasma" href="#/${tipo === "recado" ? "recados" : "ocorrencias"}">Fechar</a></div>
+    ${conversas.length ? conversas.map((c) => `<div class="conversa-familia"><div class="linha"><strong>${esc(c.nome)}</strong>
+      <span class="muted pequeno">${c.tipo === "estudante" ? "estudante" : "responsável"} · ${esc((c.estudantes || []).join(", "))}</span><span class="espaco"></span>
+      ${c.conversa.ciente_em ? etq("verde", `ciente ${fmtDataHora(c.conversa.ciente_em)}`) : etq("cinza", "não confirmou a leitura")}</div>
+      ${conversaHtml(c.conversa, true)}
+      ${podeResponder ? `<form data-form="escola-responder" data-tipo="${tipo}" data-id="${esc(c.item || "")}" data-familia="${c.familia_id}" class="responder"><div id="msg-er-${c.familia_id}"></div>
+        <textarea name="texto" rows="2" maxlength="2000" required aria-label="Resposta para ${esc(c.nome)}" placeholder="Responder a ${esc(c.nome)}…"></textarea>
+        <button class="btn pequeno" type="submit">Responder</button></form>` : ""}</div>`).join("") : '<p class="muted">Nenhuma família confirmou a leitura ou respondeu ainda.</p>'}</section>`;
+  }
+  async function carregarAlunosNoSelect(turmaId, destino) {
+    const sel = document.querySelector(destino);
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Carregando…</option>';
+    const mats = turmaId ? (await matriculasDaTurma(turmaId)).filter((m) => m.status === "ativa") : [];
+    sel.innerHTML = `<option value="">${turmaId ? "Escolha o(a) estudante" : "Escolha a turma primeiro"}</option>${mats.map((m) => `<option value="${m.aluno_id}">${esc(`${m.numero ?? ""} ${nomeAluno(m)}`.trim())}</option>`).join("")}`;
+  }
+  async function telaRecados(rq) {
+    const [lista, turmas] = await Promise.all([rpc("escola_recados"), turmasDoProfissional()]);
+    const ver = rq.get("ver");
+    let conversas = "";
+    if (ver) {
+      const r = lista.find((x) => x.id === ver);
+      const cs = (await rpc("escola_conversas", { p_tipo: "recado", p_item: ver })).map((c) => ({ ...c, item: ver }));
+      conversas = painelConversas("recado", r ? r.titulo : "recado", cs, !!r && (r.meu || gestor()));
+    }
+    const destino = (r) => r.alvo === "escola" ? "Toda a escola" : r.alvo === "turma" ? `Turma ${r.turma}` : `Estudante: ${r.aluno}`;
+    return shell(
+      `${cabecalho("Recados às famílias", "Avisos para a escola, uma turma ou um estudante — a família confirma que leu e pode responder")}
+    ${conversas}
+    <details class="cartao" ${lista.length && !rq.get("novo") ? "" : "open"}><summary><strong>+ Novo recado</strong></summary>
+      <form data-form="recado-publicar" class="mt-1"><div id="msg-recado"></div>
+        <fieldset><legend>Para quem?</legend><div class="linha">
+          <label class="checks"><input type="radio" name="alvo" value="turma" checked> Turma(s)</label>
+          <label class="checks"><input type="radio" name="alvo" value="aluno"> Um estudante</label>
+          ${tem("diretor") ? '<label class="checks"><input type="radio" name="alvo" value="escola"> Toda a escola</label>' : ""}</div></fieldset>
+        <div class="campo-alvo" data-alvo="turma"><div class="grade grade-4">${turmas.map((t) => `<label class="checks"><input type="checkbox" name="turma_ids" value="${t.id}"> Turma ${esc(t.codigo)} <span class="muted pequeno">${esc(t.serie || "")}</span></label>`).join("") || '<p class="muted">Nenhuma turma no seu acesso.</p>'}</div></div>
+        <div class="campo-alvo form-linha" data-alvo="aluno" hidden>
+          <div class="campo"><label for="rc-turma">Turma</label><select id="rc-turma" data-carregar-alunos="#rc-aluno">${opcoes([["", "Escolha"], ...turmas.map((t) => [t.id, `Turma ${t.codigo}`])])}</select></div>
+          <div class="campo"><label for="rc-aluno">Estudante</label><select id="rc-aluno" name="aluno_id"><option value="">Escolha a turma primeiro</option></select></div></div>
+        <div class="campo"><label for="rc-titulo">Assunto</label><input id="rc-titulo" name="titulo" type="text" required minlength="3" maxlength="120" placeholder="ex.: Reunião de pais na sexta"></div>
+        <div class="campo"><label for="rc-texto">Recado</label><textarea id="rc-texto" name="texto" rows="5" required maxlength="4000"></textarea></div>
+        <label class="checks"><input type="checkbox" name="permite_resposta" value="1" checked> A família pode responder</label>
+        <button class="btn" type="submit">Enviar recado</button></form></details>
+    <section class="pilha"><h2>Recados enviados</h2>${lista.length ? lista.map((r) => `<article class="cartao recado-escola">
+      <div class="linha"><strong>${esc(r.titulo)}</strong><span class="espaco"></span><span class="pequeno muted">${esc(fmtDataHora(r.criado_em))}</span></div>
+      <div class="pequeno muted">${esc(destino(r))} · ${esc(r.autor)}${r.permite_resposta ? "" : " · sem respostas"}</div>
+      <p class="texto-item">${esc(resumir(r.texto, 260))}</p>
+      <div class="linha pequeno">${etq(r.familias && r.cientes >= r.familias ? "verde" : "cinza", `Leram: ${r.cientes} de ${r.familias} família(s)`)}
+        ${r.respostas ? etq("azul", `${r.respostas} mensagem(ns)`) : ""}<span class="espaco"></span>
+        <a class="btn pequeno secundario" href="#/recados?ver=${r.id}">Ver leituras e respostas</a></div></article>`).join("") : '<p class="muted">Nenhum recado enviado ainda.</p>'}</section>`,
+      "recados"
+    );
+  }
+  const STATUS_OCORRENCIA = { aguardando: ["amarela", "Aguardando revisão"], liberada: ["verde", "Visível para a família"], arquivada: ["cinza", "Arquivada"] };
+  async function telaOcorrencias(rq) {
+    const filtro = rq.has("status") ? rq.get("status") : gestor() ? "aguardando" : "";
+    const [lista, turmas] = await Promise.all([rpc("escola_ocorrencias", { p_status: filtro || null }), turmasDoProfissional()]);
+    const ver = rq.get("ver");
+    let conversas = "";
+    if (ver) {
+      const todas2 = filtro ? await rpc("escola_ocorrencias", { p_status: null }) : lista;
+      const o = todas2.find((x) => x.id === ver);
+      const cs = (await rpc("escola_conversas", { p_tipo: "ocorrencia", p_item: ver })).map((c) => ({ ...c, item: ver }));
+      conversas = painelConversas("ocorrencia", o ? `${o.titulo} (${o.aluno.nome})` : "ocorrência", cs, !!o && (o.meu || o.pode_revisar));
+    }
+    const filtros = [...gestor() ? [["aguardando", "Aguardando revisão"]] : [], ["liberada", "Liberadas"], ["arquivada", "Arquivadas"], ["", "Todas"]];
+    const cartao = (o) => `<article class="cartao ocorrencia-escola ${o.status}">
+    <div class="linha">${etq(...TIPO_OCORRENCIA[o.tipo])} <strong>${esc(o.titulo)}</strong><span class="espaco"></span>${etq(...STATUS_OCORRENCIA[o.status])}</div>
+    <div class="pequeno muted">${esc(o.aluno.nome)}${o.turma ? ` · Turma ${esc(o.turma)}` : ""}${o.disciplina ? ` · ${esc(o.disciplina)}` : ""} · ${esc(fmtData(o.data))} · ${esc(o.autor)}</div>
+    <p class="texto-item">${esc(o.descricao)}</p>${o.providencias ? `<p class="pequeno"><strong>Providências:</strong> ${esc(o.providencias)}</p>` : ""}
+    ${o.status === "liberada" && o.revisado_por ? `<p class="pequeno muted">Liberada por ${esc(o.revisado_por)} em ${esc(fmtDataHora(o.revisado_em))}</p>` : ""}
+    ${o.pode_revisar || o.meu && o.status === "aguardando" ? `<details class="editar-aval"><summary class="btn pequeno fantasma">${o.pode_revisar && o.status === "aguardando" ? "Revisar o texto" : "Editar"}</summary>
+      <form data-form="ocorrencia-editar" data-id="${o.id}" class="mt-1"><div class="form-linha">
+        <div class="campo"><label>Tipo</label><select name="tipo">${opcoes(Object.entries(TIPO_OCORRENCIA).map(([k, v]) => [k, v[1]]), o.tipo)}</select></div>
+        <div class="campo"><label>Título</label><input type="text" name="titulo" value="${esc(o.titulo)}" minlength="3" maxlength="120" required></div></div>
+        <div class="campo"><label>Descrição</label><textarea name="descricao" rows="3" minlength="5" maxlength="4000" required>${esc(o.descricao)}</textarea></div>
+        <div class="campo"><label>Providências</label><textarea name="providencias" rows="2" maxlength="2000">${esc(o.providencias || "")}</textarea></div>
+        <button class="btn pequeno" type="submit">Salvar texto</button></form></details>` : ""}
+    <div class="linha mt-1">
+      ${o.pode_revisar && o.status === "aguardando" ? `<button type="button" class="btn pequeno" data-acao="ocorrencia-status" data-id="${o.id}" data-status="liberada">Liberar para a família</button>` : ""}
+      ${o.pode_revisar && o.status !== "arquivada" ? `<button type="button" class="btn pequeno fantasma" data-acao="ocorrencia-status" data-id="${o.id}" data-status="arquivada">Arquivar</button>` : ""}
+      ${o.pode_revisar && o.status === "arquivada" ? `<button type="button" class="btn pequeno fantasma" data-acao="ocorrencia-status" data-id="${o.id}" data-status="aguardando">Reabrir</button>` : ""}
+      <span class="espaco"></span>
+      ${o.status === "liberada" ? `${etq(o.familias && o.cientes >= o.familias ? "verde" : "cinza", `Família ciente: ${o.cientes} de ${o.familias}`)} ${o.respostas ? etq("azul", `${o.respostas} mensagem(ns)`) : ""}
+        <a class="btn pequeno secundario" href="#/ocorrencias?status=${filtro}&ver=${o.id}">Ver respostas</a>` : ""}</div></article>`;
+    return shell(
+      `${cabecalho("Ocorrências", gestor() ? "Registros disciplinares, acadêmicos e elogios — os registrados por professores chegam aqui para revisão antes de a família ver" : "Registros disciplinares, acadêmicos e elogios — a coordenação revisa antes de a família ver")}
+    ${conversas}
+    <details class="cartao" ${rq.get("novo") ? "open" : ""}><summary><strong>+ Registrar ocorrência</strong></summary>
+      <form data-form="ocorrencia-registrar" class="mt-1"><div id="msg-ocorrencia"></div><div class="form-linha">
+        <div class="campo"><label for="oc-turma">Turma</label><select id="oc-turma" data-carregar-alunos="#oc-aluno" required>${opcoes([["", "Escolha"], ...turmas.map((t) => [t.id, `Turma ${t.codigo}`])])}</select></div>
+        <div class="campo"><label for="oc-aluno">Estudante</label><select id="oc-aluno" name="aluno_id" required><option value="">Escolha a turma primeiro</option></select></div>
+        <div class="campo"><label for="oc-tipo">Tipo</label><select id="oc-tipo" name="tipo">${opcoes(Object.entries(TIPO_OCORRENCIA).map(([k, v]) => [k, v[1]]), "disciplinar")}</select></div>
+        <div class="campo"><label for="oc-data">Data</label><input id="oc-data" name="data" type="date" value="${hoje()}" max="${hoje()}" required></div></div>
+        <div class="campo"><label for="oc-titulo">Título</label><input id="oc-titulo" name="titulo" type="text" required minlength="3" maxlength="120" placeholder="ex.: Uso do celular durante a prova"></div>
+        <div class="campo"><label for="oc-desc">O que aconteceu</label><textarea id="oc-desc" name="descricao" rows="4" required minlength="5" maxlength="4000"></textarea></div>
+        <div class="campo"><label for="oc-prov">Providências (opcional)</label><textarea id="oc-prov" name="providencias" rows="2" maxlength="2000"></textarea></div>
+        ${gestor() ? '<label class="checks"><input type="checkbox" name="liberar" value="1" checked> Liberar para a família agora</label>' : '<p class="pequeno muted">A coordenação revisa o texto e libera para a família.</p>'}
+        <button class="btn" type="submit">Registrar</button></form></details>
+    <nav class="chips mb-2" aria-label="Filtrar">${filtros.map(([v, r]) => `<a class="chip-nav ${filtro === v ? "ativo" : ""}" href="#/ocorrencias?status=${v}">${esc(r)}</a>`).join("")}</nav>
+    ${lista.length ? lista.map(cartao).join("") : '<p class="muted">Nenhuma ocorrência aqui.</p>'}`,
+      "ocorrencias"
+    );
+  }
+  let credenciaisFamilia = null;
+  function enderecoSite() {
+    return CFG.endereco || (location.protocol === "file:" || !location.origin || location.origin === "null" ? "arquivo CEJA-OS.html" : location.origin + location.pathname);
+  }
+  function cartoesFamilia(c) {
+    return `<section class="cartao cartoes-familia" aria-live="polite">
+    <div class="linha nao-imprimir"><h2 class="sem-margem">${esc(c.titulo)} (${c.contas.length})</h2><span class="espaco"></span>
+      ${c.contas.length ? '<button type="button" class="btn" data-acao="imprimir-cartoes">Imprimir cartões</button>' : ""}</div>
+    ${c.contas.length ? '<p class="pequeno nao-imprimir">Entregue cada cartão só à própria família. As senhas provisórias não ficam guardadas e não serão mostradas de novo; no primeiro acesso a pessoa cria a senha dela.</p>' : ""}
+    <div class="grade-cartoes">${c.contas.map((x) => `<div class="cartao-acesso"><div class="ca-cab">${marca(30)}<strong>${esc(nomeEscola())}</strong></div>
+      <div class="ca-titulo">${x.tipo === "estudante" ? "Acesso do(a) estudante" : "Acesso do(a) responsável"}</div>
+      ${x.aluno ? `<div class="ca-aluno">${esc(x.aluno)}</div>` : `<div class="ca-aluno">${esc(x.nome || "")}</div>`}
+      <dl><dt>Endereço</dt><dd>${esc(enderecoSite())}</dd><dt>Código da escola</dt><dd><code>${esc(x.codigo_escola)}</code></dd>
+      <dt>Usuário</dt><dd><code>${esc(x.usuario)}</code></dd><dt>Senha provisória</dt><dd><code>${esc(x.senha_provisoria)}</code></dd></dl>
+      <div class="ca-rodape">Notas, frequência, recados e ocorrências. No primeiro acesso, crie a sua senha.</div>
+      ${x.aviso ? `<div class="ca-aviso nao-imprimir">${esc(x.aviso)}</div>` : ""}</div>`).join("")}</div>
+    ${c.ignoradas?.length ? `<details class="nao-imprimir mt-1" open><summary>${c.ignoradas.length} estudante(s) ficaram sem acesso criado</summary><ul class="pequeno">${c.ignoradas.map((i) => `<li>${esc(i.aluno)} — ${esc(i.motivo)}</li>`).join("")}</ul></details>` : ""}</section>`;
+  }
+  function situacaoFamilia(c) {
+    if (!c.ativo) return etq("cinza", "desativado");
+    if (c.deve_trocar_senha) return etq("amarela", "aguardando 1º acesso");
+    return `${etq("verde", "ativo")}${c.ultimo_acesso ? ` <span class="muted pequeno">último acesso ${esc(fmtDataHora(c.ultimo_acesso))}</span>` : ""}`;
+  }
+  const acoesContaFamilia = (c) => `<button type="button" class="btn pequeno fantasma" data-acao="familia-senha" data-user="${c.user_id}">Nova senha</button>
+  <button type="button" class="btn pequeno fantasma" data-acao="familia-ativar" data-user="${c.user_id}" data-ativo="${c.ativo ? 0 : 1}">${c.ativo ? "Desativar" : "Reativar"}</button>`;
+  async function telaFamiliasAcessos(rq) {
+    const turmas = await turmasDoProfissional();
+    const tid = rq.get("turma") || turmas[0]?.id;
+    const lista = tid ? await rpc("familia_acessos_turma", { p_turma: tid }) : [];
+    const cred = credenciaisFamilia;
+    credenciaisFamilia = null;
+    const linha = (x) => {
+      const idade = x.aluno.maior === null ? etq("amarela", "sem data de nascimento") : x.aluno.maior ? etq("azul", "18 anos ou mais") : "";
+      return `<tr><td class="num">${x.numero ?? ""}</td><td class="nome"><strong>${esc(x.aluno.nome)}</strong><br><span class="pequeno muted">${x.aluno.matricula ? `matrícula ${esc(x.aluno.matricula)}` : ""}</span> ${idade}</td>
+      <td>${x.estudante ? `<code>${esc(x.estudante.usuario)}</code> ${situacaoFamilia(x.estudante)}<div class="linha mt-1">${acoesContaFamilia(x.estudante)}</div>` : `<button type="button" class="btn pequeno secundario" data-acao="familia-criar" data-aluno="${x.aluno.id}">Criar acesso</button>`}</td>
+      <td>${x.responsaveis.map((r) => `<div class="resp-familia"><strong>${esc(r.nome)}</strong>${r.parentesco ? ` <span class="muted pequeno">(${esc(r.parentesco)})</span>` : ""} · <code>${esc(r.usuario)}</code> ${situacaoFamilia(r)}
+          ${!r.liberado ? `<div>${etq("vermelha", "sem acesso aos dados: precisa da autorização do estudante")} <button type="button" class="btn pequeno" data-acao="familia-autorizar" data-user="${r.user_id}" data-aluno="${x.aluno.id}" data-v="1">Registrar autorização</button></div>` : r.autorizado_maior ? `<div class="pequeno">${etq("azul", "autorizado pelo estudante")} <button type="button" class="btn-link" data-acao="familia-autorizar" data-user="${r.user_id}" data-aluno="${x.aluno.id}" data-v="0">revogar</button></div>` : ""}
+          <div class="linha">${acoesContaFamilia(r)}</div></div>`).join("")}
+        <details class="mt-1"><summary class="btn pequeno secundario">+ Responsável</summary>
+          <form data-form="familia-criar-resp" data-aluno="${x.aluno.id}" class="mt-1"><div class="form-linha">
+            <div class="campo"><label>Nome do(a) responsável</label><input type="text" name="nome" required minlength="3" maxlength="120"></div>
+            <div class="campo"><label>Parentesco</label><input type="text" name="parentesco" maxlength="40" placeholder="mãe, pai, avó…"></div></div>
+            ${x.aluno.maior !== false ? '<label class="checks"><input type="checkbox" name="autorizado_maior" value="1"> O(a) estudante autorizou o responsável a ver os dados (obrigatório para 18 anos ou mais — LGPD)</label>' : ""}
+            <button class="btn pequeno" type="submit">Criar acesso do responsável</button></form>
+          <form data-form="familia-vincular" data-aluno="${x.aluno.id}" class="linha mt-1"><input type="text" name="usuario" placeholder="ou usuário já cadastrado (irmãos)" aria-label="Usuário de responsável já cadastrado" maxlength="40" required>
+            <button class="btn pequeno fantasma" type="submit">Vincular</button></form></details></td></tr>`;
+    };
+    return shell(
+      `${cabecalho("Acessos das famílias", "Contas dos responsáveis e dos estudantes para o portal: notas, frequência, recados e ocorrências")}
+    ${cred ? cartoesFamilia(cred) : ""}
+    <div class="linha mb-2"><label class="linha"><span class="rotulo-campo">Turma</span><select data-ir-param="#/familias" data-param="turma">${opcoes(turmas.map((t) => [t.id, `Turma ${t.codigo}${t.serie ? ` · ${t.serie}` : ""}`]), tid)}</select></label>
+      <span class="espaco"></span>${tid ? `<button type="button" class="btn secundario" data-acao="familia-lote" data-turma="${tid}" data-tipo="responsavel">Criar acessos dos responsáveis</button>
+      <button type="button" class="btn secundario" data-acao="familia-lote" data-turma="${tid}" data-tipo="estudante">Criar acessos dos estudantes</button>` : ""}</div>
+    ${aviso("info", `A família entra no mesmo endereço do sistema com o código da escola <code>${esc(S.ctx.escola?.codigo || "")}</code>, o usuário e a senha do cartão. Estudantes com 18 anos ou mais (ou sem data de nascimento cadastrada): o responsável só vê os dados com a autorização do estudante (LGPD).`)}
+    ${lista.length ? `<div class="tabela-rolagem"><table class="tabela"><thead><tr><th>Nº</th><th>Estudante</th><th>Acesso do estudante</th><th>Responsáveis</th></tr></thead><tbody>${lista.map(linha).join("")}</tbody></table></div>` : '<p class="muted">Nenhum estudante ativo nesta turma.</p>'}`,
+      "familias"
+    );
+  }
   const semAcesso = () => shell(`<div class="cartao"><h1>Acesso não permitido</h1><p>Esta área não está disponível para o seu perfil.</p><a class="btn" href="#/">Voltar ao início</a></div>`);
   const naoEncontrado = () => shell(`<div class="cartao"><h1>Não encontrado</h1><p>O endereço não existe ou o registro não está disponível para o seu acesso.</p><a class="btn" href="#/">Ir para o início</a></div>`);
   function rotaInicial() {
     if (S.ctx.plataforma) return "#/plataforma";
+    if (familia()) return "#/familia";
     if (gestor()) return "#/painel";
     if (tem("professor")) return "#/professor";
     return "#/conta";
@@ -2263,6 +2637,15 @@ ${t}` : t;
     if (S.ctx.plataforma && !["plataforma", "conta"].includes(r0 || "")) {
       location.replace("#/plataforma");
       return null;
+    }
+    if (familia()) {
+      const telasFamilia = { "": telaFamiliaInicio, notas: telaFamiliaNotas, frequencia: telaFamiliaFrequencia, recados: telaFamiliaRecados, ocorrencias: telaFamiliaOcorrencias, escola: telaFamiliaEscola };
+      if (r0 === "conta") return telaConta();
+      if (r0 !== "familia" || !telasFamilia[r1 || ""]) {
+        location.replace("#/familia");
+        return null;
+      }
+      return telasFamilia[r1 || ""](rq);
     }
     switch (r0 || "") {
       case "":
@@ -2297,6 +2680,12 @@ ${t}` : t;
         return telaRetificacoes();
       case "provas":
         return exige(tem("professor") || gestor(), telaProvas);
+      case "recados":
+        return exige(tem("professor") || gestor(), () => telaRecados(rq));
+      case "ocorrencias":
+        return exige(tem("professor") || gestor(), () => telaOcorrencias(rq));
+      case "familias":
+        return exige(gestor(), () => telaFamiliasAcessos(rq));
       case "seguranca":
         return exige(tem("diretor"), telaSeguranca);
       case "equipe":
@@ -2379,6 +2768,17 @@ ${t}` : t;
     else render();
   }
   const confirmar = (t) => window.confirm(t);
+  async function recarregarNoLugar(texto) {
+    const y = window.scrollY;
+    if (texto) S.aviso = { tipo: "sucesso", texto };
+    await render();
+    window.scrollTo(0, y);
+  }
+  async function mostrarCredenciaisFamilia(titulo, contas, ignoradas) {
+    credenciaisFamilia = { titulo, contas, ignoradas };
+    await render();
+    window.scrollTo(0, 0);
+  }
   const acoes = {
     sair: () => sair(false),
     "sair-todos": () => confirmar("Encerrar a sua sessão em todos os dispositivos?") && sair(true),
@@ -2507,6 +2907,48 @@ ${t}` : t;
       await acessos("escola_status", { escola_id: el.dataset.id, exige_mfa_gestao: el.dataset.mfa === "1" });
       sucesso("Exigência de segundo fator alterada.");
     }),
+    // portal da família — família
+    "familia-ciente": (el) => executar(null, async () => {
+      await rpc("familia_ciente", { p_tipo: el.dataset.tipo, p_item: el.dataset.id });
+      S.itemAberto = el.dataset.id;
+      await recarregarNoLugar("Obrigado! A escola foi avisada de que você leu.");
+    }, el),
+    // portal da família — escola
+    "ocorrencia-status": (el) => {
+      const t = { liberada: "Liberar esta ocorrência para a família ver no portal?", arquivada: "Arquivar esta ocorrência? Ela deixa de aparecer para a família.", aguardando: "Reabrir esta ocorrência para revisão?" }[el.dataset.status];
+      return confirmar(t) && executar(null, async () => {
+        await rpc("ocorrencia_status", { p_id: el.dataset.id, p_status: el.dataset.status });
+        await recarregarNoLugar(el.dataset.status === "liberada" ? "Ocorrência liberada: a família já pode ver." : "Situação da ocorrência atualizada.");
+      }, el);
+    },
+    "familia-criar": (el) => executar(null, async () => {
+      const r = await familias("criar", { aluno_id: el.dataset.aluno, tipo: "estudante" });
+      await mostrarCredenciaisFamilia("Acesso criado", [r.conta]);
+    }, el),
+    "familia-lote": (el) => {
+      const resp = el.dataset.tipo === "responsavel";
+      return confirmar(resp ? "Criar um acesso de responsável para cada estudante desta turma que ainda não tem? Estudantes com 18 anos ou mais (ou sem data de nascimento) ficam de fora: cadastre esses individualmente, com a autorização do estudante." : "Criar o acesso de cada estudante desta turma que ainda não tem?") && executar(null, async () => {
+        const r = await familias("turma", { turma_id: el.dataset.turma, tipo: el.dataset.tipo });
+        await mostrarCredenciaisFamilia(resp ? "Acessos de responsáveis criados" : "Acessos de estudantes criados", r.criadas, r.ignoradas);
+      }, el);
+    },
+    "familia-senha": (el) => confirmar("Gerar uma nova senha provisória para este acesso? As sessões abertas serão encerradas e será preciso entregar um novo cartão.") && executar(null, async () => {
+      const r = await familias("senha", { user_id: el.dataset.user });
+      await mostrarCredenciaisFamilia("Nova senha provisória", [r.conta]);
+    }, el),
+    "familia-ativar": (el) => confirmar(el.dataset.ativo === "1" ? "Reativar este acesso?" : "Desativar este acesso? A pessoa não conseguirá mais entrar no portal.") && executar(null, async () => {
+      await familias("ativar", { user_id: el.dataset.user, ativo: el.dataset.ativo === "1" });
+      await recarregarNoLugar(el.dataset.ativo === "1" ? "Acesso reativado." : "Acesso desativado.");
+    }, el),
+    "familia-autorizar": (el) => confirmar(el.dataset.v === "1" ? "Confirmar que o(a) estudante autorizou este responsável a ver as notas, a frequência, os recados e as ocorrências? Guarde o registro da autorização (por exemplo, termo assinado)." : "Revogar a autorização? O responsável deixa de ver os dados deste estudante.") && executar(null, async () => {
+      await rpc("familia_autorizar", { p_responsavel: el.dataset.user, p_aluno: el.dataset.aluno, p_autorizado: el.dataset.v === "1" });
+      await recarregarNoLugar(el.dataset.v === "1" ? "Autorização registrada." : "Autorização revogada.");
+    }, el),
+    "imprimir-cartoes": () => {
+      document.body.classList.add("imprimir-cartoes");
+      window.print();
+      setTimeout(() => document.body.classList.remove("imprimir-cartoes"), 500);
+    },
     "criar-demo": (el) => confirmar("Criar a escola de demonstração (dados fictícios) com 7 contas de teste?") && executar(null, async () => {
       el.textContent = "Criando… (pode levar até 30 segundos)";
       const r = await acessos("escola_demo_criar", { codigo: "demo" });
@@ -2538,6 +2980,12 @@ ${t}` : t;
       return ir(`${base2}?${el.dataset.param}=${encodeURIComponent(el.value)}`);
     }
     if (el.matches("input[data-ir-data]") && ehData(el.value)) return ir(`${el.dataset.irData}?data=${el.value}`);
+    if (el.matches("select[data-carregar-alunos]")) return carregarAlunosNoSelect(el.value, el.dataset.carregarAlunos).catch(() => {
+    });
+    if (el.matches('input[name="alvo"]')) {
+      document.querySelectorAll(".campo-alvo").forEach((c) => c.hidden = c.dataset.alvo !== el.value);
+      return;
+    }
     if (el.matches('select[data-campo-reg="tempos"]') && E.reg) {
       E.reg.tempos = Number(el.value);
       alterouAula();
@@ -2747,6 +3195,51 @@ ${t}` : t;
       if (!papeis2.length) throw new ErroUsuario("Escolha ao menos um perfil.");
       await acessos("membro_atualizar", { usuario_id: f.dataset.id, nome: d.nome, email: d.email, papeis: papeis2, escopos: valores(f, "escopo") });
       sucesso("Acesso atualizado.", "#/equipe");
+    }),
+    // portal da família
+    "familia-responder": (f) => executar(`msg-resp-${f.dataset.id}`, async () => {
+      await rpc("familia_responder", { p_tipo: f.dataset.tipo, p_item: f.dataset.id, p_texto: dados(f).texto });
+      S.itemAberto = f.dataset.id;
+      await recarregarNoLugar("Mensagem enviada à escola.");
+    }),
+    "escola-responder": (f) => executar(`msg-er-${f.dataset.familia}`, async () => {
+      await rpc("escola_responder", { p_tipo: f.dataset.tipo, p_item: f.dataset.id, p_familia: f.dataset.familia, p_texto: dados(f).texto });
+      await recarregarNoLugar("Resposta enviada à família.");
+    }),
+    "recado-publicar": (f) => executar("msg-recado", async () => {
+      const d = dados(f);
+      const p = { alvo: d.alvo, titulo: d.titulo, texto: d.texto, permite_resposta: d.permite_resposta === "1" };
+      if (d.alvo === "turma") {
+        p.turma_ids = valores(f, "turma_ids");
+        if (!p.turma_ids.length) throw new ErroUsuario("Marque pelo menos uma turma.");
+      }
+      if (d.alvo === "aluno") {
+        if (!d.aluno_id) throw new ErroUsuario("Escolha a turma e o(a) estudante.");
+        p.aluno_id = d.aluno_id;
+      }
+      if (d.alvo === "escola" && !confirmar("Enviar este recado para TODAS as famílias da escola?")) return;
+      await rpc("recado_publicar", { p });
+      sucesso("Recado enviado. As famílias já podem ver no portal.", "#/recados");
+    }),
+    "ocorrencia-registrar": (f) => executar("msg-ocorrencia", async () => {
+      const d = dados(f);
+      const liberar = gestor() && d.liberar === "1";
+      await rpc("ocorrencia_registrar", { p: { aluno_id: d.aluno_id, tipo: d.tipo, data: d.data, titulo: d.titulo, descricao: d.descricao, providencias: d.providencias || "", liberar } });
+      sucesso(liberar ? "Ocorrência registrada e liberada para a família." : "Ocorrência registrada. A coordenação revisa antes de a família ver.", gestor() && !liberar ? "#/ocorrencias?status=aguardando" : "#/ocorrencias?status=");
+    }),
+    "ocorrencia-editar": (f) => executar(null, async () => {
+      const d = dados(f);
+      await rpc("ocorrencia_editar", { p_id: f.dataset.id, p: { tipo: d.tipo, titulo: d.titulo, descricao: d.descricao, providencias: d.providencias || "" } });
+      await recarregarNoLugar("Ocorrência atualizada.");
+    }),
+    "familia-criar-resp": (f) => executar(null, async () => {
+      const d = dados(f);
+      const r = await familias("criar", { aluno_id: f.dataset.aluno, tipo: "responsavel", nome: d.nome, parentesco: d.parentesco || null, autorizado_maior: d.autorizado_maior === "1" });
+      await mostrarCredenciaisFamilia("Acesso criado", [r.conta]);
+    }),
+    "familia-vincular": (f) => executar(null, async () => {
+      await rpc("familia_vincular_usuario", { p_usuario: dados(f).usuario.trim().toLowerCase(), p_aluno: f.dataset.aluno, p_parentesco: null });
+      await recarregarNoLugar("Responsável vinculado a este(a) estudante. Ele(a) usa o mesmo usuário e senha de antes.");
     }),
     "escola-criar": (f) => executar("msg-escola", async () => {
       const d = dados(f);
