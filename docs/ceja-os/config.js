@@ -4,4 +4,5 @@ window.CEJA_CONFIG = Object.freeze({
   chavePublica: "sb_publishable_5HIXxTBkRD8bFPPJ-oZ1pQ_UwO_Jx54",
   dominioLogin: 'acesso.ceja-os.invalid', // e-mail sintético de login (não altere depois de criar contas)
   inatividadeMinutos: 30,
+  endereco: "https://jairpimentasouza-web.github.io/jair-os/ceja-os/", // endereço oficial (aparece nos cartões de acesso)
 });

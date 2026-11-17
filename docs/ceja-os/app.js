@@ -268,7 +268,7 @@
     )}</select></label>`;
   }
   function cartaoCredencial(c, titulo = "Acesso criado") {
-    const site = location.protocol === "file:" || !location.origin || location.origin === "null" ? "arquivo CEJA-OS.html (abrir no navegador)" : location.origin + location.pathname;
+    const site = CFG.endereco || (location.protocol === "file:" || !location.origin || location.origin === "null" ? "arquivo CEJA-OS.html (abrir no navegador)" : location.origin + location.pathname);
     return `<section class="cartao credencial" aria-live="polite"><h2>${esc(titulo)}</h2>
   <p class="pequeno">Entregue estes dados <strong>somente à própria pessoa</strong>. A senha é provisória: no primeiro acesso o sistema exige uma senha pessoal${c.precisaMfa ? " e a configuração do aplicativo autenticador" : ""}.</p>
   <dl class="dados-credencial"><dt>Endereço</dt><dd>${esc(site)}</dd><dt>Código da escola</dt><dd><code>${esc(c.codigo_escola)}</code></dd>
