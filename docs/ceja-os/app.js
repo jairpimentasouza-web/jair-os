@@ -215,7 +215,7 @@
     }
     if (tem("diretor")) add("painel", "Painel da direção");
     else if (tem("coordenador")) add("painel", "Painel da coordenação");
-    if (tem("professor")) add("professor", "Minhas aulas");
+    if (tem("professor")) add("professor", gestor() ? "Minhas aulas" : "Início");
     if (gestor()) {
       add("turmas", "Turmas e diários");
       add("avaliacoes", "Avaliações");
@@ -224,7 +224,7 @@
       add("regras", "Regras de avaliação");
     }
     add("provas", "Provas");
-    add("retificacoes", "Retificações");
+    add("retificacoes", gestor() ? "Retificações" : "Pedidos de correção");
     if (tem("diretor")) {
       add("equipe", "Equipe e acessos");
       add("seguranca", "Backup e segurança");
@@ -533,6 +533,7 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     }
   }
   async function sair(todos) {
+    limparRascunho();
     await sb.auth.signOut({ scope: todos ? "global" : "local" }).catch(() => {
     });
     S.ctx = null;
@@ -545,6 +546,7 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
   setInterval(async () => {
     const limite = (Number(CFG.inatividadeMinutos) || 30) * 6e4;
     if (S.ctx && Date.now() - ultimaAtividade > limite) {
+      limparRascunho();
       await sb.auth.signOut({ scope: "local" }).catch(() => {
       });
       S.ctx = null;
@@ -570,7 +572,7 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     return ordenarPor(r, (m) => `${String(m.numero ?? 999).padStart(4, "0")} ${m.alunos?.nome}`);
   }
   const nomeAluno = (m) => m.alunos?.nome ?? "—";
-  const E = { chamada: null, notas: null, aula: null };
+  const E = { reg: null, notas: null, lanc: null };
   function slotsPrevistos(horarios, inicio, fim, semAula) {
     const s = [];
     for (let d = inicio; d <= fim; d = somarDias(d, 1)) {
@@ -580,74 +582,102 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     }
     return s;
   }
+  function horaAgora() {
+    return new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(/* @__PURE__ */ new Date());
+  }
+  function saudacao() {
+    const h = Number(horaAgora().slice(0, 2));
+    return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+  }
+  const primeiroNome = (n) => String(n || "").trim().split(/\s+/)[0] || "";
+  const fmtDiaCurto = (d) => `${DIAS_CURTOS[diaSemana(d)]} ${fmtData(d).slice(0, 5)}`;
+  const linkAula = (tdId, data, hora) => `#/td/${tdId}/aula?data=${data}${hora ? `&hora=${hora}` : ""}`;
+  function resumir(t, n) {
+    const s = String(t || "").replace(/\s+/g, " ").trim();
+    return s.length > n ? `${s.slice(0, n - 1)}…` : s;
+  }
+  function agendaDoDia(lista, hor, aulas, data, semAula) {
+    if (semAula.has(data)) return [];
+    const ds = diaSemana(data);
+    const mapa = new Map(aulas.filter((a) => a.data === data).map((a) => [`${a.td_id}|${fmtHora(a.hora)}`, a]));
+    const doDia = hor.filter((h) => h.dia === ds && porId(lista, h.td_id));
+    return ordenarPor(doDia, (h) => `${fmtHora(h.inicio)} ${porId(lista, h.td_id).turmas.codigo}`).map((h) => {
+      const a = mapa.get(`${h.td_id}|${fmtHora(h.inicio)}`) || null;
+      return { td: porId(lista, h.td_id), hora: fmtHora(h.inicio), fim: fmtHora(h.fim), tempos: h.tempos, aula: a, chamada: !!a?.chamada_em, conteudo: !!a?.registrada_em };
+    });
+  }
   async function telaProfessor() {
     const b = await base();
     const meus = (await tds()).filter(leciona);
     const ref = hoje();
     const p = periodoDaData(b, ref);
+    const ola = `${saudacao()}, ${primeiroNome(S.ctx.nome)}!`;
+    const sub = `${esc(fmtLonga(ref))}${p ? ` · ${esc(p.nome)}` : ""}`;
     if (!meus.length) {
-      return shell(`${cabecalho("Minhas aulas", esc(fmtLonga(ref)))}${aviso("info", "Você ainda não tem turmas vinculadas. A coordenação cadastra os vínculos (turma, disciplina e horário).")}`, "professor");
+      return shell(`${cabecalho(ola, sub)}${aviso("info", "Você ainda não tem turmas. A coordenação cadastra as suas turmas e horários; depois disso, elas aparecem aqui.")}`, "professor");
     }
     const ids = meus.map((t) => t.id);
     const [hor, aulas, mats] = await Promise.all([
       q(sb.from("horarios").select("*").in("td_id", ids)),
-      p ? todas(() => sb.from("aulas").select("id, td_id, data, hora, tempos, chamada_em, registrada_em, campos").in("td_id", ids).eq("periodo_id", p.id)) : [],
+      p ? todas(() => sb.from("aulas").select("id, td_id, data, hora, tempos, chamada_em, registrada_em").in("td_id", ids).eq("periodo_id", p.id)) : [],
       todas(() => sb.from("matriculas").select("id, turma_id, inicio, fim, status").in("turma_id", [...new Set(meus.map((t) => t.turma_id))]))
     ]);
-    const chaveAula = (td, d, h) => `${td}|${d}|${fmtHora(h)}`;
-    const mapaAulas = new Map(aulas.map((a) => [chaveAula(a.td_id, a.data, a.hora), a]));
+    const chave = (td, d, h) => `${td}|${d}|${fmtHora(h)}`;
+    const mapaAulas = new Map(aulas.map((a) => [chave(a.td_id, a.data, a.hora), a]));
     const ontem = somarDias(ref, -1);
-    const previstos = p && p.status === "aberto" ? slotsPrevistos(hor, p.inicio, ontem < p.fim ? ontem : p.fim, b.semAula) : [];
-    const semChamada = previstos.filter((s) => !mapaAulas.get(chaveAula(s.td_id, s.data, s.hora))?.chamada_em);
-    const semConteudo = aulas.filter((a) => a.chamada_em && !a.registrada_em && a.data <= ref);
-    const ds = diaSemana(ref);
-    const deHoje = b.semAula.has(ref) ? [] : ordenarPor(hor.filter((h) => h.dia === ds), (h) => h.inicio);
-    const ultima = (tdId) => ordenarPor(aulas.filter((a) => a.td_id === tdId && a.registrada_em), (a) => `${a.data} ${a.hora}`).pop();
+    const aberto = p && p.status === "aberto";
+    const previstos = aberto ? slotsPrevistos(hor, p.inicio, ontem < p.fim ? ontem : p.fim, b.semAula) : [];
+    const pend = ordenarPor([
+      ...previstos.filter((s) => !mapaAulas.get(chave(s.td_id, s.data, s.hora))?.chamada_em).map((s) => ({ tipo: "chamada", td: s.td_id, data: s.data, hora: s.hora })),
+      ...aberto ? aulas.filter((a) => a.chamada_em && !a.registrada_em && a.data < ref).map((a) => ({ tipo: "conteudo", td: a.td_id, data: a.data, hora: fmtHora(a.hora) })) : []
+    ], (x) => `${x.data} ${x.hora}`);
+    const agora = horaAgora();
+    const dia = agendaDoDia(meus, hor, aulas, ref, b.semAula);
+    const feitas = dia.filter((x) => x.chamada).length;
+    const destaque = dia.find((x) => !x.chamada && x.fim > agora) || dia.find((x) => !x.chamada) || null;
     const nAlunos = (turma) => mats.filter((m) => m.turma_id === turma && m.status === "ativa" && vigenteNa(m, ref)).length;
-    const prim = deHoje[0] ? deHoje[0].td_id : meus[0].id;
-    const cartoes = deHoje.map((h) => {
-      const td = porId(meus, h.td_id);
-      const a = mapaAulas.get(chaveAula(h.td_id, ref, h.inicio));
-      const u = ultima(h.td_id);
-      return `<article class="cartao cartao-turma"><div class="linha"><span class="turma-codigo">${esc(td.turmas.codigo)}</span><span class="espaco"></span>${a?.chamada_em ? etq("verde", "Chamada feita") : etq("amarela", "Chamada pendente")}</div>
-      <div><strong>${esc(td.disciplinas.nome)}</strong> · ${esc(td.turmas.serie)}</div><div class="horario">${fmtHora(h.inicio)}–${fmtHora(h.fim)} · ${h.tempos} tempo(s)</div>
-      <dl><dt>Estudantes</dt><dd>${nAlunos(td.turma_id)}</dd><dt>Última aula</dt><dd>${u ? `${fmtData(u.data)} — ${esc(u.campos?.conteudo || "")}` : "—"}</dd></dl>
-      <div class="acoes"><a class="btn" href="#/td/${td.id}/chamada?data=${ref}&hora=${fmtHora(h.inicio)}">Fazer chamada</a><a class="btn secundario" href="#/td/${td.id}/aula?data=${ref}&hora=${fmtHora(h.inicio)}">Registrar aula</a></div></article>`;
-    });
-    const cont = (lista, id) => lista.filter((x) => x.td_id === id).length;
+    const estado = (x) => x.chamada ? `<span class="ok">✓ Chamada</span> ${x.conteudo ? '<span class="ok">✓ Conteúdo</span>' : '<span class="falta">Falta o conteúdo</span>'}` : x.fim <= agora ? '<span class="atrasada">Chamada atrasada</span>' : '<span class="falta">Chamada a fazer</span>';
+    const LIM = 6;
+    const itemPend = (x) => {
+      const td = porId(meus, x.td);
+      return `<li><a href="${linkAula(x.td, x.data, x.hora)}"><span class="tag-pend ${x.tipo}">${x.tipo === "chamada" ? "Chamada" : "Conteúdo"}</span>
+      <span class="qual"><strong>${esc(td.turmas.codigo)}</strong> ${esc(td.disciplinas.nome)}</span><span class="quando">${esc(fmtDiaCurto(x.data))} · ${esc(x.hora)}</span><span class="ir">Resolver ›</span></a></li>`;
+    };
     return shell(
-      `${cabecalho("Minhas aulas", `${esc(fmtLonga(ref))}${p ? ` · ${esc(p.nome)} (${esc(p.status)})` : ""}`)}
-    <nav aria-label="Ações principais" class="acoes-principais">
-      <a class="acao-principal" href="#/td/${prim}/chamada"><span class="icone" aria-hidden="true">✓</span> FAZER CHAMADA</a>
-      <a class="acao-principal" href="#/td/${prim}/aula"><span class="icone" aria-hidden="true">✎</span> REGISTRAR AULA</a>
-      <a class="acao-principal" href="#/td/${prim}/notas"><span class="icone" aria-hidden="true">№</span> LANÇAR NOTAS</a>
-      <a class="acao-principal secundaria" href="#/td/${prim}/diario"><span class="icone" aria-hidden="true">▤</span> CONSULTAR DIÁRIO</a></nav>
-    ${semChamada.length + semConteudo.length ? aviso("alerta", `<strong>Pendências:</strong> ${semChamada.length} chamada(s) não realizada(s) · ${semConteudo.length} aula(s) sem conteúdo registrado.`) : ""}
-    <section class="pilha"><h2>Aulas de hoje</h2>${cartoes.length ? `<div class="grade grade-3">${cartoes.join("")}</div>` : `<p class="muted">${b.semAula.has(ref) ? "Hoje é dia sem aula no calendário escolar." : "Nenhuma aula na sua grade para hoje."}</p>`}</section>
-    <section class="pilha mt-3"><h2>Todas as minhas turmas</h2><div class="tabela-rolagem"><table class="tabela"><thead><tr><th>Turma</th><th>Disciplina</th><th class="num">Estudantes</th><th class="num">Chamadas pendentes</th><th class="num">Sem conteúdo</th><th>Ações</th></tr></thead><tbody>
-    ${meus.map((td) => `<tr><td><strong>${esc(td.turmas.codigo)}</strong> <span class="muted pequeno">${esc(td.turmas.serie)}</span></td><td>${esc(td.disciplinas.nome)}</td><td class="num">${nAlunos(td.turma_id)}</td>
-      <td class="num">${cont(semChamada, td.id) ? etq("amarela", cont(semChamada, td.id)) : 0}</td><td class="num">${cont(semConteudo, td.id) ? etq("amarela", cont(semConteudo, td.id)) : 0}</td>
-      <td><div class="linha"><a class="btn pequeno" href="#/td/${td.id}/chamada">Chamada</a><a class="btn pequeno secundario" href="#/td/${td.id}/aula">Aula</a><a class="btn pequeno secundario" href="#/td/${td.id}/notas">Notas</a><a class="btn pequeno fantasma" href="#/td/${td.id}/diario">Diário</a></div></td></tr>`).join("")}
-    </tbody></table></div>
-    ${semChamada.length ? `<details class="cartao"><summary><strong>Chamadas pendentes (${semChamada.length})</strong></summary><ul class="pequeno">${semChamada.map((s) => `<li><a href="#/td/${s.td_id}/chamada?data=${s.data}&hora=${s.hora}">${esc(rotuloTd(porId(meus, s.td_id)))} · ${fmtData(s.data)} às ${s.hora}</a></li>`).join("")}</ul></details>` : ""}
-    ${semConteudo.length ? `<details class="cartao"><summary><strong>Aulas sem conteúdo registrado (${semConteudo.length})</strong></summary><ul class="pequeno">${semConteudo.map((a) => `<li><a href="#/td/${a.td_id}/aula?data=${a.data}&hora=${fmtHora(a.hora)}">${esc(rotuloTd(porId(meus, a.td_id)))} · ${fmtData(a.data)} às ${fmtHora(a.hora)}</a></li>`).join("")}</ul></details>` : ""}
-    </section>`,
+      `${cabecalho(ola, sub)}
+    ${destaque ? `<a class="cartao-agora" href="${linkAula(destaque.td.id, ref, destaque.hora)}">
+        <span class="rotulo-agora">${destaque.fim <= agora ? "Chamada atrasada — aula já terminou" : destaque.hora <= agora ? "Aula de agora" : "Próxima aula"}</span>
+        <span class="turma-grande">Turma ${esc(destaque.td.turmas.codigo)}</span>
+        <span class="detalhe-agora">${esc(destaque.td.disciplinas.nome)} · ${esc(destaque.hora)}–${esc(destaque.fim)} · ${nAlunos(destaque.td.turma_id)} estudantes</span>
+        <span class="botao-agora">Abrir aula: chamada e conteúdo ›</span></a>` : dia.length ? aviso("sucesso", "<strong>Tudo certo por hoje:</strong> todas as chamadas do dia estão feitas.") : ""}
+    <section class="cartao"><h2 class="titulo-contador">Suas aulas de hoje ${dia.length ? `<span class="contador">${feitas} de ${dia.length} com chamada</span>` : ""}</h2>
+      ${dia.length ? `<ul class="lista-hoje">${dia.map((x) => `<li class="${x.chamada ? "feita" : ""}"><a href="${linkAula(x.td.id, ref, x.hora)}">
+        <span class="hora">${esc(x.hora)}</span><span class="qual"><strong>${esc(x.td.turmas.codigo)}</strong> ${esc(x.td.disciplinas.nome)}</span>
+        <span class="estado">${estado(x)}</span><span class="ir" aria-hidden="true">›</span></a></li>`).join("")}</ul>` : `<p class="muted">${b.semAula.has(ref) ? "Hoje é dia sem aula no calendário escolar." : "Você não tem aula na grade hoje."}</p>`}</section>
+    <section class="cartao"><h2 class="titulo-contador">Para resolver ${pend.length ? `<span class="contador alerta">${pend.length}</span>` : ""}</h2>
+      ${pend.length ? `<p class="pequeno muted">Aulas de dias anteriores que ainda precisam de chamada ou de conteúdo. Toque para resolver.</p>
+        <ul class="lista-pendencias">${pend.slice(0, LIM).map(itemPend).join("")}</ul>
+        ${pend.length > LIM ? `<details class="mais-pendencias"><summary>Ver mais ${pend.length - LIM}</summary><ul class="lista-pendencias">${pend.slice(LIM).map(itemPend).join("")}</ul></details>` : ""}` : '<p class="tudo-em-dia">✓ Nada pendente. Tudo em dia!</p>'}</section>
+    <section class="pilha"><h2>Minhas turmas</h2><div class="grade grade-3">${meus.map((td) => `<article class="cartao cartao-turma">
+      <div class="linha"><span class="turma-codigo">${esc(td.turmas.codigo)}</span><span class="espaco"></span><span class="muted pequeno">${nAlunos(td.turma_id)} estudantes</span></div>
+      <div><strong>${esc(td.disciplinas.nome)}</strong> · ${esc(td.turmas.serie)}</div>
+      <div class="acoes-turma"><a class="btn secundario" href="#/td/${td.id}/notas">Notas</a><a class="btn secundario" href="#/td/${td.id}/diario">Diário</a><a class="btn fantasma" href="#/td/${td.id}/aula?outro=1">Outra aula</a></div></article>`).join("")}</div></section>`,
       "professor"
     );
   }
   function cabecalhoTd(td, titulo, ativo) {
     return `<div class="trilha"><a href="#/">← Início</a></div>
-  ${cabecalho(`${titulo} — Turma ${td.turmas.codigo}`, `${esc(td.disciplinas.nome)} · ${esc(td.turmas.serie)} · ${esc(SEGMENTOS[td.turmas.segmento] || td.turmas.segmento)}${!leciona(td) ? ` · Professor(a): ${esc(td.perfis?.nome || "—")}` : ""}`)}
-  <nav aria-label="Seções da turma" class="linha mb-2">${[["chamada", "Chamada"], ["aula", "Registro de aula"], ["notas", "Notas"], ["diario", "Diário"]].map(([k, r]) => `<a href="#/td/${td.id}/${k}" class="btn pequeno ${k === ativo ? "" : "secundario"}" ${k === ativo ? 'aria-current="page"' : ""}>${r}</a>`).join("")}</nav>`;
+  ${cabecalho(`${titulo} — Turma ${td.turmas.codigo}`, `${esc(td.disciplinas.nome)} · ${esc(td.turmas.serie)}${!leciona(td) ? ` · Professor(a): ${esc(td.perfis?.nome || "—")}` : ""}`)}
+  <nav aria-label="Seções da turma" class="abas-turma">${[["aula", "Chamada e conteúdo"], ["notas", "Notas"], ["diario", "Diário"]].map(([k, r]) => `<a href="#/td/${td.id}/${k}" class="${k === ativo ? "ativa" : ""}" ${k === ativo ? 'aria-current="page"' : ""}>${r}</a>`).join("")}</nav>`;
   }
   function seletorDataHora(td, data, horaSel, secao, hs) {
-    return `<div class="cartao mb-2"><div class="linha">
-    <a class="btn pequeno secundario" href="#/td/${td.id}/${secao}?data=${somarDias(data, -1)}" aria-label="Dia anterior">◀</a>
-    <label class="linha"><span class="rotulo-campo">Data</span><input type="date" value="${data}" data-ir-data="#/td/${td.id}/${secao}" class="campo-data"></label>
-    <a class="btn pequeno secundario" href="#/td/${td.id}/${secao}?data=${somarDias(data, 1)}" aria-label="Próximo dia">▶</a>
+    return `<div class="linha">
+    <a class="btn pequeno secundario" href="#/td/${td.id}/${secao}?data=${somarDias(data, -1)}&outro=1" aria-label="Dia anterior">◀</a>
+    <label class="linha"><span class="rotulo-campo">Dia</span><input type="date" value="${data}" data-ir-data="#/td/${td.id}/${secao}" class="campo-data"></label>
+    <a class="btn pequeno secundario" href="#/td/${td.id}/${secao}?data=${somarDias(data, 1)}&outro=1" aria-label="Próximo dia">▶</a>
     <span class="muted pequeno">${esc(fmtLonga(data))}</span></div>
-    <div class="linha mt-1"><span class="rotulo-campo">Horário:</span>${hs.length ? "" : '<span class="muted pequeno">Sem aula desta turma na grade neste dia.</span>'}
-    ${hs.map((h) => `<a href="#/td/${td.id}/${secao}?data=${data}&hora=${fmtHora(h.inicio)}" class="btn pequeno ${fmtHora(h.inicio) === horaSel ? "" : "secundario"}">${fmtHora(h.inicio)}–${fmtHora(h.fim)} (${h.tempos}t)</a>`).join("")}</div></div>`;
+    <div class="linha mt-1"><span class="rotulo-campo">Horário:</span>${hs.length ? "" : '<span class="muted pequeno">Esta turma não tem aula na grade neste dia.</span>'}
+    ${hs.map((h) => `<a href="#/td/${td.id}/${secao}?data=${data}&hora=${fmtHora(h.inicio)}" class="btn pequeno ${fmtHora(h.inicio) === horaSel ? "" : "secundario"}">${fmtHora(h.inicio)}–${fmtHora(h.fim)}</a>`).join("")}</div>`;
   }
   async function contextoAula(td, rq) {
     const b = await base();
@@ -660,155 +690,278 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     const p = periodoDaData(b, data);
     return { b, ref, data, hs, hora, aula, p, horario: hs.find((h) => fmtHora(h.inicio) === hora) || null, semAula: b.semAula.has(data) };
   }
-  async function telaChamada(td, rq) {
+  const ROTULO_PRESENCA = { P: "Presente", F: "Faltou", A: "Atrasou", J: "Falta justificada" };
+  const CHAVE_RASCUNHO = "ceja-os-rascunho-aula";
+  function lerRascunho(chave) {
+    try {
+      const r = JSON.parse(window.sessionStorage.getItem(CHAVE_RASCUNHO) || "null");
+      return r && r.chave === chave ? r : null;
+    } catch {
+      return null;
+    }
+  }
+  function gravarRascunho() {
+    const st = E.reg;
+    if (!st || !st.editavel) return;
+    try {
+      window.sessionStorage.setItem(CHAVE_RASCUNHO, JSON.stringify({ chave: st.chave, marcas: st.marcas, conteudo: st.conteudo, tempos: st.tempos }));
+    } catch {
+    }
+  }
+  function limparRascunho() {
+    try {
+      window.sessionStorage.removeItem(CHAVE_RASCUNHO);
+    } catch {
+    }
+  }
+  async function telaRegistro(td, rq) {
     const c = await contextoAula(td, rq);
     const { data, hora, aula, p } = c;
-    const freq = aula ? await q(sb.from("frequencias").select("matricula_id, status, justificativa").eq("aula_id", aula.id)) : [];
-    const alunos = (await matriculasDaTurma(td.turma_id)).filter((m) => vigenteNa(m, data));
-    const podeEditar = leciona(td) && p && p.status === "aberto" && data <= c.ref && !c.semAula && !!hora;
+    const [freq, mats, anteriores] = await Promise.all([
+      aula ? q(sb.from("frequencias").select("matricula_id, status, justificativa").eq("aula_id", aula.id)) : [],
+      matriculasDaTurma(td.turma_id),
+      hora ? q(sb.from("aulas").select("data, hora, campos").eq("td_id", td.id).not("registrada_em", "is", null).lt("data", data).order("data", { ascending: false }).limit(3)) : []
+    ]);
+    const alunos = mats.filter((m) => vigenteNa(m, data));
+    const prof = leciona(td);
+    const aberto = !!p && p.status === "aberto";
+    const podeChamada = prof && aberto && data <= c.ref && !c.semAula && !!hora && alunos.length > 0;
+    const podeConteudo = prof && aberto && data <= c.ref && !!hora;
     const chave = `${td.id}|${data}|${hora}`;
-    if (!E.chamada || E.chamada.chave !== chave) {
+    if (!E.reg || E.reg.chave !== chave) {
       const salvo = new Map(freq.map((f) => [f.matricula_id, f]));
-      E.chamada = { chave, td: td.id, data, hora, tempos: aula ? aula.tempos : c.horario ? c.horario.tempos : 1, marcas: {}, alunos: alunos.map((m) => m.id) };
-      for (const m of alunos) E.chamada.marcas[m.id] = { s: salvo.get(m.id)?.status || null, j: salvo.get(m.id)?.justificativa || "" };
+      E.reg = {
+        chave,
+        td: td.id,
+        data,
+        hora,
+        tempos: aula ? aula.tempos : c.horario ? c.horario.tempos : 1,
+        marcas: {},
+        conteudo: aula?.campos?.conteudo || "",
+        conteudoOriginal: aula?.campos?.conteudo || "",
+        registrada: !!aula?.registrada_em,
+        chamadaFeita: !!aula?.chamada_em,
+        anteriores: anteriores.map((a) => a.campos?.conteudo || ""),
+        recuperado: false
+      };
+      for (const m of alunos) E.reg.marcas[m.id] = { s: salvo.get(m.id)?.status || (podeChamada ? "P" : null), j: salvo.get(m.id)?.justificativa || "" };
+      const r = (podeChamada || podeConteudo) && lerRascunho(chave);
+      if (r) {
+        for (const [id, mk] of Object.entries(r.marcas || {})) {
+          if (E.reg.marcas[id] && ["P", "F", "A", "J"].includes(mk?.s)) E.reg.marcas[id] = { s: mk.s, j: String(mk.j || "") };
+        }
+        if (typeof r.conteudo === "string") E.reg.conteudo = r.conteudo;
+        if (Number(r.tempos) >= 1 && Number(r.tempos) <= 6) E.reg.tempos = Number(r.tempos);
+        E.reg.recuperado = true;
+      }
     }
-    const st = E.chamada;
-    const podeRetificar = leciona(td) && aula?.chamada_em && p && p.status !== "aberto";
-    S.apos = atualizarContagemChamada;
-    const corpo = !hora ? '<p class="muted">Escolha uma data com aula desta turma na grade horária.</p>' : !alunos.length ? '<p class="muted">Nenhum estudante com matrícula vigente nesta data.</p>' : `${podeEditar ? `<div class="linha mb-2"><button type="button" class="btn grande" data-acao="todos-presentes">MARCAR TODOS COMO PRESENTES</button>
-        <label class="linha"><span class="rotulo-campo">Tempos de aula</span><select data-campo-chamada="tempos" class="campo-curto">${opcoes([1, 2, 3, 4, 5, 6].map((n) => [n, n]), st.tempos)}</select></label></div>` : ""}
-      <p class="pequeno muted">${podeEditar ? "Dica: com o foco em um estudante, use as teclas P (presente), F (falta), A (atraso) ou J (falta justificada)." : "Visualização somente leitura."}</p>
-      <ul class="lista-chamada cartao sem-recuo">${alunos.map((m) => linhaChamada(m, st.marcas[m.id], podeEditar)).join("")}</ul>
-      ${podeEditar ? `<div class="barra-fixa"><span id="contagem-chamada"></span><span class="espaco"></span><span id="status-chamada" class="status-salvamento" role="status"></span>
-      <button type="button" class="btn grande" data-acao="salvar-chamada">${aula?.chamada_em ? "Salvar alterações" : "Salvar chamada"}</button></div>` : ""}
-      ${podeRetificar ? formRetificacaoFreq(aula, alunos) : ""}`;
+    const st = E.reg;
+    Object.assign(st, { editavel: podeChamada || podeConteudo, podeChamada, podeConteudo });
+    const proxima = S.proxima;
+    S.proxima = null;
+    S.apos = () => {
+      atualizarResumoAula();
+      if (st.recuperado) marcarNaoSalvo();
+    };
+    const fim = c.horario ? fmtHora(c.horario.fim) : "";
+    const quando = `${esc(fmtLonga(data))}${hora ? ` · ${esc(hora)}${fim ? `–${esc(fim)}` : ""}` : ""}`;
+    const avisos = [];
+    if (c.semAula) avisos.push(aviso("alerta", "Este dia está marcado no calendário escolar como <strong>dia sem aula</strong>. Não há chamada."));
+    if (!p) avisos.push(aviso("alerta", "Este dia está fora dos períodos letivos cadastrados."));
+    if (data > c.ref) avisos.push(aviso("info", "Esta aula ainda não aconteceu. A chamada e o conteúdo ficam disponíveis no dia da aula."));
+    if (prof && p && !aberto) avisos.push(aviso("info", `O ${esc(p.nome)} está ${esc(p.status)}: nada pode ser alterado aqui. Para corrigir algo, use “Pedir correção” no fim da página.`));
+    if (!prof) avisos.push(aviso("info", `Visualização da gestão. Quem registra é o(a) professor(a) ${esc(td.perfis?.nome || "")}.`));
+    if (st.recuperado) avisos.push(aviso("alerta", "Recuperamos o que você tinha marcado e escrito e ainda não foi salvo. Confira e toque em <strong>Salvar aula</strong>."));
+    if (st.chamadaFeita && !proxima && hora) {
+      avisos.push(aviso("sucesso", `Chamada feita${aula?.chamada_em ? ` em ${esc(fmtDataHora(aula.chamada_em))}` : ""}${st.registrada ? " · conteúdo registrado" : " · <strong>falta o conteúdo</strong>"}.${st.editavel ? " Se precisar, corrija e salve de novo." : ""}`));
+    }
+    const cartaoProxima = proxima ? `<div class="cartao-proxima" role="status">${proxima.href ? `<p>Próxima aula de hoje: <strong>${esc(proxima.rotulo)}</strong></p><a class="btn grande" href="${proxima.href}">Abrir a próxima aula ›</a>` : `<p>${st.data === c.ref ? "Não há mais chamadas a fazer hoje." : "Pronto."}</p>`}<a class="btn secundario" href="#/">Voltar ao início</a></div>` : "";
+    const trocar = `<details class="trocar-aula" ${!hora || rq.get("outro") ? "open" : ""}><summary>Trocar o dia ou o horário</summary><div class="trocar-corpo">
+    ${seletorDataHora(td, data, hora, "aula", c.hs)}
+    ${st.editavel ? `<label class="linha mt-1"><span class="rotulo-campo">Tempos desta aula</span><select data-campo-reg="tempos" class="campo-curto">${opcoes([1, 2, 3, 4, 5, 6].map((n) => [n, n]), st.tempos)}</select></label>` : ""}</div></details>`;
+    const blocoChamada = !hora ? "" : !alunos.length ? '<section class="cartao bloco-aula"><p class="muted">Nenhum estudante com matrícula nesta turma neste dia.</p></section>' : `<section class="cartao bloco-aula"><div class="titulo-bloco"><span class="passo" aria-hidden="true">1</span><div class="texto-bloco"><h2>Chamada</h2>
+      <p class="pequeno muted">${podeChamada ? "Todos começam como <strong>presentes</strong>. Toque no nome de quem <strong>faltou</strong>. Atraso ou falta justificada: botão <strong>⋯</strong>." : `${alunos.length} estudantes.`}</p></div>
+      ${podeChamada ? '<button type="button" class="btn pequeno fantasma" data-acao="todos-presentes">Todos presentes</button>' : ""}</div>
+      <ul class="lista-presenca">${alunos.map((m) => linhaPresenca(m, st.marcas[m.id], podeChamada)).join("")}</ul></section>`;
+    const blocoConteudo = !hora ? "" : `<section class="cartao bloco-aula"><div class="titulo-bloco"><span class="passo" aria-hidden="true">2</span><div class="texto-bloco">
+      <h2><label for="r-conteudo">O que foi trabalhado na aula</label></h2>
+      ${podeConteudo ? '<p class="pequeno muted">Escreva do seu jeito, em poucas linhas. Pode ser agora ou depois: a chamada é salva mesmo sem o conteúdo.</p>' : ""}</div></div>
+      <textarea id="r-conteudo" data-campo-reg="conteudo" class="conteudo-aula" maxlength="5000" rows="6" placeholder="Ex.: Leis de Newton — 2ª lei (F = m·a). Exercícios 1 a 8 da página 112." ${podeConteudo ? "" : "disabled"}>${esc(st.conteudo)}</textarea>
+      ${podeConteudo && st.anteriores.some(Boolean) ? `<div class="sugestoes"><span class="pequeno muted">Aproveitar o texto de uma aula anterior:</span>
+        ${anteriores.map((a, i) => a.campos?.conteudo ? `<button type="button" class="chip" data-acao="usar-conteudo" data-i="${i}" title="${esc(a.campos.conteudo)}">${esc(fmtDiaCurto(a.data))}: ${esc(resumir(a.campos.conteudo, 46))}</button>` : "").join("")}</div>` : ""}</section>`;
+    const barra = st.editavel ? `<div class="barra-fixa barra-aula" ${proxima ? "hidden" : ""}><span id="resumo-aula" class="resumo-aula"></span><span class="espaco"></span>
+      <span id="status-aula" class="status-salvamento" role="status"></span><button type="button" class="btn grande" data-acao="salvar-registro">Salvar aula</button></div>` : "";
+    const retif = prof && aula?.chamada_em && p && !aberto ? formRetificacaoFreq(aula, alunos) : "";
     return shell(
-      `${cabecalhoTd(td, "Chamada", "chamada")}${seletorDataHora(td, data, hora, "chamada", c.hs)}
-    ${c.semAula ? aviso("alerta", "Esta data está marcada no calendário escolar como dia sem aula.") : ""}
-    ${!p ? aviso("alerta", "A data não pertence a nenhum período letivo cadastrado.") : ""}
-    ${data > c.ref ? aviso("info", "Não é possível registrar chamada de data futura.") : ""}
-    ${aula?.chamada_em ? aviso("sucesso", `Chamada registrada em ${esc(fmtDataHora(aula.chamada_em))}. Alterações ficam registradas na auditoria.`) : ""}
-    ${leciona(td) && p && p.status !== "aberto" ? aviso("info", `O período está ${esc(p.status)}. Correções somente por solicitação de retificação (aprovada pela coordenação).`) : ""}
-    ${!leciona(td) ? aviso("info", "Visualização da gestão. O registro é feito pelo professor responsável.") : ""}
-    ${corpo}
-    ${aula?.chamada_em && leciona(td) ? `<p class="mt-2"><a class="btn secundario" href="#/td/${td.id}/aula?data=${data}&hora=${hora}">Registrar o conteúdo desta aula →</a></p>` : ""}`,
-      leciona(td) ? "professor" : "turmas"
+      `${cabecalhoTd(td, "Aula", "aula")}<p class="quando-aula">${quando}</p>${cartaoProxima}${trocar}${avisos.join("")}${blocoChamada}${blocoConteudo}${barra}${retif}`,
+      prof ? "professor" : "turmas"
     );
   }
-  function linhaChamada(m, mk, podeEditar) {
-    const cls = { F: "ausente", A: "atraso", J: "justificada" }[mk.s] || "";
-    return `<li class="${cls}" data-mat="${m.id}" tabindex="-1"><span class="numero">${m.numero ?? "—"}</span>
-  <div><span class="aluno-nome">${esc(nomeAluno(m))}</span>
-  ${mk.s === "J" ? `<input type="text" data-just="${m.id}" value="${esc(mk.j)}" placeholder="Justificativa (ex.: atestado médico)" aria-label="Justificativa da falta de ${esc(nomeAluno(m))}" ${podeEditar ? "" : "disabled"} class="campo-justificativa" maxlength="300">` : ""}</div>
-  <div class="seletor-presenca" role="group" aria-label="Frequência de ${esc(nomeAluno(m))}">
-  ${["P", "F", "A", "J"].map((s) => `<button type="button" class="${s}" aria-pressed="${mk.s === s}" title="${ROTULO_FREQ[s]}" aria-label="${ROTULO_FREQ[s]} — ${esc(nomeAluno(m))}" ${podeEditar ? "" : "disabled"} data-acao="marcar" data-mat="${m.id}" data-s="${s}">${s}</button>`).join("")}</div></li>`;
+  const campoJustificativa = (id, j, pode) => `<input type="text" class="campo-justificativa" data-just="${id}" value="${esc(j)}" placeholder="Motivo da falta justificada (ex.: atestado médico)" aria-label="Motivo da falta justificada" maxlength="300" ${pode ? "" : "disabled"}>`;
+  function linhaPresenca(m, mk, pode) {
+    const s = mk?.s || null;
+    const rot = s ? ROTULO_PRESENCA[s] : "sem marcação";
+    return `<li class="aluno-presenca est-${s || "nada"}" data-mat="${m.id}">
+  <button type="button" class="toque" data-acao="alternar-presenca" data-mat="${m.id}" ${pode ? "" : "disabled"} aria-label="${esc(nomeAluno(m))}: ${rot}">
+    <span class="numero">${m.numero ?? "—"}</span><span class="aluno-nome">${esc(nomeAluno(m))}</span><span class="selo">${s ? ROTULO_PRESENCA[s] : "—"}</span></button>
+  ${pode ? `<button type="button" class="mais" data-acao="mais-presenca" data-mat="${m.id}" aria-expanded="false" title="Atraso ou falta justificada" aria-label="Outras opções para ${esc(nomeAluno(m))}">⋯</button>
+  <div class="opcoes-presenca" hidden>${["P", "F", "A", "J"].map((x) => `<button type="button" class="opcao ${x}" data-acao="marcar" data-mat="${m.id}" data-s="${x}" aria-pressed="${s === x}">${ROTULO_PRESENCA[x]}</button>`).join("")}</div>` : ""}
+  ${s === "J" ? campoJustificativa(m.id, mk.j, pode) : ""}</li>`;
   }
-  function atualizarContagemChamada() {
-    const el = document.getElementById("contagem-chamada");
-    if (!el || !E.chamada) return;
-    const v = Object.values(E.chamada.marcas);
-    const pres = v.filter((x) => x.s === "P" || x.s === "A").length;
-    const aus = v.filter((x) => x.s === "F" || x.s === "J").length;
-    const sem = v.filter((x) => !x.s).length;
-    el.innerHTML = `<strong>${pres}</strong> presentes · <strong>${aus}</strong> ausentes${sem ? ` · <strong>${sem}</strong> sem marcação` : ""}`;
-    const bt = document.querySelector('[data-acao="salvar-chamada"]');
-    if (bt) bt.disabled = sem > 0;
-  }
-  function marcarFrequencia(matId, s) {
-    const st = E.chamada;
-    if (!st || !st.marcas[matId]) return;
-    const antes = st.marcas[matId].s;
-    st.marcas[matId].s = s;
-    const li = document.querySelector(`li[data-mat="${matId}"]`);
-    if (!li) return;
-    li.className = { F: "ausente", A: "atraso", J: "justificada" }[s] || "";
-    li.querySelectorAll(".seletor-presenca button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.s === s)));
-    const div = li.children[1];
-    const inp = div.querySelector("input[data-just]");
-    if (s === "J" && !inp) {
-      div.insertAdjacentHTML("beforeend", `<input type="text" data-just="${matId}" value="${esc(st.marcas[matId].j)}" placeholder="Justificativa (ex.: atestado médico)" aria-label="Justificativa" class="campo-justificativa" maxlength="300">`);
-      if (antes !== "J") div.querySelector("input[data-just]").focus();
-    } else if (s !== "J" && inp) inp.remove();
-    const status = document.getElementById("status-chamada");
+  function marcarNaoSalvo() {
+    const status = document.getElementById("status-aula");
     if (status) {
       status.className = "status-salvamento pendente";
-      status.textContent = "Alterações não salvas";
+      status.textContent = "Ainda não salvo";
     }
-    atualizarContagemChamada();
   }
-  async function salvarChamada() {
-    const st = E.chamada;
-    const status = document.getElementById("status-chamada");
-    const sem = Object.values(st.marcas).filter((x) => !x.s).length;
-    if (sem) return;
-    const faltaJust = Object.entries(st.marcas).find(([, x]) => x.s === "J" && !x.j.trim());
-    if (faltaJust) {
-      status.className = "status-salvamento erro";
-      status.textContent = "Informe a justificativa das faltas justificadas.";
-      return;
+  function alterouAula() {
+    document.querySelector(".barra-aula")?.removeAttribute("hidden");
+    marcarNaoSalvo();
+    gravarRascunho();
+    atualizarResumoAula();
+  }
+  function marcarPresenca(matId, s) {
+    const st = E.reg;
+    if (!st || !st.podeChamada || !st.marcas[matId]) return;
+    const antes = st.marcas[matId].s;
+    st.marcas[matId].s = s;
+    const li = document.querySelector(`li.aluno-presenca[data-mat="${matId}"]`);
+    if (li) {
+      li.className = `aluno-presenca est-${s}`;
+      li.querySelector(".selo").textContent = ROTULO_PRESENCA[s];
+      li.querySelector(".toque").setAttribute("aria-label", `${li.querySelector(".aluno-nome").textContent}: ${ROTULO_PRESENCA[s]}`);
+      li.querySelectorAll(".opcao").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.s === s)));
+      const inp = li.querySelector("input[data-just]");
+      if (s === "J" && !inp) {
+        li.insertAdjacentHTML("beforeend", campoJustificativa(matId, st.marcas[matId].j, true));
+        if (antes !== "J") li.querySelector("input[data-just]").focus();
+      } else if (s !== "J" && inp) inp.remove();
     }
+    alterouAula();
+  }
+  function alternarPresenca(matId) {
+    const s = E.reg?.marcas[matId]?.s;
+    marcarPresenca(matId, s === "P" ? "F" : "P");
+  }
+  function abrirOpcoesPresenca(matId, abrir) {
+    const li = document.querySelector(`li.aluno-presenca[data-mat="${matId}"]`);
+    if (!li) return;
+    const caixa = li.querySelector(".opcoes-presenca");
+    const bt = li.querySelector(".mais");
+    const mostrar = abrir ?? caixa.hidden;
+    caixa.hidden = !mostrar;
+    bt.setAttribute("aria-expanded", String(mostrar));
+    if (mostrar) (caixa.querySelector('[aria-pressed="true"]') || caixa.querySelector("button"))?.focus();
+  }
+  function atualizarResumoAula() {
+    const st = E.reg;
+    const el = document.getElementById("resumo-aula");
+    if (!st || !el) return;
+    const v = Object.values(st.marcas);
+    const n = (k) => v.filter((x) => x.s === k).length;
+    const sem = v.filter((x) => !x.s).length;
+    const partes = [];
+    if (v.length && st.podeChamada) {
+      partes.push(`<strong>${n("P") + n("A")}</strong> presentes`, `<strong>${n("F") + n("J")}</strong> faltaram`);
+      if (n("A")) partes.push(`${n("A")} atrasou`);
+      if (n("J")) partes.push(`${n("J")} justificada(s)`);
+      if (sem) partes.push(`<strong>${sem}</strong> sem marcação`);
+    }
+    el.innerHTML = partes.join(" · ");
+  }
+  function usarConteudoAnterior(i) {
+    const st = E.reg;
+    const ta = document.getElementById("r-conteudo");
+    const t = st?.anteriores?.[Number(i)];
+    if (!ta || ta.disabled || !t) return;
+    ta.value = ta.value.trim() ? `${ta.value.trim()}
+${t}` : t;
+    st.conteudo = ta.value;
+    ta.focus();
+    alterouAula();
+  }
+  async function proximaAulaHoje(st) {
+    const ref = hoje();
+    const meus = (await tds()).filter(leciona);
+    const ids = meus.map((t) => t.id);
+    if (!ids.length) return { href: null };
+    const [b, hor, aulas] = await Promise.all([
+      base(),
+      q(sb.from("horarios").select("td_id, dia, inicio, fim, tempos").in("td_id", ids).eq("dia", diaSemana(ref))),
+      q(sb.from("aulas").select("td_id, data, hora, chamada_em, registrada_em").in("td_id", ids).eq("data", ref))
+    ]);
+    const resto = agendaDoDia(meus, hor, aulas, ref, b.semAula).filter((x) => !x.chamada && !(x.td.id === st.td && x.hora === st.hora));
+    const prox = resto.find((x) => x.hora > st.hora) || resto[0];
+    return prox ? { href: linkAula(prox.td.id, ref, prox.hora), rotulo: `Turma ${prox.td.turmas.codigo} · ${prox.td.disciplinas.nome} às ${prox.hora}` } : { href: null };
+  }
+  async function salvarRegistro(bt) {
+    const st = E.reg;
+    const status = document.getElementById("status-aula");
+    if (!st || !status) return;
+    const erro = (t) => {
+      status.className = "status-salvamento erro";
+      status.textContent = t;
+    };
+    if (st.podeChamada) {
+      const sem = Object.values(st.marcas).filter((x) => !x.s).length;
+      if (sem) return erro(`Falta marcar ${sem} estudante(s).`);
+      const semMotivo = Object.entries(st.marcas).find(([, x]) => x.s === "J" && !x.j.trim());
+      if (semMotivo) {
+        document.querySelector(`input[data-just="${semMotivo[0]}"]`)?.focus();
+        return erro("Escreva o motivo da falta justificada.");
+      }
+    }
+    const ta = document.getElementById("r-conteudo");
+    const conteudo = (ta && !ta.disabled ? ta.value : "").trim();
+    const salvarConteudo = st.podeConteudo && !!conteudo && (conteudo !== st.conteudoOriginal.trim() || !st.registrada);
+    if (st.podeConteudo && !conteudo && st.registrada) return erro("O conteúdo não pode ficar vazio. Escreva o que foi trabalhado.");
+    if (!st.podeChamada && !salvarConteudo) return erro(st.podeConteudo ? "Escreva o que foi trabalhado na aula para salvar." : "Nada a salvar.");
     status.className = "status-salvamento pendente";
     status.textContent = "Salvando…";
+    if (bt) bt.disabled = true;
+    let chamada = null;
     try {
-      const r = await rpc("salvar_chamada", {
-        p_td: st.td,
-        p_data: st.data,
-        p_hora: st.hora,
-        p_tempos: Number(st.tempos),
-        p_registros: Object.entries(st.marcas).map(([id, x]) => ({ matricula_id: id, status: x.s, justificativa: x.s === "J" ? x.j.trim() : null }))
-      });
-      S.aviso = { tipo: "sucesso", texto: `Chamada salva: ${r.presentes} presentes e ${r.faltas} ausentes.` };
-      E.chamada = null;
-      render();
+      if (st.podeChamada) {
+        chamada = await rpc("salvar_chamada", {
+          p_td: st.td,
+          p_data: st.data,
+          p_hora: st.hora,
+          p_tempos: Number(st.tempos),
+          p_registros: Object.entries(st.marcas).map(([id, x]) => ({ matricula_id: id, status: x.s, justificativa: x.s === "J" ? x.j.trim() : null }))
+        });
+      }
+      if (salvarConteudo) {
+        await rpc("salvar_aula", { p_td: st.td, p_data: st.data, p_hora: st.hora, p_tempos: Number(st.tempos), p_campos: { conteudo }, p_confirmar: true });
+      }
     } catch (e) {
-      status.className = "status-salvamento erro";
-      status.textContent = traduzirErro(e).message;
+      if (bt && document.body.contains(bt)) bt.disabled = false;
+      const m = traduzirErro(e).message;
+      if (chamada) {
+        st.chamadaFeita = true;
+        return erro(`A chamada foi salva, mas o conteúdo não: ${m}`);
+      }
+      return erro(m);
     }
+    limparRascunho();
+    const partes = [];
+    if (chamada) partes.push(`Chamada salva: ${chamada.presentes} presente(s) e ${chamada.faltas} falta(s).`);
+    if (salvarConteudo) partes.push("Conteúdo registrado.");
+    else if (!st.registrada && !conteudo) partes.push("Falta escrever o conteúdo — dá para fazer depois.");
+    S.aviso = { tipo: "sucesso", texto: partes.join(" ") };
+    S.proxima = st.data === hoje() ? await proximaAulaHoje(st).catch(() => ({ href: null })) : { href: null };
+    E.reg = null;
+    await render();
+    window.scrollTo(0, 0);
   }
   function formRetificacaoFreq(aula, alunos) {
-    return `<details class="cartao mt-2"><summary><strong>Solicitar correção de frequência (retificação)</strong></summary>
+    return `<details class="cartao mt-2"><summary><strong>Pedir correção da chamada</strong> <span class="muted pequeno">(a coordenação aprova)</span></summary>
   <form data-form="retificar-freq" data-aula="${aula.id}"><div id="msg-retif"></div><div class="form-linha">
     <div class="campo"><label for="rf-aluno">Estudante</label><select id="rf-aluno" name="matricula_id" required>${opcoes(alunos.map((m) => [m.id, `${m.numero ?? ""} ${nomeAluno(m)}`]))}</select></div>
-    <div class="campo"><label for="rf-status">Situação correta</label><select id="rf-status" name="status">${opcoes(Object.entries(ROTULO_FREQ))}</select></div>
-    <div class="campo"><label for="rf-jf">Justificativa da falta (se J)</label><input id="rf-jf" name="justificativa_falta" maxlength="300"></div></div>
-    <div class="campo"><label for="rf-motivo">Motivo da correção (obrigatório)</label><textarea id="rf-motivo" name="justificativa" minlength="10" maxlength="1000" required></textarea></div>
+    <div class="campo"><label for="rf-status">Situação correta</label><select id="rf-status" name="status">${opcoes(Object.entries(ROTULO_PRESENCA))}</select></div>
+    <div class="campo"><label for="rf-jf">Motivo da falta (se justificada)</label><input id="rf-jf" name="justificativa_falta" maxlength="300"></div></div>
+    <div class="campo"><label for="rf-motivo">Por que precisa corrigir? (obrigatório)</label><textarea id="rf-motivo" name="justificativa" minlength="10" maxlength="1000" required></textarea></div>
     <button class="btn secundario" type="submit">Enviar à coordenação</button></form></details>`;
-  }
-  const CAMPOS_AULA = [["conteudo", "Conteúdo da aula"]];
-  async function telaAula(td, rq) {
-    const c = await contextoAula(td, rq);
-    const { data, hora, aula, p } = c;
-    const podeEditar = leciona(td) && p && p.status === "aberto" && !!hora;
-    const recentes = await q(sb.from("aulas").select("data, hora, campos").eq("td_id", td.id).not("registrada_em", "is", null).lt("data", data).order("data", { ascending: false }).limit(3));
-    E.aula = { td: td.id, data, hora, tempos: aula ? aula.tempos : c.horario?.tempos || 1 };
-    return shell(
-      `${cabecalhoTd(td, "Registro de aula", "aula")}${seletorDataHora(td, data, hora, "aula", c.hs)}
-    ${aula?.registrada_em ? aviso("sucesso", `Aula registrada em ${esc(fmtDataHora(aula.registrada_em))}. Você pode corrigir o texto e salvar de novo.`) : ""}
-    ${p && p.status !== "aberto" ? aviso("info", `Período ${esc(p.status)}: registro somente leitura.`) : ""}
-    ${!hora ? '<p class="muted">Escolha uma data com aula desta turma na grade horária.</p>' : `
-    <form data-form="aula" class="cartao aula-simples"><div id="msg-aula"></div>
-      <label for="a-conteudo" class="rotulo-grande">O que foi trabalhado nesta aula</label>
-      <textarea id="a-conteudo" name="conteudo" class="conteudo-aula" maxlength="5000" rows="12" placeholder="Ex.: Leis de Newton — 2ª lei (F = m·a). Exercícios 1 a 8 da página 112. Correção no quadro." ${podeEditar ? "autofocus" : "disabled"}>${esc(aula?.campos?.conteudo || "")}</textarea>
-      ${podeEditar ? `<div class="linha mt-1"><button type="submit" class="btn grande">Salvar aula</button>
-        <label class="linha"><span class="rotulo-campo">Tempos</span><select name="tempos" class="campo-curto">${opcoes([1, 2, 3, 4, 5, 6].map((n) => [n, n]), E.aula.tempos)}</select></label></div>` : ""}
-    </form>`}
-    ${recentes.length ? `<section class="cartao mt-2"><h2>Aulas anteriores</h2><ul class="pequeno">${recentes.map((a) => `<li>${fmtData(a.data)} — ${esc(a.campos?.conteudo || "")}</li>`).join("")}</ul></section>` : ""}`,
-      leciona(td) ? "professor" : "turmas"
-    );
-  }
-  async function salvarAula(f) {
-    const d = Object.fromEntries(new FormData(f).entries());
-    const alvo = document.getElementById("msg-aula");
-    const conteudo = String(d.conteudo || "").trim();
-    if (!conteudo) return alvo.innerHTML = aviso("erro", "Escreva o conteúdo da aula antes de salvar.");
-    if (E.aula.data > hoje()) return alvo.innerHTML = aviso("erro", "Não é possível registrar aula de data futura.");
-    try {
-      await rpc("salvar_aula", { p_td: E.aula.td, p_data: E.aula.data, p_hora: E.aula.hora, p_tempos: Number(d.tempos || E.aula.tempos), p_campos: { conteudo }, p_confirmar: true });
-      S.aviso = { tipo: "sucesso", texto: "Aula salva." };
-      render();
-    } catch (e) {
-      alvo.innerHTML = aviso("erro", esc(traduzirErro(e).message));
-    }
   }
   const ORDEM_TIPO = { regular: 0, segunda_chamada: 1, recuperacao: 2, especial: 3 };
   function textoNota(n) {
@@ -817,10 +970,7 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     if (n.situacao === "dispensado") return "D";
     return fmtNota(n.valor);
   }
-  async function telaNotas(td, rq) {
-    const b = await base();
-    const p = porId(b.periodos, rq.get("periodo")) || periodoAtual(b);
-    if (!p) return shell(`${cabecalhoTd(td, "Notas", "notas")}${aviso("alerta", "Nenhum período letivo cadastrado.")}`);
+  async function dadosNotas(td, p) {
     const [avals, mats, regras, medias] = await Promise.all([
       q(sb.from("avaliacoes").select("*").eq("td_id", td.id).eq("periodo_id", p.id).neq("status", "rascunho")),
       matriculasDaTurma(td.turma_id),
@@ -836,21 +986,188 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     const mapaMed = new Map(medias.map((m) => [m.matricula_id, m]));
     const ref = hoje();
     const casas = regra?.definicao?.casas_decimais_lancamento ?? 2;
-    const editavel = (a, m) => {
-      if (!leciona(td) || p.status !== "aberto" || a.status !== "liberada" || a.prazo && ref > a.prazo) return false;
+    const lancamentoAberto = (a) => leciona(td) && p.status === "aberto" && a.status === "liberada" && !(a.prazo && ref > a.prazo);
+    const participa = (a, m) => {
       if (a.data && (a.data < m.inicio || m.fim && a.data > m.fim)) return false;
-      const n = mapa.get(`${a.id}|${m.id}`);
-      if (n?.situacao === "dispensado") return false;
+      if (mapa.get(`${a.id}|${m.id}`)?.situacao === "dispensado") return false;
       if (a.tipo === "segunda_chamada") return mapa.get(`${a.substitui_id}|${m.id}`)?.situacao === "falta";
       return true;
     };
+    const editavel = (a, m) => lancamentoAberto(a) && participa(a, m);
+    return { cols, alunos, mapa, mapaMed, regra, casas, ref, editavel, participa, lancamentoAberto, refMedia: Number(regra?.definicao?.media_referencia ?? 6) };
+  }
+  async function telaNotas(td, rq) {
+    const b = await base();
+    const p = porId(b.periodos, rq.get("periodo")) || periodoAtual(b);
+    if (!p) return shell(`${cabecalhoTd(td, "Notas", "notas")}${aviso("alerta", "Nenhum período letivo cadastrado.")}`);
+    const d = await dadosNotas(td, p);
+    if (rq.get("av")) return telaLancarAvaliacao(td, p, d, rq.get("av"));
+    if (rq.get("ver") === "tabela") return telaNotasTabela(td, b, p, d);
+    return telaEscolherAvaliacao(td, b, p, d);
+  }
+  function telaEscolherAvaliacao(td, b, p, d) {
+    const { cols, alunos, mapa, mapaMed, regra, ref } = d;
+    const avisos = [];
+    if (!regra) avisos.push(aviso("erro", "Ainda não há regra de avaliação aprovada para esta turma. A direção precisa aprovar uma regra em “Regras de avaliação”."));
+    if (p.status !== "aberto") avisos.push(aviso("info", `O ${esc(p.nome)} está ${esc(p.status)}: as notas só podem ser consultadas. Correções por pedido de correção.`));
+    const cartao = (a) => {
+      const quem = alunos.filter((m) => d.participa(a, m));
+      const feitos = quem.filter((m) => ["lancada", "falta"].includes(mapa.get(`${a.id}|${m.id}`)?.situacao)).length;
+      const completa = quem.length > 0 && feitos === quem.length;
+      const aberta = d.lancamentoAberto(a);
+      const situacao = a.status !== "liberada" ? etq("cinza", "bloqueada pela coordenação") : a.prazo && ref > a.prazo ? etq("vermelha", "prazo encerrado") : completa ? etq("verde", "completa") : feitos ? etq("amarela", "em andamento") : etq("cinza", "a lançar");
+      return `<a class="cartao-aval ${completa ? "completa" : ""}" href="#/td/${td.id}/notas?periodo=${p.id}&av=${a.id}">
+      <span class="nome-aval">${esc(a.nome)}</span>
+      <span class="info-aval">vale ${fmtNota(a.nota_maxima)}${a.data ? ` · aplicada em ${fmtData(a.data)}` : ""}${a.prazo ? ` · lançar até ${fmtData(a.prazo)}` : ""}</span>
+      <progress max="${Math.max(1, quem.length)}" value="${feitos}">${feitos} de ${quem.length}</progress>
+      <span class="progresso-texto">${feitos} de ${quem.length} lançadas${a.tipo === "segunda_chamada" ? " (só quem faltou)" : ""} ${situacao}</span>
+      <span class="botao-aval">${aberta ? completa ? "Revisar notas" : feitos ? "Continuar lançando" : "Lançar notas" : "Ver notas"} ›</span></a>`;
+    };
+    const meds = alunos.map((m) => mapaMed.get(m.id)).filter(Boolean);
+    const completas = meds.filter((x) => x.completa);
+    const abaixo = completas.filter((x) => Number(x.media) < d.refMedia).length;
+    return shell(
+      `${cabecalhoTd(td, "Notas", "notas")}<div class="linha mb-2">${seletorPeriodo(b, p, `#/td/${td.id}/notas`)}</div>
+    ${avisos.join("")}
+    <section class="pilha"><h2>Qual avaliação você quer lançar?</h2>
+      ${cols.length ? `<div class="grade grade-3">${cols.map(cartao).join("")}</div>` : aviso("info", "A coordenação ainda não criou as avaliações deste período (Teste 1, Avaliação…). Quando criar, elas aparecem aqui.")}</section>
+    ${cols.length && alunos.length ? `<section class="cartao mt-2"><h2>Médias do período</h2>
+      <div class="grade grade-3">${indicador("Médias completas", `${completas.length} de ${alunos.length}`, "com todas as notas lançadas", completas.length === alunos.length ? "ok" : "atencao")}
+      ${indicador("Abaixo da média", abaixo, `média de referência ${fmtNota(d.refMedia)} (alerta pedagógico)`, abaixo ? "critico" : "ok")}</div>
+      <div class="linha mt-1"><a class="btn secundario" href="#/td/${td.id}/notas?periodo=${p.id}&ver=tabela">Ver tabela com todas as notas e médias</a>
+      <a class="btn fantasma" href="#/relatorio/notas/${td.id}?periodo=${p.id}">Imprimir pauta</a></div></section>` : ""}`,
+      leciona(td) ? "professor" : "turmas"
+    );
+  }
+  function telaLancarAvaliacao(td, p, d, avId) {
+    const a = d.cols.find((x) => x.id === avId);
+    if (!a) return shell(`${cabecalhoTd(td, "Notas", "notas")}${aviso("alerta", "Avaliação não encontrada.")}<a class="btn" href="#/td/${td.id}/notas?periodo=${p.id}">Ver as avaliações</a>`);
+    const lista = a.tipo === "segunda_chamada" ? d.alunos.filter((m) => d.participa(a, m)) : d.alunos;
+    const aberta = d.lancamentoAberto(a);
+    const orig = /* @__PURE__ */ new Map();
+    const linhas = lista.map((m) => {
+      const n = d.mapa.get(`${a.id}|${m.id}`);
+      const txt = textoNota(n);
+      const ed = d.editavel(a, m);
+      if (ed) orig.set(m.id, txt);
+      const motivo = n?.situacao === "dispensado" ? "dispensado(a)" : !d.participa(a, m) ? "fora do período da matrícula" : "";
+      return `<li class="linha-nota ${txt === "F" ? "faltou" : ""}" data-mat="${m.id}"><span class="numero">${m.numero ?? ""}</span>
+      <label class="aluno-nome" for="nota-${m.id}">${esc(nomeAluno(m))}</label>
+      <span class="entrada-nota"><input id="nota-${m.id}" type="text" inputmode="decimal" autocomplete="off" class="campo-nota" data-lanc="${m.id}" value="${esc(txt === "D" ? "" : txt)}"
+        placeholder="${ed ? "—" : ""}" maxlength="6" ${ed ? "" : "disabled"}>
+      ${ed ? `<button type="button" class="btn-faltou" data-acao="nota-faltou" data-mat="${m.id}" aria-pressed="${txt === "F"}">Faltou</button>` : `<span class="muted pequeno">${esc(motivo)}</span>`}</span>
+      <span class="msg-nota" aria-live="polite"></span></li>`;
+    });
+    E.lanc = { td: td.id, periodo: p.id, av: a, casas: d.casas, orig, alt: /* @__PURE__ */ new Map() };
+    S.apos = atualizarResumoLanc;
+    const original = a.substitui_id ? d.cols.find((x) => x.id === a.substitui_id) : null;
+    const avisos = [];
+    if (p.status !== "aberto") avisos.push(aviso("info", `O ${esc(p.nome)} está ${esc(p.status)}: notas só para consulta. Correções por pedido de correção (abaixo).`));
+    else if (a.status !== "liberada") avisos.push(aviso("info", "Esta avaliação está bloqueada pela coordenação."));
+    else if (a.prazo && d.ref > a.prazo) avisos.push(aviso("alerta", `O prazo para lançar terminou em ${fmtData(a.prazo)}. Fale com a coordenação.`));
+    return shell(
+      `${cabecalhoTd(td, "Notas", "notas")}<div class="trilha"><a href="#/td/${td.id}/notas?periodo=${p.id}">← Todas as avaliações</a></div>
+    <section class="cartao cabecalho-aval"><h2>${esc(a.nome)} <span class="vale">vale ${fmtNota(a.nota_maxima)} ponto(s)</span></h2>
+      ${aberta ? `<ul class="instrucoes-nota pequeno"><li>Digite a nota de cada estudante. Use vírgula: <strong>7,5</strong>.</li>
+        <li>Quem não fez: toque em <strong>Faltou</strong>.</li><li>Em branco = ainda sem nota (não vira zero).</li><li>Tecla <strong>Enter</strong> passa para o próximo.</li></ul>` : ""}
+      ${original ? `<p class="pequeno muted">2ª chamada de <strong>${esc(original.nome)}</strong>: aparecem só os estudantes que faltaram nela.</p>` : ""}</section>
+    ${avisos.join("")}
+    ${lista.length ? `<ul class="lista-notas cartao">${linhas.join("")}</ul>` : aviso("info", a.tipo === "segunda_chamada" ? "Ninguém faltou na avaliação original: não há 2ª chamada a lançar." : "Nenhum estudante nesta turma no período.")}
+    ${aberta && orig.size ? `<div class="barra-fixa"><span id="resumo-lanc" class="resumo-aula"></span><span class="espaco"></span><span id="status-lanc" class="status-salvamento" role="status"></span>
+      <button type="button" class="btn grande" data-acao="salvar-lanc" disabled>Salvar notas</button></div>` : ""}
+    ${leciona(td) && p.status !== "aberto" ? formRetificacaoNota(d.cols, d.alunos) : ""}`,
+      leciona(td) ? "professor" : "turmas"
+    );
+  }
+  function editarLanc(inp) {
+    const st = E.lanc;
+    if (!st) return;
+    const id = inp.dataset.lanc;
+    let v = inp.value.trim();
+    if (/^f(altou)?$/i.test(v)) v = "F";
+    if (inp.value !== v && v === "F") inp.value = "F";
+    const orig = st.orig.get(id) ?? "";
+    if (v === orig) st.alt.delete(id);
+    else st.alt.set(id, v);
+    const li = inp.closest("li");
+    const msg = li.querySelector(".msg-nota");
+    inp.classList.remove("invalido");
+    msg.textContent = "";
+    li.classList.toggle("faltou", v === "F");
+    li.querySelector(".btn-faltou")?.setAttribute("aria-pressed", String(v === "F"));
+    inp.classList.toggle("alterado", st.alt.has(id));
+    if (v && v !== "F") {
+      const r = Motor.validarNota(v, Number(st.av.nota_maxima), st.casas);
+      if (!r.ok) {
+        inp.classList.add("invalido");
+        msg.textContent = r.erro;
+      }
+    }
+    atualizarResumoLanc();
+  }
+  function atualizarResumoLanc() {
+    const st = E.lanc;
+    const el = document.getElementById("resumo-lanc");
+    if (!st || !el) return;
+    const campos = [...document.querySelectorAll("input[data-lanc]:not([disabled])")];
+    const comNota = campos.filter((i) => i.value.trim()).length;
+    const n = st.alt.size;
+    el.innerHTML = `<strong>${comNota}</strong> de ${campos.length} com nota`;
+    const invalida = !!document.querySelector("input[data-lanc].invalido");
+    const bt = document.querySelector('[data-acao="salvar-lanc"]');
+    if (bt) bt.disabled = n === 0 || invalida;
+    const status = document.getElementById("status-lanc");
+    if (status) {
+      status.className = `status-salvamento ${invalida ? "erro" : n ? "pendente" : ""}`;
+      status.textContent = invalida ? "Corrija as notas em vermelho" : n ? `${n} alteração(ões) não salva(s)` : "";
+    }
+  }
+  function alternarFaltouNota(matId) {
+    const inp = document.querySelector(`input[data-lanc="${matId}"]`);
+    if (!inp || inp.disabled) return;
+    inp.value = inp.value.trim().toUpperCase() === "F" ? "" : "F";
+    editarLanc(inp);
+    const todos = [...document.querySelectorAll("input[data-lanc]:not([disabled])")];
+    (todos[todos.indexOf(inp) + 1] || inp).focus();
+  }
+  async function salvarLanc(bt) {
+    const st = E.lanc;
+    const status = document.getElementById("status-lanc");
+    if (!st || !st.alt.size) return;
+    status.className = "status-salvamento pendente";
+    status.textContent = "Salvando…";
+    if (bt) bt.disabled = true;
+    try {
+      const r = await rpc("lancar_notas", { p_td: st.td, p_periodo: st.periodo, p_alteracoes: [...st.alt.entries()].map(([matricula_id, valor]) => ({ avaliacao_id: st.av.id, matricula_id, valor })) });
+      S.aviso = { tipo: "sucesso", texto: `Notas salvas (${r.salvas}). As médias foram recalculadas.` };
+      E.lanc = null;
+      await render();
+      window.scrollTo(0, 0);
+    } catch (e) {
+      const err = traduzirErro(e);
+      status.className = "status-salvamento erro";
+      status.textContent = err.message;
+      if (bt && document.body.contains(bt)) bt.disabled = false;
+      try {
+        for (const x of JSON.parse(err.detalhe || "[]")) {
+          const inp = document.querySelector(`input[data-lanc="${x.matricula_id}"]`);
+          if (inp) {
+            inp.classList.add("invalido");
+            inp.closest("li").querySelector(".msg-nota").textContent = x.erro;
+          }
+        }
+      } catch {
+      }
+    }
+  }
+  function telaNotasTabela(td, b, p, d) {
+    const { cols, alunos, mapa, mapaMed, regra, casas, ref, editavel } = d;
     E.notas = { td: td.id, periodo: p.id, regra, casas, avals: cols, alunos: alunos.map((m) => m.id), mapa, alterados: /* @__PURE__ */ new Map() };
-    const refMedia = Number(regra?.definicao?.media_referencia ?? 6);
     const celMedia = (m) => {
       const md = mapaMed.get(m.id);
       if (!md) return '<td class="media incompleta centro">—</td>';
       if (!md.completa) return `<td class="media incompleta centro" title="${esc((md.resultado?.pendencias || []).join("; "))}">incompleta</td>`;
-      return `<td class="media centro ${Number(md.media) < refMedia ? "abaixo" : ""}"><strong>${fmtNota(md.media)}</strong></td>`;
+      return `<td class="media centro ${Number(md.media) < d.refMedia ? "abaixo" : ""}"><strong>${fmtNota(md.media)}</strong></td>`;
     };
     const avisos = [];
     if (!regra) avisos.push(aviso("erro", "Não há regra de avaliação aprovada para este segmento e período. A direção precisa aprovar uma regra."));
@@ -859,7 +1176,8 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     const prazos = cols.filter((a) => a.prazo && ref > a.prazo && a.status === "liberada");
     if (prazos.length && p.status === "aberto") avisos.push(aviso("alerta", `Prazo encerrado para: ${esc(prazos.map((a) => a.nome).join(", "))}.`));
     return shell(
-      `${cabecalhoTd(td, "Notas", "notas")}<div class="linha mb-2">${seletorPeriodo(b, p, `#/td/${td.id}/notas`)}
+      `${cabecalhoTd(td, "Notas", "notas")}<div class="trilha"><a href="#/td/${td.id}/notas?periodo=${p.id}">← Escolher uma avaliação</a></div>
+    <div class="linha mb-2">${seletorPeriodo(b, p, `#/td/${td.id}/notas`)}
      <span class="espaco"></span><a class="btn pequeno fantasma" href="#/relatorio/notas/${td.id}?periodo=${p.id}">Imprimir pauta</a></div>
     ${avisos.join("")}
     ${regra ? `<p class="pequeno muted">Regra: <strong>${esc(regra.nome)}</strong> (versão ${regra.versao}) — ${esc(descreverRegra(regra.definicao))}. Digite a nota (ex.: 7,5) ou <strong>F</strong> para falta. Nota em branco não é zero: a média fica incompleta.</p>` : ""}
@@ -965,7 +1283,7 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     }
   }
   function formRetificacaoNota(cols, alunos) {
-    return `<details class="cartao mt-2"><summary><strong>Solicitar correção de nota (retificação)</strong></summary>
+    return `<details class="cartao mt-2"><summary><strong>Pedir correção de nota</strong> <span class="muted pequeno">(a coordenação aprova)</span></summary>
   <form data-form="retificar-nota"><div id="msg-retif"></div><div class="form-linha">
     <div class="campo"><label for="rn-aluno">Estudante</label><select id="rn-aluno" name="matricula_id" required>${opcoes(alunos.map((m) => [m.id, `${m.numero ?? ""} ${nomeAluno(m)}`]))}</select></div>
     <div class="campo"><label for="rn-av">Avaliação</label><select id="rn-av" name="avaliacao_id" required>${opcoes(cols.map((a) => [a.id, a.nome]))}</select></div>
@@ -1042,6 +1360,33 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
   }
   const nivel = (n, crit = 10) => n === 0 ? "ok" : n >= crit ? "critico" : "atencao";
   const segmentosDoEscopo = (b) => b.segmentos.filter((s) => s.habilitado && (tem("diretor") || (S.ctx.escopos || []).includes(s.codigo)));
+  async function cartaoHojeNaEscola(b) {
+    const ref = hoje();
+    if (b.semAula.has(ref)) return `<section class="cartao hoje-escola"><h2>Hoje na escola</h2><p class="muted">Hoje é dia sem aula no calendário escolar.</p></section>`;
+    const lista = (await tds()).filter((t) => t.ativo);
+    if (!lista.length) return "";
+    const [hor, aulas] = await Promise.all([
+      todas(() => sb.from("horarios").select("td_id, dia, inicio, fim, tempos").eq("dia", diaSemana(ref))),
+      todas(() => sb.from("aulas").select("td_id, data, hora, chamada_em, registrada_em").eq("data", ref))
+    ]);
+    const itens = agendaDoDia(lista, hor, aulas, ref, b.semAula);
+    if (!itens.length) return `<section class="cartao hoje-escola"><h2>Hoje na escola</h2><p class="muted">Nenhuma aula na grade horária de hoje.</p></section>`;
+    const agora = horaAgora();
+    const sit = (x) => x.chamada ? "feita" : agora >= x.fim ? "atrasada" : agora >= x.hora ? "agora" : "depois";
+    const conta = (k) => itens.filter((x) => sit(x) === k).length;
+    const atrasadas = itens.filter((x) => sit(x) === "atrasada");
+    const ROT = { feita: ["verde", "feita"], atrasada: ["vermelha", "atrasada"], agora: ["amarela", "em andamento"], depois: ["cinza", "ainda não começou"] };
+    const linha = (x) => `<tr><td>${esc(x.hora)}–${esc(x.fim)}</td><td><strong>${esc(x.td.turmas.codigo)}</strong></td><td>${esc(x.td.disciplinas.nome)}</td><td>${esc(x.td.perfis?.nome || "—")}</td>
+    <td>${etq(...ROT[sit(x)])}${x.chamada && x.aula?.chamada_em ? ` <span class="muted pequeno">${esc(fmtDataHora(x.aula.chamada_em).slice(-5))}</span>` : ""}</td>
+    <td>${x.conteudo ? etq("verde", "registrado") : x.chamada ? etq("amarela", "falta") : "—"}</td>
+    <td><a class="btn pequeno fantasma" href="${linkAula(x.td.id, ref, x.hora)}">Ver</a></td></tr>`;
+    return `<section class="cartao hoje-escola"><h2 class="titulo-contador">Hoje na escola — chamadas <span class="contador">${conta("feita")} de ${itens.length} feitas</span></h2>
+    <div class="resumo-hoje">${etq("verde", `${conta("feita")} feitas`)} ${atrasadas.length ? etq("vermelha", `${atrasadas.length} atrasadas`) : ""} ${conta("agora") ? etq("amarela", `${conta("agora")} em andamento`) : ""} ${conta("depois") ? etq("cinza", `${conta("depois")} ainda vão começar`) : ""}</div>
+    ${atrasadas.length ? `<p class="mt-1"><strong>Aula já terminou e a chamada não foi feita:</strong></p><ul class="lista-atrasadas">${atrasadas.map((x) => `<li><strong>${esc(x.td.turmas.codigo)}</strong> ${esc(x.td.disciplinas.nome)} · ${esc(x.hora)} · ${esc(x.td.perfis?.nome || "sem professor")}</li>`).join("")}</ul>` : ""}
+    <details class="mt-1"><summary>Ver aula por aula (${itens.length})</summary><div class="tabela-rolagem"><table class="tabela"><thead><tr><th>Horário</th><th>Turma</th><th>Disciplina</th><th>Professor(a)</th><th>Chamada</th><th>Conteúdo</th><th></th></tr></thead>
+    <tbody>${itens.map(linha).join("")}</tbody></table></div></details>
+    <p class="pequeno muted mt-1">Atualizado às ${esc(agora)}. Atualize a página para ver novas chamadas.</p></section>`;
+  }
   async function telaPainel(rq) {
     const b = await base();
     const p = porId(b.periodos, rq.get("periodo")) || periodoAtual(b);
@@ -1059,6 +1404,7 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     return shell(
       `${cabecalho(tem("diretor") ? "Painel da direção" : "Painel da coordenação", `${esc(p.nome)} ${p.ano} · ${esc(p.status)} · situação até ${fmtData(r.limite)}${!tem("diretor") ? ` · ${esc((S.ctx.escopos || []).map((s) => SEGMENTOS[s] || s).join(", "))}` : ""}`, seletorPeriodo(b, p, "#/painel"))}
     ${(r.periodos_proximos || []).map((x) => aviso("alerta", `<strong>${esc(x.nome)}</strong>: termina em ${fmtData(x.fim)}${x.prazo ? `; prazo de lançamento ${fmtData(x.prazo)}` : ""}.`)).join("")}
+    ${p.id === periodoAtual(b)?.id ? await cartaoHojeNaEscola(b).catch(() => "") : ""}
     <div class="grade grade-4">
       ${indicador("Professores", t.professores, `${t.turmas} turmas · ${t.vinculos} vínculos`, "ok")}
       ${indicador("Chamadas pendentes", t.frequencias_pendentes, "aulas da grade sem chamada até ontem", nivel(t.frequencias_pendentes, 20))}
@@ -1926,7 +2272,7 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
         return exige(tem("professor"), telaProfessor);
       case "td": {
         const td = await carregarTd(r1);
-        const telas = { chamada: telaChamada, aula: telaAula, notas: telaNotas, diario: telaDiario };
+        const telas = { chamada: telaRegistro, aula: telaRegistro, notas: telaNotas, diario: telaDiario };
         return telas[r2] ? telas[r2](td, rq) : naoEncontrado();
       }
       case "painel":
@@ -2051,11 +2397,20 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
         el.textContent = "Não foi possível copiar";
       }
     },
-    marcar: (el) => marcarFrequencia(el.dataset.mat, el.dataset.s),
-    "todos-presentes": () => {
-      for (const id of Object.keys(E.chamada.marcas)) marcarFrequencia(id, "P");
+    marcar: (el) => {
+      marcarPresenca(el.dataset.mat, el.dataset.s);
+      abrirOpcoesPresenca(el.dataset.mat, false);
+      if (el.dataset.s !== "J") document.querySelector(`li.aluno-presenca[data-mat="${el.dataset.mat}"] .toque`)?.focus();
     },
-    "salvar-chamada": () => salvarChamada(),
+    "alternar-presenca": (el) => alternarPresenca(el.dataset.mat),
+    "mais-presenca": (el) => abrirOpcoesPresenca(el.dataset.mat),
+    "todos-presentes": () => {
+      for (const id of Object.keys(E.reg?.marcas || {})) marcarPresenca(id, "P");
+    },
+    "usar-conteudo": (el) => usarConteudoAnterior(el.dataset.i),
+    "salvar-registro": (el) => salvarRegistro(el),
+    "nota-faltou": (el) => alternarFaltouNota(el.dataset.mat),
+    "salvar-lanc": (el) => salvarLanc(el),
     "salvar-notas": () => salvarNotas(),
     "configurar-mfa": async () => {
       app.innerHTML = await telaMfa();
@@ -2183,7 +2538,10 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
       return ir(`${base2}?${el.dataset.param}=${encodeURIComponent(el.value)}`);
     }
     if (el.matches("input[data-ir-data]") && ehData(el.value)) return ir(`${el.dataset.irData}?data=${el.value}`);
-    if (el.matches('select[data-campo-chamada="tempos"]') && E.chamada) E.chamada.tempos = Number(el.value);
+    if (el.matches('select[data-campo-reg="tempos"]') && E.reg) {
+      E.reg.tempos = Number(el.value);
+      alterouAula();
+    }
     if (el.matches('select[data-campo-aval="categoria"]')) aplicarCategoriaAval(el.value);
     if (el.matches("input[data-sugerir-usuario]")) {
       const u = document.getElementById("mb-usuario");
@@ -2197,11 +2555,27 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
   });
   document.addEventListener("input", (ev) => {
     const el = ev.target;
-    if (el.matches("input[data-just]") && E.chamada?.marcas[el.dataset.just]) E.chamada.marcas[el.dataset.just].j = el.value;
+    if (el.matches("input[data-just]") && E.reg?.marcas[el.dataset.just]) {
+      E.reg.marcas[el.dataset.just].j = el.value;
+      alterouAula();
+    }
+    if (el.matches('textarea[data-campo-reg="conteudo"]') && E.reg) {
+      E.reg.conteudo = el.value;
+      alterouAula();
+    }
+    if (el.matches("input[data-lanc]") && E.lanc) editarLanc(el);
     if (el.matches("input[data-nota]") && E.notas) editarNota(el);
   });
   document.addEventListener("keydown", (ev) => {
     const el = ev.target;
+    if (el.matches?.("input[data-lanc]") && ev.key === "Enter") {
+      ev.preventDefault();
+      const todos = [...document.querySelectorAll("input[data-lanc]:not([disabled])")];
+      const prox = todos[todos.indexOf(el) + 1];
+      if (prox) prox.focus();
+      else document.querySelector('[data-acao="salvar-lanc"]')?.focus();
+      return;
+    }
     if (el.matches?.("input[data-nota]") && ev.key === "Enter") {
       ev.preventDefault();
       const [av] = el.dataset.nota.split("|");
@@ -2213,9 +2587,9 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT") return;
     const li = el.closest?.("li[data-mat]");
     const k = ev.key.toUpperCase();
-    if (li && E.chamada && ["P", "F", "A", "J"].includes(k) && !li.querySelector("button[disabled]")) {
+    if (li && E.reg?.podeChamada && ["P", "F", "A", "J"].includes(k) && !li.querySelector(".toque[disabled]")) {
       ev.preventDefault();
-      marcarFrequencia(li.dataset.mat, k);
+      marcarPresenca(li.dataset.mat, k);
       if (k !== "J") {
         const prox = li.nextElementSibling;
         (prox?.querySelector("button") || prox)?.focus();
@@ -2229,7 +2603,6 @@ Senha provisória: ${c.senha_provisoria}`)}">Copiar</button></div>
     "mfa-verificar": (f) => verificarMfa(f.dataset.fator, dados(f).codigo, document.getElementById("msg-mfa")),
     "mfa-ativar": (f) => verificarMfa(mfaPendente.factorId, dados(f).codigo, document.getElementById("msg-mfa")),
     recuperar: (f, ev) => enviarRecuperar(f, ev),
-    aula: (f) => salvarAula(f),
     "retificar-freq": (f) => executar("msg-retif", async () => {
       const d = dados(f);
       await rpc("retificacao_solicitar", { p: { tipo: "frequencia", aula_id: f.dataset.aula, matricula_id: d.matricula_id, status: d.status, justificativa_falta: d.justificativa_falta, justificativa: d.justificativa } });
