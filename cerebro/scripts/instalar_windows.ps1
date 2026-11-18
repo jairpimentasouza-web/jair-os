@@ -13,6 +13,8 @@ param(
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
+$env:PYTHONIOENCODING = "utf-8"
+$env:PIP_DISABLE_PIP_VERSION_CHECK = "1"
 
 $Casa   = Join-Path $env:USERPROFILE ".jos-cerebro"
 $Codigo = Join-Path $env:USERPROFILE "JarvisJOS"
@@ -20,11 +22,18 @@ $Venv   = Join-Path $Casa "venv"
 $VPy    = Join-Path $Venv "Scripts\python.exe"
 $VPyW   = Join-Path $Venv "Scripts\pythonw.exe"
 function Passo([string]$t) { Write-Host "-> $t" }
+function Rodar([string]$exe, [string[]]$argumentos, [string]$erro) {
+    # Programas externos (pip, python) escrevem avisos no stderr; só o código de saída decide.
+    $antes = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    & $exe @argumentos
+    $codigo = $LASTEXITCODE; $ErrorActionPreference = $antes
+    if ($codigo -ne 0) { throw "$erro (código $codigo)" }
+}
 New-Item -ItemType Directory -Force -Path $Casa, (Join-Path $Casa "logs") | Out-Null
 
 # 1. Código ---------------------------------------------------------------
-$Local = Split-Path -Parent $PSScriptRoot
-if ($PSScriptRoot -and (Test-Path (Join-Path $Local "pyproject.toml")) -and ($Local -ne $Codigo)) {
+$Local = if ($PSScriptRoot) { Split-Path -Parent $PSScriptRoot } else { "" }
+if ($Local -and (Test-Path (Join-Path $Local "pyproject.toml")) -and ($Local -ne $Codigo)) {
     $Fonte = $Local
     Passo "Usando o código de $Fonte"
 } elseif ((Test-Path (Join-Path $Codigo "pyproject.toml")) -and $env:JARVIS_SEM_DOWNLOAD) {
@@ -59,11 +68,10 @@ if (-not $Py) {
 }
 if (-not $Py) { throw "Python 3.10+ não encontrado. Instale em https://www.python.org/downloads/ e rode de novo." }
 Passo "Python: $Py"
-if (-not (Test-Path $VPy)) { & $Py -m venv $Venv }
-& $VPy -m pip install -q --disable-pip-version-check --upgrade pip
+if (-not (Test-Path $VPy)) { Rodar $Py @("-m", "venv", $Venv) "não consegui criar o ambiente virtual" }
+Rodar $VPy @("-m", "pip", "install", "-q", "--upgrade", "pip") "falha ao atualizar o pip"
 Passo "Instalando dependências (pode levar alguns minutos)..."
-& $VPy -m pip install -q --disable-pip-version-check -e "$Codigo[voz,api,windows]"
-if ($LASTEXITCODE -ne 0) { throw "falha no pip install" }
+Rodar $VPy @("-m", "pip", "install", "-q", "-e", ($Codigo + "[voz,api,windows]")) "falha no pip install"
 
 # 3. Configuração -------------------------------------------------------------
 $Cfg = Join-Path $Casa "config.yaml"
@@ -87,11 +95,11 @@ porta: 8767
 
 # 4. Modelos de voz -----------------------------------------------------------
 Passo "Baixando os modelos de reconhecimento de voz (uma vez só)..."
-& $VPy -c "from faster_whisper import WhisperModel; [WhisperModel(m, device='cpu', compute_type='int8') for m in ('base','small')]; print('   modelos ok')"
+Rodar $VPy @("-c", "from faster_whisper import WhisperModel; [WhisperModel(m, device='cpu', compute_type='int8') for m in ('base','small')]; print('   modelos ok')") "falha ao baixar os modelos de voz"
 
 # 5. Ícone e atalhos ------------------------------------------------------------
 $Ico = Join-Path $Casa "jarvis.ico"
-& $VPy (Join-Path $Codigo "scripts\criar_icone.py") $Ico
+Rodar $VPy @((Join-Path $Codigo "scripts\criar_icone.py"), $Ico) "falha ao criar o ícone"
 $ws = New-Object -ComObject WScript.Shell
 function Atalho([string]$caminho) {
     $l = $ws.CreateShortcut($caminho)
@@ -122,7 +130,8 @@ if ($geral -eq "Deny" -or $desk -eq "Deny") {
 
 # 7. Autoteste ---------------------------------------------------------------
 Passo "Autoteste:"
+$ErrorActionPreference = "Continue"
 & $VPy -m cerebro --sem-llm entender "jarvis abre o google chrome" | Select-String '"intencao"' | Select-Object -First 1
-& $VPy -m cerebro avaliar | Select-String "===|Acurácia de intenção"
+& $VPy -m cerebro avaliar | Select-String "===|Acur"
 Write-Host ""
 Write-Host "Pronto! Dê dois cliques em 'Jarvis' na área de trabalho e diga: Jarvis, abre o Chrome."

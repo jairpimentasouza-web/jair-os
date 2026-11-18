@@ -76,7 +76,7 @@ class Config:
         caminho = Path(arquivo).expanduser() if arquivo else (PASTA / "config.yaml")
         dados: Dict[str, Any] = {}
         if caminho.exists():
-            with caminho.open(encoding="utf-8") as f:
+            with caminho.open(encoding="utf-8-sig") as f:
                 dados = yaml.safe_load(f) or {}
         nomes = {f.name: f for f in fields(cls)}
         for k, v in dados.items():
