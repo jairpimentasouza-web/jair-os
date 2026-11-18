@@ -235,6 +235,7 @@
     else if (tem("coordenador")) add("painel", "Painel da coordenação");
     if (tem("professor")) add("professor", gestor() ? "Minhas aulas" : "Início");
     if (gestor()) {
+      add("implantacao", "Implantação");
       add("turmas", "Turmas e diários");
       add("avaliacoes", "Avaliações");
       add("estudantes", "Estudantes");
@@ -1340,8 +1341,8 @@ ${t}` : t;
         dias.set(a.data, d);
       }
       const tDias = dias.size, fDias = [...dias.values()].filter((d) => d.falta).length;
-      const pct = seg.contagem === "dia" ? tDias ? 100 * (tDias - fDias) / tDias : null : total ? 100 * (total - faltas) / total : null;
-      return { m, total, faltas, pct, abaixo: pct !== null && pct < Number(seg.minimo) };
+      const pct2 = seg.contagem === "dia" ? tDias ? 100 * (tDias - fDias) / tDias : null : total ? 100 * (total - faltas) / total : null;
+      return { m, total, faltas, pct: pct2, abaixo: pct2 !== null && pct2 < Number(seg.minimo) };
     });
     const ref = hoje();
     const lim = ref < p.fim ? ref : p.fim;
@@ -1436,6 +1437,7 @@ ${t}` : t;
     ${(r.periodos_proximos || []).map((x) => aviso("alerta", `<strong>${esc(x.nome)}</strong>: termina em ${fmtData(x.fim)}${x.prazo ? `; prazo de lançamento ${fmtData(x.prazo)}` : ""}.`)).join("")}
     ${p.id === periodoAtual(b)?.id ? await cartaoHojeNaEscola(b).catch(() => "") : ""}
     ${await cartaoPortalFamilias().catch(() => "")}
+    ${await cartaoImplantacao().catch(() => "")}
     <div class="grade grade-4">
       ${indicador("Professores", t.professores, `${t.turmas} turmas · ${t.vinculos} vínculos`, "ok")}
       ${indicador("Chamadas pendentes", t.frequencias_pendentes, "aulas da grade sem chamada até ontem", nivel(t.frequencias_pendentes, 20))}
@@ -1862,10 +1864,10 @@ ${t}` : t;
   const PARTE_ALERTA = 0.8;
   function barraUso(rotulo, usado, limite, detalhe) {
     const frac = limite ? usado / limite : 0;
-    const pct = Math.round(frac * 100);
+    const pct2 = Math.round(frac * 100);
     const nivel2 = frac >= PARTE_ALERTA ? "critico" : frac >= 0.6 ? "atencao" : "ok";
-    return `<div class="indicador uso-item ${nivel2}"><div class="linha-uso"><span class="rotulo">${esc(rotulo)}</span><span class="valor-uso">${pct}%</span></div>
-    <meter min="0" max="${limite}" low="${0.6 * limite}" high="${PARTE_ALERTA * limite}" optimum="0" value="${Math.min(usado, limite)}">${pct}%</meter>
+    return `<div class="indicador uso-item ${nivel2}"><div class="linha-uso"><span class="rotulo">${esc(rotulo)}</span><span class="valor-uso">${pct2}%</span></div>
+    <meter min="0" max="${limite}" low="${0.6 * limite}" high="${PARTE_ALERTA * limite}" optimum="0" value="${Math.min(usado, limite)}">${pct2}%</meter>
     <div class="detalhe">${esc(fmtBytes(usado))} de ${esc(fmtBytes(limite))}${detalhe ? ` · ${detalhe}` : ""}</div></div>`;
   }
   function cartaoUso(u) {
@@ -2280,6 +2282,425 @@ ${t}` : t;
     st.className = "status-salvamento ok";
     st.textContent = `Cópia gerada: ${Object.values(conteudo.contagens).reduce((s, n) => s + n, 0)} registros, ${fmtTamanho(blob.size)}.`;
   }
+  function anoImplantacao() {
+    const [a, m] = hoje().split("-").map(Number);
+    return m >= 10 ? a + 1 : a;
+  }
+  const pct = (a, b) => b ? Math.round(100 * a / b) : 0;
+  const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+  const IMPL_FASES = [
+    {
+      id: "preparacao",
+      titulo: "Preparação",
+      quando: "Dezembro e início de janeiro",
+      objetivo: "Deixar a escola pronta: contrato, regras, calendário e segurança.",
+      itens: [
+        {
+          id: "contrato",
+          manual: true,
+          quem: "Direção",
+          titulo: "Contrato e termo de proteção de dados assinados",
+          como: "Contrato de uso do sistema e termo de tratamento de dados (LGPD): a escola é a controladora; o CEJA OS, o operador."
+        },
+        {
+          id: "pontos_focais",
+          manual: true,
+          quem: "Direção",
+          titulo: "Pessoas de referência definidas",
+          como: "Uma pessoa da direção e uma da coordenação para tirar dúvidas da equipe e falar com o suporte."
+        },
+        {
+          id: "periodos",
+          quem: "Coordenação",
+          rota: "#/periodos",
+          titulo: "Períodos letivos cadastrados",
+          como: "Em Períodos: datas de início e fim de cada trimestre e o prazo de lançamento de notas.",
+          auto: (s) => ({ estado: s.periodos >= 2 ? "ok" : s.periodos ? "parcial" : "pendente", detalhe: plural(s.periodos, "período", "períodos") })
+        },
+        {
+          id: "calendario",
+          quem: "Coordenação",
+          rota: "#/periodos",
+          titulo: "Feriados, recessos e eventos no calendário",
+          como: "Dias sem aula no calendário não viram chamada pendente no painel.",
+          auto: (s) => ({ estado: s.calendario >= 5 ? "ok" : s.calendario ? "parcial" : "pendente", detalhe: plural(s.calendario, "data cadastrada", "datas cadastradas") })
+        },
+        {
+          id: "regra",
+          quem: "Coordenação e direção",
+          rota: "#/regras",
+          titulo: "Regra de avaliação aprovada",
+          como: "A coordenação propõe, a direção aprova, com data de vigência. A média é calculada pelo sistema, sem conta à mão.",
+          auto: (s) => ({ estado: s.regra_vigente ? "ok" : "pendente", detalhe: s.regra_vigente ? "regra vigente no ano" : "nenhuma regra aprovada para o ano" })
+        },
+        {
+          id: "mfa",
+          quem: "Direção e coordenação",
+          rota: "#/conta",
+          titulo: "Segundo fator ativo para toda a gestão",
+          como: "Cada pessoa da direção e da coordenação configura o aplicativo autenticador em Minha conta.",
+          auto: (s) => ({
+            estado: s.gestao && !s.gestao_sem_mfa ? "ok" : s.gestao > s.gestao_sem_mfa ? "parcial" : "pendente",
+            detalhe: `${s.gestao - s.gestao_sem_mfa} de ${s.gestao} com aplicativo autenticador`
+          })
+        }
+      ]
+    },
+    {
+      id: "cadastro",
+      titulo: "Cadastro",
+      quando: "Janeiro (3 a 4 semanas antes das aulas)",
+      objetivo: "Turmas, estudantes, equipe e horários no sistema.",
+      itens: [
+        {
+          id: "turmas",
+          quem: "Coordenação",
+          rota: "#/turmas",
+          titulo: "Turmas do ano criadas",
+          como: "Em Turmas e diários: código, série, segmento e turno de cada turma.",
+          auto: (s) => ({ estado: s.turmas ? "ok" : "pendente", detalhe: plural(s.turmas, "turma", "turmas") })
+        },
+        {
+          id: "estudantes",
+          quem: "Secretaria e coordenação",
+          rota: "#/estudantes",
+          titulo: "Estudantes importados e matriculados",
+          como: "Em Estudantes: importe a planilha da secretaria (nome, matrícula, data de nascimento e turma).",
+          auto: (s) => ({ estado: s.estudantes ? "ok" : "pendente", detalhe: plural(s.estudantes, "estudante matriculado", "estudantes matriculados") })
+        },
+        {
+          id: "nascimento",
+          quem: "Secretaria",
+          rota: "#/estudantes",
+          titulo: "Datas de nascimento preenchidas",
+          como: "Pela LGPD, o responsável de estudante com 18 anos ou mais só vê os dados com autorização. Sem a data, o sistema trata como maior de idade.",
+          auto: (s) => ({
+            estado: !s.estudantes ? "pendente" : !s.sem_nascimento ? "ok" : s.sem_nascimento < s.estudantes ? "parcial" : "pendente",
+            detalhe: s.estudantes ? `${s.estudantes - s.sem_nascimento} de ${s.estudantes} com data de nascimento` : "sem estudantes"
+          })
+        },
+        {
+          id: "equipe",
+          quem: "Direção",
+          rota: "#/equipe",
+          soDiretor: true,
+          titulo: "Professores e coordenação com acesso",
+          como: "Em Equipe e acessos: cada pessoa recebe usuário e senha provisória, no cartão impresso.",
+          auto: (s) => ({
+            estado: s.professores && s.coordenadores ? "ok" : s.professores || s.coordenadores ? "parcial" : "pendente",
+            detalhe: `${plural(s.professores, "professor(a)", "professores")} · ${plural(s.coordenadores, "coordenador(a)", "coordenadores")}`
+          })
+        },
+        {
+          id: "vinculos",
+          quem: "Coordenação",
+          rota: "#/turmas",
+          titulo: "Cada disciplina com o seu professor",
+          como: "Em Turmas e diários: ligue professor, turma e disciplina. É o que define quem lança o quê.",
+          auto: (s) => ({
+            estado: !s.vinculos ? "pendente" : !s.vinculos_sem_professor ? "ok" : "parcial",
+            detalhe: s.vinculos ? `${s.vinculos - s.vinculos_sem_professor} de ${s.vinculos} disciplinas com professor` : "nenhuma disciplina nas turmas"
+          })
+        },
+        {
+          id: "horarios",
+          quem: "Coordenação",
+          rota: "#/turmas",
+          titulo: "Horários das turmas",
+          como: "Com o horário, o professor vê a aula de agora e a coordenação vê as chamadas atrasadas em tempo real.",
+          auto: (s) => ({
+            estado: !s.vinculos ? "pendente" : !s.vinculos_sem_horario ? "ok" : s.vinculos_sem_horario < s.vinculos ? "parcial" : "pendente",
+            detalhe: s.vinculos ? `${s.vinculos - s.vinculos_sem_horario} de ${s.vinculos} disciplinas com horário` : "nenhuma disciplina nas turmas"
+          })
+        }
+      ]
+    },
+    {
+      id: "treinamento",
+      titulo: "Treinamento",
+      quando: "Semana de planejamento",
+      objetivo: "Todos sabendo usar antes do primeiro dia de aula.",
+      itens: [
+        {
+          id: "treino_gestao",
+          manual: true,
+          quem: "Direção e coordenação",
+          titulo: "Treinamento da direção e da coordenação (2 h)",
+          como: "Painel, avaliações, regras, provas, correções, recados, ocorrências, acessos das famílias, backup e auditoria."
+        },
+        {
+          id: "treino_prof",
+          manual: true,
+          quem: "Coordenação",
+          titulo: "Apresentação para os professores (30 min, no celular)",
+          como: "Cada professor entra, troca a senha e faz uma chamada de teste. Vale passar o vídeo de apresentação."
+        },
+        {
+          id: "senhas",
+          quem: "Toda a equipe",
+          rota: "#/equipe",
+          soDiretor: true,
+          titulo: "Ninguém mais com senha provisória",
+          como: "No primeiro acesso cada pessoa cria a sua senha. Quem esqueceu recebe uma nova da direção.",
+          auto: (s) => ({ estado: !s.senha_provisoria ? "ok" : "parcial", detalhe: s.senha_provisoria ? `${plural(s.senha_provisoria, "pessoa", "pessoas")} com senha provisória` : "todas as senhas definidas" })
+        },
+        {
+          id: "primeiro_acesso",
+          quem: "Professores",
+          rota: "#/equipe",
+          soDiretor: true,
+          titulo: "Todos os professores já entraram",
+          como: "Quem ainda não entrou precisa de ajuda antes do primeiro dia de aula.",
+          auto: (s) => ({
+            estado: !s.professores ? "pendente" : !s.professores_sem_acesso ? "ok" : s.professores_sem_acesso < s.professores ? "parcial" : "pendente",
+            detalhe: s.professores ? `${s.professores - s.professores_sem_acesso} de ${s.professores} já entraram` : "sem professores"
+          })
+        }
+      ]
+    },
+    {
+      id: "familias",
+      titulo: "Famílias",
+      quando: "1ª e 2ª semanas de aula",
+      objetivo: "Pais, responsáveis e estudantes acompanhando pelo celular.",
+      itens: [
+        {
+          id: "comunicado_familias",
+          manual: true,
+          quem: "Direção",
+          titulo: "Comunicado às famílias sobre o portal",
+          como: "Bilhete ou reunião de pais: o que a família vê, como entrar e a quem pedir ajuda."
+        },
+        {
+          id: "acessos_familias",
+          quem: "Coordenação",
+          rota: "#/familias",
+          titulo: "Acessos das famílias entregues",
+          como: "Em Acessos das famílias: por turma, um a um ou a turma inteira. Os cartões são impressos e entregues em mãos.",
+          auto: (s) => {
+            const p = pct(s.estudantes_com_familia, s.estudantes);
+            return { estado: s.estudantes && p >= 90 ? "ok" : s.estudantes_com_familia ? "parcial" : "pendente", detalhe: `${s.estudantes_com_familia} de ${s.estudantes} estudantes (${p}%)` };
+          }
+        },
+        {
+          id: "autorizacoes",
+          quem: "Coordenação",
+          rota: "#/familias",
+          titulo: "Autorizações LGPD em dia",
+          como: "Estudante com 18 anos ou mais (ou sem data de nascimento) autoriza o responsável a ver os dados. Registre e guarde o termo assinado.",
+          auto: (s) => ({
+            estado: !s.estudantes_com_familia ? "pendente" : !s.autorizacoes_pendentes ? "ok" : "parcial",
+            detalhe: s.autorizacoes_pendentes ? `${plural(s.autorizacoes_pendentes, "responsável aguardando", "responsáveis aguardando")} autorização` : s.estudantes_com_familia ? "nenhuma pendente" : "ainda sem acessos de famílias"
+          })
+        },
+        {
+          id: "primeiro_recado",
+          quem: "Direção",
+          rota: "#/recados",
+          titulo: "Primeiro recado enviado às famílias",
+          como: "Uma mensagem de boas-vindas ao portal. A escola vê quem leu.",
+          auto: (s) => ({ estado: s.recados ? "ok" : "pendente", detalhe: plural(s.recados, "recado enviado", "recados enviados") })
+        }
+      ]
+    },
+    {
+      id: "rotina",
+      titulo: "Rotina",
+      quando: "Durante todo o ano",
+      objetivo: "O sistema como parte do dia a dia, com acompanhamento.",
+      itens: [
+        {
+          id: "chamadas",
+          quem: "Professores",
+          rota: "#/painel",
+          titulo: "Chamadas feitas no sistema",
+          como: "A chamada é feita durante a aula, no celular. O painel mostra o que está atrasado.",
+          auto: (s) => ({ estado: s.chamadas ? "ok" : "pendente", detalhe: plural(s.chamadas, "chamada no ano", "chamadas no ano") })
+        },
+        {
+          id: "backup",
+          quem: "Direção",
+          rota: "#/seguranca",
+          soDiretor: true,
+          titulo: "Cópia de segurança em dia",
+          como: "Automática todos os dias. Ao fim de cada trimestre, baixe uma cópia completa e guarde em local seguro da escola.",
+          auto: (s) => {
+            const h = s.ultimo_backup ? (Date.now() - new Date(s.ultimo_backup).getTime()) / 36e5 : Infinity;
+            return { estado: h <= 48 ? "ok" : h <= 168 ? "parcial" : "pendente", detalhe: s.ultimo_backup ? `última cópia: ${fmtDataHora(s.ultimo_backup)}` : "nenhuma cópia concluída" };
+          }
+        },
+        {
+          id: "acompanhamento",
+          manual: true,
+          quem: "Coordenação e direção",
+          titulo: "Reunião quinzenal de acompanhamento",
+          como: "15 minutos com o painel aberto: chamadas atrasadas, aulas sem conteúdo, notas a lançar e frequência baixa."
+        },
+        {
+          id: "canal_suporte",
+          manual: true,
+          quem: "Direção",
+          titulo: "Canal de suporte combinado",
+          como: "Quem a equipe procura quando algo não funciona, e como o problema chega ao suporte do CEJA OS."
+        }
+      ]
+    }
+  ];
+  const IMPL_PRATICAS = [
+    { papel: "Professores", itens: [
+      "Faça a chamada durante a aula, no celular. Todos começam presentes: só toque em quem faltou.",
+      "Registre o conteúdo no mesmo dia. Poucas linhas bastam.",
+      "Lance as notas logo depois de corrigir: a média e o painel se atualizam sozinhos.",
+      "Envie as provas pelo sistema até o prazo, com a versão adaptada quando for pedida.",
+      "Ocorrências: descreva fatos, sem adjetivos nem diagnósticos. A coordenação revisa antes de chegar à família.",
+      "Errou depois do prazo? Peça a correção pelo sistema: nada é apagado, tudo fica registrado."
+    ] },
+    { papel: "Coordenação", itens: [
+      "Abra o painel toda segunda-feira: chamadas atrasadas, aulas sem conteúdo, notas a lançar.",
+      "Peça as provas com 3 semanas de antecedência e prazo claro.",
+      "Revise as ocorrências no mesmo dia e responda as famílias em até 2 dias úteis.",
+      "Decida os pedidos de correção com critério e registre o motivo.",
+      "Uma semana antes do fim do trimestre, avise os professores sobre as pendências."
+    ] },
+    { papel: "Direção", itens: [
+      "Aprove a regra de avaliação antes das aulas. Mudança no meio do ano, só com nova versão e data de vigência.",
+      "Crie e desative acessos no mesmo dia em que as pessoas entram ou saem da escola.",
+      "Uma vez por mês: confira a cópia de segurança e dê uma olhada na auditoria.",
+      "Recado para a escola inteira só quando for para todos. O que é de uma turma vai só para a turma.",
+      "Mantenha o segundo fator ativo para toda a gestão."
+    ] },
+    { papel: "Famílias", itens: [
+      "Entregue o cartão de acesso em mãos ou na reunião de pais, nunca por foto em grupo.",
+      "Explique o que o portal mostra e que “Estou ciente” avisa a escola que a família leu.",
+      "Estudante com 18 anos ou mais decide se o responsável vê os dados: registre a autorização com termo assinado.",
+      "Perdeu a senha? A coordenação gera uma nova em segundos."
+    ] },
+    { papel: "Segurança e LGPD", itens: [
+      "Dados de estudantes ficam no sistema: evite planilhas soltas e prints em grupos de WhatsApp.",
+      "Cada pessoa com o seu acesso. Senha não se empresta.",
+      "Ao fim de cada trimestre, guarde a cópia completa em local seguro da escola.",
+      "Quem sai da escola tem o acesso desativado no mesmo dia.",
+      "Pedidos de pais sobre dados pessoais são respondidos pela direção, em nome da escola."
+    ] }
+  ];
+  const IMPL_RITMO = [
+    ["Todo dia", "Professores", "Chamada e conteúdo durante a aula; notas logo depois de corrigir."],
+    ["Toda semana", "Coordenação", "Painel às segundas; ocorrências revisadas; famílias respondidas."],
+    ["A cada 15 dias", "Coordenação e direção", "Reunião de 15 minutos com o painel aberto."],
+    ["Todo mês", "Direção", "Cópia de segurança, auditoria e contas ativas da equipe."],
+    ["Fim de cada trimestre", "Toda a escola", "Notas até o prazo, pautas e diários impressos, cópia completa guardada."],
+    ["Fim do ano", "Direção e coordenação", "Fechamento, arquivo dos documentos e este roteiro de novo para o ano seguinte."]
+  ];
+  function avaliarImplantacao(s) {
+    const fases = IMPL_FASES.map((f) => {
+      const itens = f.itens.map((it) => {
+        const m = s.marcas?.[it.id];
+        const r = it.manual ? { estado: m?.feito ? "ok" : "pendente", detalhe: "" } : it.auto(s);
+        return { ...it, ...r, marca: m };
+      });
+      return { ...f, itens, ok: itens.filter((x) => x.estado === "ok").length };
+    });
+    const todos = fases.flatMap((f) => f.itens.map((it) => ({ ...it, fase: f.titulo })));
+    return { fases, todos, ok: todos.filter((x) => x.estado === "ok").length, total: todos.length };
+  }
+  const ROTULO_ESTADO = { ok: ["verde", "Concluído"], parcial: ["amarela", "Em andamento"], pendente: ["cinza", "Pendente"] };
+  const ICONE_ESTADO = { ok: "✓", parcial: "◐", pendente: "○" };
+  const rotaPermitida = (it) => it.rota && (!it.soDiretor || tem("diretor"));
+  async function telaImplantacao(rq) {
+    const ano = Number(rq.get("ano")) || anoImplantacao();
+    const s = await rpc("implantacao_status", { p_ano: ano });
+    const r = avaliarImplantacao(s);
+    const proximos = r.todos.filter((x) => x.estado !== "ok").slice(0, 4);
+    const item = (it) => `<li class="etapa-impl ${it.estado}">
+    <span class="icone-impl" aria-hidden="true">${ICONE_ESTADO[it.estado]}</span>
+    <div class="corpo-impl"><div class="linha"><strong>${esc(it.titulo)}</strong> ${etq(...ROTULO_ESTADO[it.estado])}
+      <span class="pequeno muted">${it.manual ? "marcado pela gestão" : "conferido no sistema"} · ${esc(it.quem)}</span></div>
+      ${it.detalhe ? `<div class="detalhe-impl">${esc(it.detalhe)}</div>` : ""}
+      <p class="como-impl">${esc(it.como)}</p>
+      ${it.manual && it.marca?.feito ? `<p class="pequeno marca-impl">✓ Marcado por ${esc(it.marca.por || "—")} em ${esc(fmtDataHora(it.marca.em))}${it.marca.obs ? ` — ${esc(it.marca.obs)}` : ""}</p>` : ""}
+      <div class="linha nao-imprimir">
+        ${rotaPermitida(it) ? `<a class="btn pequeno secundario" href="${it.rota}">Abrir</a>` : ""}
+        ${it.manual ? it.marca?.feito ? `<button type="button" class="btn pequeno fantasma" data-acao="impl-desmarcar" data-item="${it.id}" data-ano="${ano}">Desfazer</button>` : `<form data-form="impl-marcar" data-item="${it.id}" data-ano="${ano}" class="linha form-impl"><input name="obs" maxlength="500" aria-label="Observação (opcional)" placeholder="Observação (opcional): data, quem participou…">
+              <button class="btn pequeno" type="submit">Marcar como feito</button></form>` : ""}
+      </div></div></li>`;
+    return shell(
+      `${cabecalho(
+        `Implantação ${ano}`,
+        "Roteiro de boas práticas para começar o ano letivo com o CEJA OS — as etapas com dados são conferidas pelo próprio sistema",
+        `<a class="btn" href="#/implantacao/apresentar?ano=${ano}">Apresentar</a> <button type="button" class="btn secundario" data-acao="imprimir">Imprimir</button>`
+      )}
+    <section class="cartao resumo-impl"><div class="numero-impl"><strong>${pct(r.ok, r.total)}%</strong><span>${r.ok} de ${r.total} etapas concluídas</span></div>
+      <meter min="0" max="${r.total}" value="${r.ok}" aria-label="Etapas concluídas">${r.ok} de ${r.total}</meter>
+      <ol class="fases-impl">${r.fases.map((f, i) => `<li class="${f.ok === f.itens.length ? "completa" : ""}"><a href="#fase-${f.id}"><b>${i + 1}</b> ${esc(f.titulo)} <span>${f.ok}/${f.itens.length}</span></a></li>`).join("")}</ol>
+      ${proximos.length ? `<div class="proximos-impl"><h2>Próximos passos</h2><ul>${proximos.map((x) => `<li><strong>${esc(x.titulo)}</strong> <span class="muted pequeno">· ${esc(x.fase)} · ${esc(x.quem)}</span></li>`).join("")}</ul></div>` : aviso("sucesso", "Todas as etapas concluídas. Bom ano letivo!")}</section>
+    ${r.fases.map((f, i) => `<section class="cartao fase-impl" id="fase-${f.id}"><div class="cab-fase"><span class="num-fase">${i + 1}</span>
+      <div><h2 class="sem-margem">${esc(f.titulo)}</h2><div class="muted">${esc(f.quando)} · ${esc(f.objetivo)}</div></div><span class="espaco"></span>
+      <span class="pequeno"><strong>${f.ok}</strong> de ${f.itens.length}</span></div>
+      <ul class="lista-impl">${f.itens.map(item).join("")}</ul></section>`).join("")}
+    <section class="cartao"><h2>Boas práticas por papel</h2><div class="grade grade-3 praticas-impl">${IMPL_PRATICAS.map((p) => `<article><h3>${esc(p.papel)}</h3>
+      <ul>${p.itens.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></article>`).join("")}</div></section>
+    <section class="cartao"><h2>O ritmo da escola com o CEJA OS</h2><div class="tabela-rolagem"><table class="tabela"><thead><tr><th>Quando</th><th>Quem</th><th>O quê</th></tr></thead>
+      <tbody>${IMPL_RITMO.map(([q2, w, o]) => `<tr><td><strong>${esc(q2)}</strong></td><td>${esc(w)}</td><td>${esc(o)}</td></tr>`).join("")}</tbody></table></div></section>
+    <p class="pequeno muted">As etapas conferidas no sistema se atualizam sozinhas conforme a escola cadastra e usa. As etapas manuais ficam registradas com quem marcou e quando (e entram na auditoria).</p>`,
+      "implantacao"
+    );
+  }
+  async function cartaoImplantacao() {
+    const ano = anoImplantacao();
+    const r = avaliarImplantacao(await rpc("implantacao_status", { p_ano: ano }));
+    if (r.ok === r.total) return "";
+    return `<section class="cartao aviso-impl"><div class="linha"><div><h2 class="sem-margem">Implantação ${ano}</h2>
+    <span class="muted">${r.ok} de ${r.total} etapas concluídas</span></div><span class="espaco"></span>
+    <meter min="0" max="${r.total}" value="${r.ok}" aria-label="Etapas concluídas">${r.ok} de ${r.total}</meter>
+    <a class="btn secundario" href="#/implantacao">Ver o roteiro</a></div></section>`;
+  }
+  async function telaImplantacaoApresentar(rq) {
+    const ano = Number(rq.get("ano")) || anoImplantacao();
+    const s = await rpc("implantacao_status", { p_ano: ano });
+    const r = avaliarImplantacao(s);
+    const lista = (itens) => `<ul class="ap-itens">${itens.map((it) => `<li class="${it.estado}"><span class="ap-icone">${ICONE_ESTADO[it.estado]}</span>
+    <span><strong>${esc(it.titulo)}</strong>${it.detalhe ? `<small>${esc(it.detalhe)}</small>` : `<small>${esc(it.quem)}</small>`}</span></li>`).join("")}</ul>`;
+    const pend = r.todos.filter((x) => x.estado !== "ok");
+    const slides = [
+      `<div class="ap-capa">${marca(120)}<div class="ap-rotulo">CEJA OS · ${esc(nomeEscola())}</div><h1>Implantação ${ano}</h1>
+      <p class="ap-sub">Roteiro para começar o ano letivo com o sistema — e manter o ritmo o ano inteiro.</p>
+      <div class="ap-progresso"><strong>${pct(r.ok, r.total)}%</strong><meter min="0" max="${r.total}" value="${r.ok}">${r.ok}</meter><span>${r.ok} de ${r.total} etapas concluídas</span></div></div>`,
+      `<div class="ap-rotulo">Como vamos implantar</div><h2>Cinco fases, do contrato à rotina</h2>
+      <ol class="ap-fases">${r.fases.map((f, i) => `<li class="${f.ok === f.itens.length ? "completa" : ""}"><b>${i + 1}</b><strong>${esc(f.titulo)}</strong><span>${esc(f.quando)}</span><small>${f.ok} de ${f.itens.length}</small></li>`).join("")}</ol>`,
+      ...r.fases.map((f, i) => `<div class="ap-rotulo">Fase ${i + 1} · ${esc(f.quando)}</div><h2>${esc(f.titulo)}</h2><p class="ap-sub">${esc(f.objetivo)}</p>${lista(f.itens)}`),
+      `<div class="ap-rotulo">Rotina</div><h2>O ritmo da escola com o CEJA OS</h2>
+      <ul class="ap-ritmo">${IMPL_RITMO.map(([q2, w, o]) => `<li><strong>${esc(q2)}</strong><span>${esc(w)}</span><p>${esc(o)}</p></li>`).join("")}</ul>`,
+      ...IMPL_PRATICAS.map((p) => `<div class="ap-rotulo">Boas práticas</div><h2>${esc(p.papel)}</h2>
+      <ul class="ap-praticas">${p.itens.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`),
+      `<div class="ap-rotulo">Próximos passos</div><h2>${pend.length ? "O que falta fazer" : "Tudo pronto!"}</h2>
+      ${pend.length ? `<ul class="ap-itens">${pend.slice(0, 6).map((it) => `<li class="${it.estado}"><span class="ap-icone">${ICONE_ESTADO[it.estado]}</span>
+        <span><strong>${esc(it.titulo)}</strong><small>${esc(it.fase)} · ${esc(it.quem)}</small></span></li>`).join("")}</ul>
+        ${pend.length > 6 ? `<p class="ap-sub">e mais ${pend.length - 6} etapa(s) no roteiro completo.</p>` : ""}` : '<p class="ap-sub">Todas as etapas concluídas. Bom ano letivo!</p>'}`
+    ];
+    const inicio = Math.min(Math.max(Number(rq.get("s")) || 1, 1), slides.length) - 1;
+    S.slideAtual = inicio;
+    S.apos = () => mudarSlide(0);
+    return `<div class="apresentacao" data-ano="${ano}">
+    ${slides.map((h, i) => `<section class="ap-slide" data-slide="${i}" ${i === inicio ? "" : "hidden"} aria-roledescription="slide" aria-label="${i + 1} de ${slides.length}">${h}</section>`).join("")}
+    <nav class="ap-controles" aria-label="Controles da apresentação">
+      <a class="ap-btn" href="#/implantacao?ano=${ano}">Sair</a>
+      <button type="button" class="ap-btn" data-acao="ap-tela-cheia">Tela cheia</button>
+      <span class="espaco"></span>
+      <button type="button" class="ap-btn" data-acao="ap-anterior" aria-label="Slide anterior">←</button>
+      <span class="ap-contador" aria-live="polite">${inicio + 1} / ${slides.length}</span>
+      <button type="button" class="ap-btn" data-acao="ap-proximo" aria-label="Próximo slide">→</button>
+    </nav></div>`;
+  }
+  function mudarSlide(delta) {
+    const slides = [...document.querySelectorAll(".ap-slide")];
+    if (!slides.length) return;
+    S.slideAtual = Math.min(Math.max((S.slideAtual || 0) + delta, 0), slides.length - 1);
+    slides.forEach((el, i) => el.hidden = i !== S.slideAtual);
+    const c = document.querySelector(".ap-contador");
+    if (c) c.textContent = `${S.slideAtual + 1} / ${slides.length}`;
+    const ano = document.querySelector(".apresentacao")?.dataset.ano;
+    history.replaceState(null, "", `#/implantacao/apresentar?ano=${ano}&s=${S.slideAtual + 1}`);
+  }
   async function familiaInicio(forcar) {
     if (!S.portalInicio || forcar) S.portalInicio = await rpc("familia_inicio");
     return S.portalInicio;
@@ -2339,7 +2760,7 @@ ${t}` : t;
     const d = await rpc("familia_aluno", { p_aluno: a.id });
     const tempos = d.disciplinas.reduce((s, x) => s + Number(x.frequencia?.tempos || 0), 0);
     const faltas = d.disciplinas.reduce((s, x) => s + Number(x.frequencia?.faltas || 0), 0);
-    const pct = tempos ? 100 * (tempos - faltas) / tempos : null;
+    const pct2 = tempos ? 100 * (tempos - faltas) / tempos : null;
     const notas = d.disciplinas.flatMap((x) => x.avaliacoes.filter((v) => v.situacao).map((v) => ({ ...v, disciplina: x.disciplina }))).sort((p, q2) => String(q2.data || "").localeCompare(String(p.data || ""))).slice(0, 6);
     const abaixo = d.disciplinas.filter((x) => x.media?.completa && Number(x.media.valor) < Number(d.media_referencia));
     const semAula = d.calendario.filter((c) => c.tipo !== "evento").slice(0, 4);
@@ -2350,7 +2771,7 @@ ${t}` : t;
     <section class="cartao cartao-estudante"><strong class="nome-estudante">${esc(a.nome)}</strong>
       <div class="muted">${a.turma ? `Turma ${esc(a.turma.codigo)} · ${esc(a.turma.serie)}` : ""}${d.periodo ? ` · ${esc(d.periodo.nome)}` : ""}</div></section>
     <div class="grade indicadores-familia mb-2">
-      ${indicador("Frequência", pct === null ? "—" : fmtPct(pct), `mínimo exigido ${fmtPct(d.frequencia_minima)}`, pct !== null && pct < Number(d.frequencia_minima) ? "critico" : "ok", `#/familia/frequencia?aluno=${a.id}`)}
+      ${indicador("Frequência", pct2 === null ? "—" : fmtPct(pct2), `mínimo exigido ${fmtPct(d.frequencia_minima)}`, pct2 !== null && pct2 < Number(d.frequencia_minima) ? "critico" : "ok", `#/familia/frequencia?aluno=${a.id}`)}
       ${indicador("Recados novos", a.recados_novos, a.recados_novos ? "toque para ler" : "nenhum novo", a.recados_novos ? "atencao" : "ok", `#/familia/recados?aluno=${a.id}`)}
       ${indicador("Ocorrências novas", a.ocorrencias_novas, a.ocorrencias_novas ? "toque para ver" : "nenhuma nova", a.ocorrencias_novas ? "atencao" : "ok", `#/familia/ocorrencias?aluno=${a.id}`)}
     </div>
@@ -2686,6 +3107,8 @@ ${t}` : t;
         return exige(tem("professor") || gestor(), () => telaOcorrencias(rq));
       case "familias":
         return exige(gestor(), () => telaFamiliasAcessos(rq));
+      case "implantacao":
+        return exige(gestor(), () => r1 === "apresentar" ? telaImplantacaoApresentar(rq) : telaImplantacao(rq));
       case "seguranca":
         return exige(tem("diretor"), telaSeguranca);
       case "equipe":
@@ -2944,6 +3367,15 @@ ${t}` : t;
       await rpc("familia_autorizar", { p_responsavel: el.dataset.user, p_aluno: el.dataset.aluno, p_autorizado: el.dataset.v === "1" });
       await recarregarNoLugar(el.dataset.v === "1" ? "Autorização registrada." : "Autorização revogada.");
     }, el),
+    // implantação do ano letivo
+    "impl-desmarcar": (el) => confirmar("Desfazer esta etapa? Ela volta a aparecer como pendente.") && executar(null, async () => {
+      await rpc("implantacao_marcar", { p_ano: Number(el.dataset.ano), p_item: el.dataset.item, p_feito: false, p_obs: null });
+      await recarregarNoLugar("Etapa desmarcada.");
+    }, el),
+    "ap-anterior": () => mudarSlide(-1),
+    "ap-proximo": () => mudarSlide(1),
+    "ap-tela-cheia": () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {
+    }),
     "imprimir-cartoes": () => {
       document.body.classList.add("imprimir-cartoes");
       window.print();
@@ -3016,6 +3448,32 @@ ${t}` : t;
   });
   document.addEventListener("keydown", (ev) => {
     const el = ev.target;
+    if (document.querySelector(".apresentacao") && !ev.altKey && !ev.ctrlKey && !ev.metaKey) {
+      if (["ArrowRight", "PageDown", " ", "Enter"].includes(ev.key) && !el.closest?.("button, a")) {
+        ev.preventDefault();
+        return mudarSlide(1);
+      }
+      if (["ArrowRight", "PageDown"].includes(ev.key)) {
+        ev.preventDefault();
+        return mudarSlide(1);
+      }
+      if (["ArrowLeft", "PageUp"].includes(ev.key)) {
+        ev.preventDefault();
+        return mudarSlide(-1);
+      }
+      if (ev.key === "Home") {
+        ev.preventDefault();
+        return mudarSlide(-999);
+      }
+      if (ev.key === "End") {
+        ev.preventDefault();
+        return mudarSlide(999);
+      }
+      if (ev.key === "Escape" && !document.fullscreenElement) {
+        ev.preventDefault();
+        return ir(`#/implantacao?ano=${document.querySelector(".apresentacao").dataset.ano}`);
+      }
+    }
     if (el.matches?.("input[data-lanc]") && ev.key === "Enter") {
       ev.preventDefault();
       const todos = [...document.querySelectorAll("input[data-lanc]:not([disabled])")];
@@ -3197,6 +3655,10 @@ ${t}` : t;
       sucesso("Acesso atualizado.", "#/equipe");
     }),
     // portal da família
+    "impl-marcar": (f) => executar(null, async () => {
+      await rpc("implantacao_marcar", { p_ano: Number(f.dataset.ano), p_item: f.dataset.item, p_feito: true, p_obs: dados(f).obs || null });
+      await recarregarNoLugar("Etapa marcada como feita.");
+    }),
     "familia-responder": (f) => executar(`msg-resp-${f.dataset.id}`, async () => {
       await rpc("familia_responder", { p_tipo: f.dataset.tipo, p_item: f.dataset.id, p_texto: dados(f).texto });
       S.itemAberto = f.dataset.id;
