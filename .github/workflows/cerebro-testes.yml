@@ -1,0 +1,29 @@
+name: Cérebro JOS — testes
+
+on:
+  push:
+    paths: ["cerebro/**", ".github/workflows/cerebro-testes.yml"]
+  pull_request:
+    paths: ["cerebro/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.13"]
+    defaults:
+      run:
+        working-directory: cerebro
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -e ".[dev]"
+      - run: python -m pytest -q
+      - run: python -m cerebro --simulado --sem-llm avaliar

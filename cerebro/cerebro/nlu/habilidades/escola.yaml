@@ -1,0 +1,44 @@
+# Habilidades das plataformas escolares. As escolas e turmas vêm do léxico
+# LOCAL (privado), com a plataforma de cada uma (activesoft, p4ed, classroom).
+# Toda gravação (nota, presença) pede confirmação falada e o executor do iMac
+# ainda exige o clique de confirmação final na tela.
+
+- id: escola.abrir
+  descricao: Abrir o sistema/portal de uma escola
+  risco: R0
+  padroes:
+    - "{v:abrir|ir} [{prep}] [{art}] [sistema|portal|plataforma|site|diario|diario de classe|pagina] [{prep}] [{art}] [escola|colegio] {escola}"
+  exemplos: [abre o sistema do horizonte, entra no portal da escola aurora, abre o diario do horizonte]
+  slots:
+    escola: {tipo: escola, obrigatorio: true, pergunta: "De qual escola?"}
+  acao:
+    construtor: escola_abrir
+  respostas: ["Abrindo o sistema da escola {escola.nome}."]
+
+- id: escola.frequencia
+  descricao: Consultar ou lançar frequência/presença de uma turma
+  risco: R3
+  padroes:
+    - "{v:lancar|abrir|mostrar|criar|mudar|preparar|anotar} [{art}] (frequencia|presenca|presencas|chamada|faltas|falta|lista de presenca) [{detalhes:resto}]"
+    - "(frequencia|chamada|presenca|faltas) {detalhes:resto}"
+    - "{v:lancar|anotar} (falta|presenca) [{prep}|para|pra] {detalhes:resto}"
+  exemplos: [lanca a frequencia da 2101 de hoje, abre a chamada da turma 2201, marca falta para o rafael na 2101, consulta a frequencia do terceiro bimestre da 2201]
+  slots:
+    detalhes: {tipo: texto}
+  acao:
+    construtor: escola_frequencia
+  respostas: ["Preparando a frequência."]
+
+- id: escola.notas
+  descricao: Consultar ou lançar notas no sistema da escola
+  risco: R3
+  padroes:
+    - "{v:lancar|mudar|criar|anotar} [{art}] (nota|notas|media|medias|resultado|resultados|av1|av2|av3|conceito|conceitos) {detalhes:resto}"
+    - "{v:mostrar|abrir|pesquisar} [{art}] (notas|boletim|boletins|diario de notas|registro de notas|medias|resultados) [{detalhes:resto}]"
+    - "(nota|notas) {detalhes:resto}"
+  exemplos: [lanca a nota 7.5 do rafael na av1 da 2101, coloca nota 8 para a bia na prova, mostra as notas da 2201, abre o boletim da turma 2101]
+  slots:
+    detalhes: {tipo: texto}
+  acao:
+    construtor: escola_notas
+  respostas: ["Abrindo o registro de notas."]

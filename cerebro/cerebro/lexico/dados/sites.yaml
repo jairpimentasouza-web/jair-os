@@ -1,0 +1,184 @@
+# Sites e serviços web. "busca" (opcional) é o modelo de URL para pesquisar
+# dentro do site, com {q} no lugar do termo.
+
+youtube:
+  nome: YouTube
+  url: https://www.youtube.com
+  busca: https://www.youtube.com/results?search_query={q}
+  aliases: [youtube, you tube, iutubi, iutube, yutube, yotube, ioutube, tubo, youtub, utube, o youtube]
+gmail:
+  nome: Gmail
+  url: https://mail.google.com
+  busca: https://mail.google.com/mail/u/0/#search/{q}
+  aliases: [gmail, g mail, gimeio, gimeil, jimeil, djimeil, gemail, email, e mail, emails, e-mail, meu email, meus emails, caixa de entrada, correio eletronico, inbox]
+drive:
+  nome: Google Drive
+  url: https://drive.google.com
+  busca: https://drive.google.com/drive/search?q={q}
+  aliases: [drive, google drive, draive, gugou draive, meu drive, nuvem, drive do google, meus arquivos do drive]
+agenda:
+  nome: Google Agenda
+  url: https://calendar.google.com
+  aliases: [agenda, google agenda, calendario, google calendar, calendar, calendario do google, minha agenda]
+classroom:
+  nome: Google Classroom
+  url: https://classroom.google.com
+  aliases: [classroom, class room, class rum, class rumi, clasroom, google classroom, google class, sala de aula, sala de aula do google, class home, classe room]
+meet:
+  nome: Google Meet
+  url: https://meet.google.com
+  aliases: [meet, google meet, miti, mit, reuniao do google, videochamada]
+docs:
+  nome: Google Docs
+  url: https://docs.google.com/document
+  aliases: [google docs, docs, documentos google, docs do google, doc do google]
+sheets:
+  nome: Google Planilhas
+  url: https://docs.google.com/spreadsheets
+  aliases: [google planilhas, sheets, google sheets, planilhas google, planilha do google]
+slides:
+  nome: Google Apresentações
+  url: https://docs.google.com/presentation
+  aliases: [google slides, slides, apresentacoes google, google apresentacoes]
+forms:
+  nome: Google Forms
+  url: https://docs.google.com/forms
+  aliases: [google forms, forms, formulario, formularios google, google formularios]
+keep:
+  nome: Google Keep
+  url: https://keep.google.com
+  aliases: [google keep, keep, kip]
+fotos:
+  nome: Google Fotos
+  url: https://photos.google.com
+  aliases: [google fotos, google photos, minhas fotos, fotos do google]
+maps:
+  nome: Google Maps
+  url: https://maps.google.com
+  busca: https://www.google.com/maps/search/{q}
+  aliases: [google maps, maps, mapa, mapas, mapas do google, waze do google]
+tradutor:
+  nome: Google Tradutor
+  url: https://translate.google.com
+  aliases: [google tradutor, tradutor, translate, google translate]
+google:
+  nome: Google
+  url: https://www.google.com
+  busca: https://www.google.com/search?q={q}
+  aliases: [google, gugou, gugol, o google, buscador]
+whatsapp_web:
+  nome: WhatsApp Web
+  url: https://web.whatsapp.com
+  aliases: [whatsapp web, zap web, whats web, uatsap web]
+chatgpt_web:
+  nome: ChatGPT
+  url: https://chatgpt.com
+  aliases: [chatgpt site, site do chatgpt, chat gpt web]
+claude:
+  nome: Claude
+  url: https://claude.ai
+  aliases: [claude, clode, cloud ai, claude ai, clóde, o claude]
+gemini:
+  nome: Gemini
+  url: https://gemini.google.com
+  aliases: [gemini, jemini, gêmini, google gemini]
+notebooklm:
+  nome: NotebookLM
+  url: https://notebooklm.google.com
+  aliases: [notebooklm, notebook lm, notebook, notbuk]
+github:
+  nome: GitHub
+  url: https://github.com
+  aliases: [github, git hub, guit rabi, guitirrub, gitirrub]
+supabase:
+  nome: Supabase
+  url: https://supabase.com/dashboard
+  aliases: [supabase, supa base, supabeise, suprabase]
+vercel:
+  nome: Vercel
+  url: https://vercel.com/dashboard
+  aliases: [vercel, versel, vercé]
+netflix:
+  nome: Netflix
+  url: https://www.netflix.com
+  aliases: [netflix, netiflix, netflics]
+instagram:
+  nome: Instagram
+  url: https://www.instagram.com
+  aliases: [instagram, insta, instagran]
+facebook:
+  nome: Facebook
+  url: https://www.facebook.com
+  aliases: [facebook, face, feicebuk, feice]
+tiktok:
+  nome: TikTok
+  url: https://www.tiktok.com
+  busca: https://www.tiktok.com/search?q={q}
+  aliases: [tiktok, tik tok, tique toque]
+linkedin:
+  nome: LinkedIn
+  url: https://www.linkedin.com
+  aliases: [linkedin, linkedim, linquedin, linked in]
+twitter:
+  nome: X (Twitter)
+  url: https://x.com
+  aliases: [twitter, tuiter, x, xis]
+spotify_web:
+  nome: Spotify Web
+  url: https://open.spotify.com
+  busca: https://open.spotify.com/search/{q}
+  aliases: [spotify web, open spotify]
+wikipedia:
+  nome: Wikipédia
+  url: https://pt.wikipedia.org
+  busca: https://pt.wikipedia.org/w/index.php?search={q}
+  aliases: [wikipedia, wiki, uiquipedia]
+gov:
+  nome: gov.br
+  url: https://www.gov.br
+  aliases: [gov br, gov.br, governo, site do governo, portal gov]
+enem:
+  nome: ENEM (INEP)
+  url: https://www.gov.br/inep/pt-br/areas-de-atuacao/avaliacao-e-exames-educacionais/enem
+  aliases: [enem, site do enem, inep, pagina do enem]
+uerj:
+  nome: Vestibular UERJ
+  url: https://www.vestibular.uerj.br
+  aliases: [uerj, vestibular uerj, site da uerj, vestibular da uerj]
+khan:
+  nome: Khan Academy
+  url: https://pt.khanacademy.org
+  aliases: [khan academy, khan, can academy, academia khan]
+phet:
+  nome: PhET Simulações
+  url: https://phet.colorado.edu/pt_BR/
+  aliases: [phet, fet, simulacoes phet, simulador phet, simulacao de fisica]
+geogebra:
+  nome: GeoGebra
+  url: https://www.geogebra.org/calculator
+  aliases: [geogebra, geo gebra, jeojebra, calculadora grafica]
+desmos:
+  nome: Desmos
+  url: https://www.desmos.com/calculator
+  aliases: [desmos, dezmos, desmo]
+wolfram:
+  nome: Wolfram Alpha
+  url: https://www.wolframalpha.com
+  busca: https://www.wolframalpha.com/input?i={q}
+  aliases: [wolfram, wolfram alpha, uolfram]
+kiwify:
+  nome: Kiwify
+  url: https://dashboard.kiwify.com.br
+  aliases: [kiwify, kiwi fy, quiuifai, kiuifai]
+meta_ads:
+  nome: Gerenciador de Anúncios (Meta)
+  url: https://adsmanager.facebook.com
+  aliases: [gerenciador de anuncios, meta ads, ads manager, anuncios do facebook, anuncios do instagram]
+jair_didatica:
+  nome: Portal Jair Didática
+  url: https://jair-didatica-portal.web.app
+  aliases: [jair didatica, portal jair didatica, portal do aluno, portal didatica, jair didática]
+jos_painel:
+  nome: Painel do JOS
+  url: http://127.0.0.1:3000/jair
+  aliases: [painel do jos, painel do jair os, control center, centro de controle, jair personal, painel]

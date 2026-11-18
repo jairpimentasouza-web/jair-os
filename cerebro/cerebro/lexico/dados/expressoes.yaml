@@ -1,0 +1,318 @@
+# Expressões de conversa em PT-BR: despertar, molduras de pedido, hesitações,
+# cortesia, confirmação, negação, cancelamento e afins. Tudo sem acento
+# (o normalizador dobra o texto antes de comparar).
+
+despertar:
+  # Como o reconhecimento de voz costuma escrever "Jarvis" e "Jair".
+  palavras: [jarvis, jarves, jarvez, jarviz, jarvi, jervis, djarvis, dijarvis, iarvis, jarbas, jarvas, charvis, xarvis, javis, jaivis, jair vis, jair, jairo, jairo os, jair os, jairos, jair o s]
+  prefixos: [ei, hey, hei, oi, ok, okay, ola, fala, alo, o, e ai, bom dia, boa tarde, boa noite]
+
+molduras_pedido:
+  # Frases que só anunciam o pedido; são removidas antes de entender a intenção.
+  - voce pode
+  - voce poderia
+  - voce consegue
+  - voce conseguiria
+  - voce podia
+  - sera que voce pode
+  - sera que voce consegue
+  - sera que da pra
+  - sera que da para
+  - pode
+  - poderia
+  - podia
+  - consegue
+  - conseguiria
+  - tem como
+  - teria como
+  - da pra
+  - da para
+  - daria pra
+  - daria para
+  - quero que voce
+  - queria que voce
+  - gostaria que voce
+  - preciso que voce
+  - eu quero que voce
+  - eu queria que voce
+  - eu preciso que voce
+  - eu gostaria que voce
+  - estou precisando que voce
+  - eu estou precisando que voce
+  - estou precisando
+  - estava precisando
+  - estou querendo
+  - eu estou querendo
+  - preciso que
+  - quero que
+  - queria que
+  - gostaria que
+  - vou querer
+  - eu ia pedir para voce
+  - ia pedir para voce
+  - ve se voce consegue
+  - ve se consegue
+  - tenta
+  - tente
+  - sera que
+  - faz assim
+  - faz o favor de
+  - faca o favor de
+  - me faz um favor
+  - faz um favor
+  - por favor
+  - por gentileza
+  - favor
+  - me ajuda a
+  - me ajude a
+  - ajuda a
+  - vai la e
+  - vai la
+  - va la e
+  - agora
+  - entao
+  - ai
+  - olha
+  - escuta
+  - so
+  - rapidinho
+  - eu queria
+  - queria
+  - eu quero
+  - quero
+  - eu gostaria de
+  - gostaria de
+  - vamos
+  - bora
+  - me
+  - pra mim
+  - para mim
+
+sufixos_cortesia:
+  - por favor
+  - por gentileza
+  - pra mim
+  - para mim
+  - ai
+  - agora
+  - rapidinho
+  - rapido
+  - ja
+  - logo
+  - se possivel
+  - quando puder
+  - obrigado
+  - obrigada
+  - valeu
+  - brigado
+  - brigada
+  - viu
+  - ta
+  - ok
+  - beleza
+  - jarvis
+  - jair
+
+hesitacoes: [e, ee, eee, eh, ehh, hum, humm, hmm, hm, ahn, an, ah, aah, uh, uhm, er, tipo, tipo assim, assim, ne, sabe, cara, mano, velho, poxa, puxa, nossa, caramba, pera, peraí, perai, espera, deixa eu ver, como e que fala, como e o nome]
+
+contracoes:
+  # Formas faladas → forma usada nos padrões.
+  pra: para
+  pro: para o
+  pros: para os
+  pras: para as
+  prum: para um
+  pruma: para uma
+  ta: esta
+  tava: estava
+  to: estou
+  tô: estou
+  ce: voce
+  oce: voce
+  vc: voce
+  voces: voces
+  q: que
+  pq: porque
+  tb: tambem
+  tbm: tambem
+  blz: beleza
+  vlw: valeu
+  obg: obrigado
+  msg: mensagem
+  msgs: mensagens
+  hj: hoje
+  amn: amanha
+  qdo: quando
+  qnd: quando
+  cmg: comigo
+  td: tudo
+  tds: todos
+  dps: depois
+  agr: agora
+
+confirmacao:
+  - sim
+  - s
+  - pode
+  - pode sim
+  - pode fazer
+  - pode mandar
+  - pode ir
+  - pode seguir
+  - pode continuar
+  - confirma
+  - confirmo
+  - confirmado
+  - confirmada
+  - isso
+  - isso mesmo
+  - isso ai
+  - exato
+  - exatamente
+  - correto
+  - certo
+  - certissimo
+  - positivo
+  - afirmativo
+  - claro
+  - claro que sim
+  - com certeza
+  - certeza
+  - faz
+  - faz isso
+  - faca
+  - manda
+  - manda ver
+  - manda bala
+  - vai
+  - vai la
+  - bora
+  - vamos
+  - ok
+  - okay
+  - beleza
+  - blz
+  - fechou
+  - fechado
+  - ta
+  - esta
+  - ta bom
+  - esta bom
+  - ta certo
+  - esta certo
+  - ta otimo
+  - perfeito
+  - otimo
+  - show
+  - uhum
+  - aham
+  - ahan
+  - yes
+  - quero
+  - quero sim
+  - autorizo
+  - autorizado
+  - aprovado
+  - aprovo
+  - segue
+  - prossiga
+  - executa
+  - executar
+  - sim por favor
+  - sim pode
+  - sim senhor
+  - pode ser
+
+negacao:
+  - nao
+  - n
+  - nao pode
+  - nao quero
+  - nao precisa
+  - nao faz
+  - nao faca
+  - nao manda
+  - negativo
+  - nada
+  - nem
+  - nem pensar
+  - de jeito nenhum
+  - jamais
+  - nunca
+  - agora nao
+  - melhor nao
+  - acho que nao
+  - errado
+  - ta errado
+  - esta errado
+  - nao e isso
+  - nao era isso
+  - nope
+  - no
+
+cancelamento:
+  - cancela
+  - cancelar
+  - cancelado
+  - esquece
+  - esquece isso
+  - esquece tudo
+  - deixa
+  - deixa pra la
+  - deixa para la
+  - deixa quieto
+  - deixa isso
+  - para
+  - pare
+  - para tudo
+  - para ai
+  - chega
+  - basta
+  - ja chega
+  - aborta
+  - abortar
+  - desiste
+  - desisto
+  - nao precisa mais
+  - pode cancelar
+  - cancela isso
+  - cancela tudo
+  - stop
+  - sai
+  - silencio
+  - cala a boca
+  - fica quieto
+
+repeticao:
+  - repete
+  - repita
+  - repetir
+  - fala de novo
+  - diz de novo
+  - fala outra vez
+  - diz outra vez
+  - de novo
+  - outra vez
+  - o que voce disse
+  - o que voce falou
+  - como
+  - como e
+  - o que
+  - nao entendi
+  - nao ouvi
+  - pode repetir
+  - repete por favor
+  - hein
+  - oi
+
+agradecimento: [obrigado, obrigada, brigado, brigada, valeu, valeu mesmo, muito obrigado, muito obrigada, obrigadao, agradecido, agradecida, thanks, obrigado jarvis, valeu jarvis, show de bola, boa, mandou bem, perfeito obrigado, tmj, tamo junto]
+
+saudacao: [oi, ola, oie, opa, e ai, eai, fala, salve, bom dia, boa tarde, boa noite, tudo bem, tudo bom, como vai, como voce esta, beleza, firmeza, hello, hi, alo]
+
+despedida: [tchau, ate mais, ate logo, ate amanha, falou, fui, boa noite, vou dormir, encerra, desliga, ate depois, flw, xau, tchauzinho]
+
+pronomes_objeto: [ele, ela, eles, elas, isso, isto, aquilo, esse, essa, este, esta, aquele, aquela, o mesmo, a mesma, o, a, lo, la, la mesmo, de novo, o anterior, a anterior, o ultimo, a ultima]
+
+artigos: [o, a, os, as, um, uma, uns, umas, meu, minha, meus, minhas, seu, sua, nosso, nossa, do, da, dos, das, no, na, nos, nas, ao, aos, pelo, pela, num, numa, esse, essa, este, esta, aquele, aquela]
+
+preposicoes: [de, do, da, dos, das, em, no, na, nos, nas, para, pra, pro, por, pelo, pela, com, sem, sobre, ate, a, ao, as, aos, dentro de, dentro do, dentro da, la no, la na, aqui no, aqui na]

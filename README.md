@@ -62,6 +62,7 @@ Consulte [SECURITY.md](SECURITY.md).
 ## Documentação
 
 - [Arquitetura](docs/architecture.md)
+- [Cérebro JOS (Jarvis) — comando de voz em português](cerebro/README.md)
 - [Maturidade e evidências](docs/maturity.md)
 - [Roadmap](docs/roadmap.md)
 - [Métricas públicas](public-metrics.json)

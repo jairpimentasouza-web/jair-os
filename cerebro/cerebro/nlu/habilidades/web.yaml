@@ -1,0 +1,85 @@
+# Habilidades de internet: sites, pesquisas e YouTube.
+
+- id: site.abrir
+  descricao: Abrir um site ou serviço web (YouTube, Gmail, Drive, Classroom...)
+  risco: R0
+  padroes:
+    - "{v:abrir|ir|mostrar} [{prep}] [{art}] [site|pagina|portal|aba] [{prep}] [{art}] {site}"
+    - "{site} [{v:abrir}]"
+  exemplos: [abre o youtube, entra no gmail, abre o drive, vai no classroom, abre meu email, abre o google agenda, entra no whatsapp web, abre o site do enem]
+  slots:
+    site: {tipo: site, obrigatorio: true, pergunta: "Qual site?"}
+  acao:
+    executor: desktop
+    passos: [{action: open_url, payload: {url: "{site.url}"}}]
+  respostas: ["Abrindo {site.nome}.", "Certo, entrando no {site.nome}."]
+
+- id: url.abrir
+  descricao: Abrir um endereço de internet ditado
+  risco: R0
+  padroes:
+    - "{v:abrir|ir} [{prep}] [{art}] [site|pagina|link|endereco] url"
+    - "url"
+  exemplos: []
+  slots:
+    url: {tipo: url, obrigatorio: true}
+  acao:
+    executor: desktop
+    passos: [{action: open_url, payload: {url: "{url}"}}]
+  respostas: ["Abrindo o endereço."]
+
+- id: site.pesquisar
+  descricao: Pesquisar dentro de um site (YouTube, Gmail, Drive, Maps, Wikipédia...)
+  risco: R0
+  padroes:
+    - "{v:pesquisar|abrir|mostrar} [{prep}] [{art}] {site} [por|sobre|o|a|os|as|um|uma] {consulta}"
+    - "{v:pesquisar} [{art}] {consulta} (no|na|nos|nas|pelo|pela|dentro do|dentro da) {site}"
+  exemplos: [pesquisa no youtube relatividade geral, procura no drive prova de fisica, busca no gmail mensagem da coordenacao, procura no maps padaria perto, pesquisa leis de newton na wikipedia]
+  slots:
+    site: {tipo: site, obrigatorio: true}
+    consulta: {tipo: consulta, obrigatorio: true, pergunta: "O que eu pesquiso?"}
+  acao:
+    construtor: pesquisar_site
+  respostas: ["Pesquisando {consulta} no {site.nome}.", "Buscando {consulta} no {site.nome}."]
+
+- id: web.pesquisar
+  descricao: Pesquisar algo na internet (Google)
+  risco: R0
+  padroes:
+    - "{v:pesquisar} [{prep}] [google|internet|web|navegador|online] [por|sobre|o que e|a respeito de|informacoes sobre|informacao sobre|{art}] {consulta}"
+    - "{v:pesquisar} [{art}] {consulta} (no google|na internet|na web|online|no navegador)"
+  exemplos: [pesquisa relatividade geral, procura receita de bolo de cenoura, da um google em leis de newton, busca na internet o preco do dolar, pesquisa sobre buracos negros]
+  slots:
+    consulta: {tipo: consulta, obrigatorio: true, pergunta: "O que eu pesquiso?"}
+  acao:
+    construtor: pesquisar_web
+  respostas: ["Pesquisando {consulta}.", "Vou buscar {consulta} no Google."]
+
+- id: youtube.tocar
+  descricao: Tocar uma música ou vídeo no YouTube
+  risco: R0
+  padroes:
+    - "{v:tocar} [{art}] [musica|cancao|video|clipe|som|playlist|album|banda|o som do|a musica do|a musica da|o album do|um video de|um som do|um som da|musica do|musica da|musicas do|musicas da] [{prep}] {musica} [no youtube|do youtube|pelo youtube|la no youtube|para mim|para tocar|pra tocar]"
+    - "{v:tocar} [{art}] {musica} (para|pra) tocar [no youtube]"
+    - "(quero|vamos|bora) (ouvir|escutar|ver|assistir) {musica}"
+    - "(ver|assistir) [{art}] [video|clipe|show|filme] [{prep}] {musica}"
+    - "(abre|abrir|coloca|poe|bota) [{art}] {musica} no youtube"
+  exemplos: [toca alice in chains down in a hole, coloca uma musica do legiao urbana, bota pra tocar coldplay, poe o video da aula de fisica no youtube, quero ouvir djavan, toca nutshell no youtube, reproduz lofi para estudar]
+  slots:
+    musica: {tipo: consulta, obrigatorio: true, pergunta: "O que você quer ouvir?"}
+  acao:
+    executor: desktop
+    passos: [{action: youtube_play, payload: {query: "{musica}", session: jair-personal}}]
+  respostas: ["Colocando {musica} pra tocar.", "Tocando {musica} no YouTube.", "Já vai tocar {musica}."]
+
+- id: conhecimento.perguntar
+  descricao: Responder uma pergunta de conhecimento geral (ou pesquisar se não souber)
+  risco: R0
+  padroes:
+    - "(o que e|o que sao|o que significa|o que quer dizer|quem foi|quem e|quem era|quando foi|quando e|onde fica|onde e|como funciona|como funcionam|por que|porque|qual a diferenca entre|qual e a diferenca entre|como se calcula|como calcular|como se faz|como fazer|qual e a formula|qual a formula|qual e a capital|quantos anos tem|me explica|explica) {consulta}"
+  exemplos: [o que e entropia, quem foi isaac newton, como funciona uma usina nuclear, qual a diferenca entre massa e peso, qual e a formula da energia cinetica, me explica o efeito fotoeletrico]
+  slots:
+    consulta: {tipo: consulta, obrigatorio: true}
+  acao:
+    construtor: responder_pergunta
+  respostas: ["Deixa eu ver.", "Boa pergunta."]

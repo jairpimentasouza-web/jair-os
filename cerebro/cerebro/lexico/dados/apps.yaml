@@ -1,0 +1,194 @@
+# Aplicativos. "mac" = chave aceita pelo executor do iMac (allowed_apps em
+# always_on/config.json); "mac_app" = nome do aplicativo no macOS (open -a);
+# "windows" = executável. Aliases incluem como as pessoas falam e como o
+# reconhecimento de voz costuma escrever.
+
+chrome:
+  nome: Google Chrome
+  mac: chrome
+  mac_app: Google Chrome
+  windows: chrome.exe
+  aliases: [chrome, google chrome, o chrome, navegador, navegador do google, browser, cromo, crome, cromi, chromi, crômi, gugou cromi, google cromi, google crome, gugol crome, internet]
+safari:
+  nome: Safari
+  mac: safari
+  mac_app: Safari
+  aliases: [safari, safári, navegador da apple, sáfari]
+finder:
+  nome: Finder
+  mac: finder
+  mac_app: Finder
+  windows: explorer.exe
+  aliases: [finder, fainder, faider, gerenciador de arquivos, explorador de arquivos, explorer, meus arquivos, arquivos do mac]
+terminal:
+  nome: Terminal
+  mac: terminal
+  mac_app: Terminal
+  windows: wt.exe
+  aliases: [terminal, linha de comando, console, prompt, shell, terminau]
+vscode:
+  nome: Visual Studio Code
+  mac: vscode
+  mac_app: Visual Studio Code
+  windows: code.exe
+  aliases: [vscode, vs code, visual studio code, visual studio, code, editor de codigo, vê esse code, vi es code, visual studio cold]
+preview:
+  nome: Pré-Visualização
+  mac: preview
+  mac_app: Preview
+  aliases: [preview, pre visualizacao, previsualizacao, visualizador, visualizador de pdf, leitor de pdf]
+textedit:
+  nome: TextEdit
+  mac: textedit
+  mac_app: TextEdit
+  windows: notepad.exe
+  aliases: [textedit, text edit, editor de texto, bloco de notas, notepad, tekst edit]
+preferences:
+  nome: Ajustes do Sistema
+  mac: preferences
+  mac_app: System Preferences
+  windows: "ms-settings:"
+  aliases: [ajustes, ajustes do sistema, preferencias, preferencias do sistema, configuracoes, configuracoes do sistema, configuracao, settings, painel de controle]
+activity_monitor:
+  nome: Monitor de Atividade
+  mac: activity_monitor
+  mac_app: Activity Monitor
+  windows: taskmgr.exe
+  aliases: [monitor de atividade, monitor de atividades, gerenciador de tarefas, activity monitor, monitor do sistema, task manager]
+photobooth:
+  nome: Photo Booth
+  mac: photobooth
+  mac_app: Photo Booth
+  windows: "microsoft.windows.camera:"
+  aliases: [photo booth, photobooth, foto booth, fotobooth, camera, câmera, webcam, camara]
+facetime:
+  nome: FaceTime
+  mac: facetime
+  mac_app: FaceTime
+  aliases: [facetime, face time, feice taime, feicetaime, chamada de video da apple]
+mail:
+  nome: Mail
+  mac: mail
+  mac_app: Mail
+  aliases: [mail, app de email, aplicativo de email, mail da apple, correio]
+music:
+  nome: Música
+  mac: music
+  mac_app: Music
+  aliases: [musica, app de musica, apple music, itunes, music]
+word:
+  nome: Microsoft Word
+  mac: word
+  mac_app: Microsoft Word
+  windows: winword.exe
+  aliases: [word, microsoft word, uord, uordi, editor do word, documento do word]
+excel:
+  nome: Microsoft Excel
+  mac: excel
+  mac_app: Microsoft Excel
+  windows: excel.exe
+  aliases: [excel, microsoft excel, planilha, ecsel, ecssel, exel, planilha do excel]
+powerpoint:
+  nome: Microsoft PowerPoint
+  mac: powerpoint
+  mac_app: Microsoft PowerPoint
+  windows: powerpnt.exe
+  aliases: [powerpoint, power point, microsoft powerpoint, pauer point, pawer point, slides do powerpoint, apresentacao do powerpoint]
+onenote:
+  nome: Microsoft OneNote
+  mac: onenote
+  mac_app: Microsoft OneNote
+  aliases: [onenote, one note, uan note, caderno do onenote]
+outlook:
+  nome: Microsoft Outlook
+  mac: outlook
+  mac_app: Microsoft Outlook
+  windows: outlook.exe
+  aliases: [outlook, out look, autluk, email da microsoft]
+whatsapp:
+  nome: WhatsApp
+  mac: whatsapp
+  mac_app: WhatsApp
+  aliases: [whatsapp, whats app, zap, zapzap, zap zap, uatsap, uatizap, wats, whats, watsap, uats]
+telegram:
+  nome: Telegram
+  mac: telegram
+  mac_app: Telegram
+  aliases: [telegram, telegrama, telegran, telegrão]
+zoom:
+  nome: Zoom
+  mac: zoom
+  mac_app: zoom.us
+  aliases: [zoom, zum, zoom meeting, reuniao do zoom]
+canva:
+  nome: Canva
+  mac: canva
+  mac_app: Canva
+  aliases: [canva, canvas, canvah, kanva]
+capcut:
+  nome: CapCut
+  mac: capcut
+  mac_app: CapCut
+  aliases: [capcut, cap cut, quepcut, kapkat, editor de video]
+trello:
+  nome: Trello
+  mac: trello
+  mac_app: Trello
+  aliases: [trello, trelo, quadro do trello]
+onedrive:
+  nome: OneDrive
+  mac: onedrive
+  mac_app: OneDrive
+  aliases: [onedrive, one drive, uan draive, wan drive]
+openboard:
+  nome: OpenBoard
+  mac: openboard
+  mac_app: OpenBoard
+  aliases: [openboard, open board, quadro branco, lousa digital, lousa]
+ollama:
+  nome: Ollama
+  mac: ollama
+  mac_app: Ollama
+  aliases: [ollama, olama, o lama, ia local]
+chatgpt:
+  nome: ChatGPT
+  mac: chatgpt
+  mac_app: ChatGPT Lite
+  aliases: [chatgpt, chat gpt, chat gepeto, chat gpt lite, gpt, tchat gpt]
+tailscale:
+  nome: Tailscale
+  mac: tailscale
+  mac_app: Tailscale
+  aliases: [tailscale, tail scale, teilskeil]
+calculadora:
+  nome: Calculadora
+  mac: calculator
+  mac_app: Calculator
+  windows: calc.exe
+  aliases: [calculadora, calculator, calculadora do mac]
+notas:
+  nome: Notas
+  mac: notes
+  mac_app: Notes
+  aliases: [notas, app de notas, bloco de anotacoes, notes]
+calendario_app:
+  nome: Calendário
+  mac: calendar_app
+  mac_app: Calendar
+  aliases: [calendario do mac, app de calendario, calendario da apple]
+lembretes:
+  nome: Lembretes
+  mac: reminders
+  mac_app: Reminders
+  aliases: [app de lembretes, lembretes do mac, reminders]
+spotify:
+  nome: Spotify
+  mac: spotify
+  mac_app: Spotify
+  windows: spotify.exe
+  aliases: [spotify, espotifai, spotifai, spotfy, isspotify]
+teams:
+  nome: Microsoft Teams
+  mac: teams
+  mac_app: Microsoft Teams
+  aliases: [teams, microsoft teams, times, tims]

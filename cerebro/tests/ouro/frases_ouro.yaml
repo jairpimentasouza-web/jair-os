@@ -1,0 +1,256 @@
+# Conjunto-ouro: frases como chegam do reconhecimento de voz (sem pontuação
+# confiável, com erros de grafia, gírias, hesitações e palavra de despertar).
+# NÃO são os exemplos de treino das habilidades. Usa o léxico local de exemplo
+# (nomes fictícios). Campo s: slots esperados (id da entidade ou trecho contido).
+# i: null = não deve virar comando.
+
+# ---------------------------------------------------------------- apps
+- {f: "jarvis abre o google chrome", i: app.abrir, s: {app: chrome}}
+- {f: "abre o crome ai", i: app.abrir, s: {app: chrome}}
+- {f: "jarbas abri o navegador pra mim", i: app.abrir, s: {app: chrome}}
+- {f: "você pode abrir o fainder", i: app.abrir, s: {app: finder}}
+- {f: "inicia o visual studio code", i: app.abrir, s: {app: vscode}}
+- {f: "ei jarvis roda o terminal", i: app.abrir, s: {app: terminal}}
+- {f: "abre o uord", i: app.abrir, s: {app: word}}
+- {f: "abre a planilha do excel", i: app.abrir, s: {app: excel}}
+- {f: "abre o pauer point", i: app.abrir, s: {app: powerpoint}}
+- {f: "abre o zap", i: app.abrir, s: {app: whatsapp}}
+- {f: "abre o uatsap", i: app.abrir, s: {app: whatsapp}}
+- {f: "jarvis abre o telegram", i: app.abrir, s: {app: telegram}}
+- {f: "entra no zoom", i: app.abrir, s: {app: zoom}}
+- {f: "abre o canvas", i: app.abrir, s: {app: canva}}
+- {f: "quero usar a calculadora", i: app.abrir, s: {app: calculadora}}
+- {f: "abre o monitor de atividade", i: app.abrir, s: {app: activity_monitor}}
+- {f: "é... abre o face time", i: app.abrir, s: {app: facetime}}
+- {f: "abre a câmera", i: app.abrir, s: {app: photobooth}}
+- {f: "abre o open board", i: app.abrir, s: {app: openboard}}
+- {f: "abre o chat gpt", i: app.abrir, s: {app: chatgpt}}
+- {f: "abre o spotfy", i: app.abrir, s: {app: spotify}}
+- {f: "liga o trelo", i: app.abrir, s: {app: trello}}
+- {f: "fecha o chrome", i: app.fechar, s: {app: chrome}}
+- {f: "jarvis fecha o word por favor", i: app.fechar, s: {app: word}}
+- {f: "encerra o zoom", i: app.fechar, s: {app: zoom}}
+- {f: "sai do whatsapp", i: app.fechar, s: {app: whatsapp}}
+- {f: "mata o terminal", i: app.fechar, s: {app: terminal}}
+
+# ---------------------------------------------------------------- volume e mídia
+- {f: "volume 40", i: volume.definir, s: {nivel: 40}}
+- {f: "coloca o volume em cinquenta", i: volume.definir, s: {nivel: 50}}
+- {f: "deixa o som no vinte por cento", i: volume.definir, s: {nivel: 20}}
+- {f: "ajusta o volume pra oitenta", i: volume.definir, s: {nivel: 80}}
+- {f: "aumenta o volume", i: volume.aumentar}
+- {f: "sobe o som aí", i: volume.aumentar}
+- {f: "aumenta um pouquinho", i: volume.aumentar}
+- {f: "mais alto", i: volume.aumentar}
+- {f: "abaixa o volume", i: volume.diminuir}
+- {f: "baixa o som por favor", i: volume.diminuir}
+- {f: "diminui o volume em 20", i: volume.diminuir, s: {delta: 20}}
+- {f: "mais baixo", i: volume.diminuir}
+- {f: "muta o computador", i: volume.mudo}
+- {f: "tira o som", i: volume.mudo}
+- {f: "deixa no mudo", i: volume.mudo}
+- {f: "tira do mudo", i: volume.desmutar}
+- {f: "volta o som", i: volume.desmutar}
+- {f: "pausa a música", i: midia.pausar}
+- {f: "dá um pause", i: midia.pausar}
+- {f: "continua o vídeo", i: midia.continuar}
+- {f: "dá play", i: midia.continuar}
+- {f: "próxima música", i: midia.proxima}
+- {f: "pula essa", i: midia.proxima}
+
+# ---------------------------------------------------------------- sistema
+- {f: "abre os ajustes de wi-fi", i: ajustes.abrir, s: {ajuste: network}}
+- {f: "abre a configuração do bluetooth", i: ajustes.abrir, s: {ajuste: bluetooth}}
+- {f: "liga o blutufe", i: ajustes.abrir, s: {ajuste: bluetooth}}
+- {f: "configura o som", i: ajustes.abrir, s: {ajuste: sound}}
+- {f: "abre as preferências do teclado", i: ajustes.abrir, s: {ajuste: keyboard}}
+- {f: "tira um print", i: tela.capturar}
+- {f: "faz um print da tela", i: tela.capturar}
+- {f: "captura a tela", i: tela.capturar}
+- {f: "printa a tela pra mim", i: tela.capturar}
+- {f: "tira uma foto minha", i: camera.foto}
+- {f: "bate uma selfie", i: camera.foto}
+- {f: "quanto de espaço tem no mac", i: sistema.recurso, s: {recurso: disco}}
+- {f: "qual é o espaço livre do ssd", i: sistema.recurso, s: {recurso: disco}}
+- {f: "como tá a memória do computador", i: sistema.recurso, s: {recurso: memoria}}
+- {f: "mostra os processos rodando", i: sistema.recurso, s: {recurso: processos}}
+- {f: "quais janelas estão abertas", i: sistema.recurso, s: {recurso: janelas}}
+- {f: "ve o uso do processador", i: sistema.recurso, s: {recurso: cpu}}
+- {f: "o computador tá lento", i: sistema.diagnostico}
+- {f: "faz um diagnóstico rápido do imac", i: sistema.diagnostico}
+- {f: "como está a saúde do computador", i: sistema.diagnostico}
+- {f: "abre a pasta de downloads", i: pasta.abrir, s: {pasta: downloads}}
+- {f: "abre os documentos", i: pasta.abrir, s: {pasta: documentos}}
+- {f: "mostra a área de trabalho", i: pasta.abrir, s: {pasta: desktop}}
+- {f: "procura o arquivo da prova de física", i: arquivo.procurar, s: {consulta: prova de física}}
+- {f: "acha o pdf do calendário escolar", i: arquivo.procurar, s: {consulta: calendário escolar}}
+- {f: "onde está a planilha de notas", i: arquivo.procurar, s: {consulta: notas}}
+- {f: "abre o arquivo do planejamento anual", i: arquivo.abrir, s: {consulta: planejamento anual}}
+- {f: "o que eu copiei", i: clipboard.ler}
+- {f: "bloqueia a tela", i: tela.bloquear}
+- {f: "trava o computador", i: tela.bloquear}
+
+# ---------------------------------------------------------------- web
+- {f: "abre o iutubi", i: site.abrir, s: {site: youtube}}
+- {f: "entra no gmail", i: site.abrir, s: {site: gmail}}
+- {f: "abre meu e-mail", i: site.abrir, s: {site: gmail}}
+- {f: "abre o draive", i: site.abrir, s: {site: drive}}
+- {f: "vai no class rum", i: site.abrir, s: {site: classroom}}
+- {f: "jarvis abre o google classroom", i: site.abrir, s: {site: classroom}}
+- {f: "abre a agenda do google", i: site.abrir, s: {site: agenda}}
+- {f: "abre o whatsapp web", i: site.abrir, s: {site: whatsapp_web}}
+- {f: "entra no portal jair didática", i: site.abrir, s: {site: jair_didatica}}
+- {f: "abre o geogebra", i: site.abrir, s: {site: geogebra}}
+- {f: "abre o phet", i: site.abrir, s: {site: phet}}
+- {f: "abre o supa base", i: site.abrir, s: {site: supabase}}
+- {f: "pesquisa no youtube aula de cinemática", i: site.pesquisar, s: {site: youtube, consulta: cinemática}}
+- {f: "procura no drive a prova da 2101", i: site.pesquisar, s: {site: drive, consulta: prova}}
+- {f: "busca no gmail mensagem da coordenação", i: site.pesquisar, s: {site: gmail, consulta: coordenação}}
+- {f: "procura padaria no maps", i: site.pesquisar, s: {site: maps, consulta: padaria}}
+- {f: "pesquisa na wikipedia efeito fotoelétrico", i: site.pesquisar, s: {site: wikipedia, consulta: fotoelétrico}}
+- {f: "pesquisa sobre buracos negros", i: web.pesquisar, s: {consulta: buracos negros}}
+- {f: "dá um google em lei de coulomb", i: web.pesquisar, s: {consulta: lei de coulomb}}
+- {f: "procura na internet o preço do dólar hoje", i: web.pesquisar, s: {consulta: dólar}}
+- {f: "pesquisa receita de bolo de cenoura", i: web.pesquisar, s: {consulta: bolo de cenoura}}
+- {f: "toca alice in chains", i: youtube.tocar, s: {musica: alice in chains}}
+- {f: "bota pra tocar legião urbana", i: youtube.tocar, s: {musica: legião urbana}}
+- {f: "coloca uma música do djavan", i: youtube.tocar, s: {musica: djavan}}
+- {f: "quero ouvir lofi pra estudar", i: youtube.tocar, s: {musica: lofi}}
+- {f: "toca nutshell no youtube", i: youtube.tocar, s: {musica: nutshell}}
+- {f: "põe coldplay pra tocar", i: youtube.tocar, s: {musica: coldplay}}
+- {f: "reproduz o clipe de bohemian rhapsody", i: youtube.tocar, s: {musica: bohemian rhapsody}}
+- {f: "o que é entropia", i: conhecimento.perguntar, s: {consulta: entropia}}
+- {f: "quem foi isaac newton", i: conhecimento.perguntar, s: {consulta: newton}}
+- {f: "qual a diferença entre massa e peso", i: conhecimento.perguntar, s: {consulta: massa e peso}}
+- {f: "como funciona um transformador", i: conhecimento.perguntar, s: {consulta: transformador}}
+
+# ---------------------------------------------------------------- agenda e google
+- {f: "o que eu tenho amanhã", i: agenda.consultar}
+- {f: "jarvis o que tenho hoje", i: agenda.consultar}
+- {f: "mostra minha agenda da semana que vem", i: agenda.consultar}
+- {f: "quais compromissos eu tenho sexta", i: agenda.consultar}
+- {f: "tenho reunião amanhã", i: agenda.consultar}
+- {f: "como tá minha agenda", i: agenda.consultar}
+- {f: "marca reunião com a coordenação sexta às 3 da tarde", i: agenda.criar, s: {titulo: coordenação}}
+- {f: "agenda consulta no dentista amanhã às 9", i: agenda.criar, s: {titulo: dentista}}
+- {f: "põe na agenda aula particular segunda às 18h", i: agenda.criar, s: {titulo: aula particular}}
+- {f: "cria um evento de conselho de classe dia 25", i: agenda.criar, s: {titulo: conselho de classe}}
+- {f: "manda um email pra coordenação dizendo que vou atrasar", i: gmail.escrever, s: {destinatario: coordenacao}}
+- {f: "escreve um email para a coordenadora sobre a reunião", i: gmail.escrever, s: {destinatario: coordenacao}}
+- {f: "mostra os avisos da turma 2101", i: classroom.avisos, s: {turma: "2101"}}
+- {f: "o que tem no mural da 2201", i: classroom.avisos, s: {turma: "2201"}}
+- {f: "posta um aviso na turma 2201 dizendo que amanhã tem revisão", i: classroom.publicar, s: {turma: "2201", texto: revisão}}
+- {f: "publica no mural da 2101 que a lista já está no drive", i: classroom.publicar, s: {turma: "2101", texto: lista}}
+
+# ---------------------------------------------------------------- JOS
+- {f: "cria uma tarefa de mandar o planejamento pra coordenação", i: tarefa.criar, s: {titulo: planejamento}}
+- {f: "adiciona na lista ligar pro banco", i: tarefa.criar, s: {titulo: banco}}
+- {f: "anota uma tarefa pra amanhã revisar a lista de física", i: tarefa.criar, s: {titulo: revisar a lista}}
+- {f: "tenho que pagar a conta de luz sexta", i: tarefa.criar, s: {titulo: conta de luz}}
+- {f: "cria tarefa nova corrigir as redações", i: tarefa.criar, s: {titulo: corrigir as redações}}
+- {f: "mostra minhas tarefas", i: tarefa.listar}
+- {f: "quais são as pendências", i: tarefa.listar}
+- {f: "o que eu tenho que fazer hoje", i: tarefa.listar}
+- {f: "lista as tarefas abertas", i: tarefa.listar}
+- {f: "tem alguma tarefa pendente", i: tarefa.listar}
+- {f: "conclui a tarefa de corrigir as provas", i: tarefa.concluir, s: {consulta: corrigir as provas}}
+- {f: "marca a tarefa ligar para o banco como feita", i: tarefa.concluir, s: {consulta: banco}}
+- {f: "já paguei a conta de luz", i: tarefa.concluir, s: {consulta: conta de luz}}
+- {f: "me lembra de tirar o bolo do forno daqui a 30 minutos", i: lembrete.criar, s: {texto: bolo}}
+- {f: "me avisa amanhã às 7 pra levar o notebook", i: lembrete.criar, s: {texto: notebook}}
+- {f: "cria um lembrete de pagar o boleto sexta", i: lembrete.criar, s: {texto: boleto}}
+- {f: "não me deixa esquecer da reunião de pais amanhã", i: lembrete.criar, s: {texto: reunião de pais}}
+- {f: "me lembra hoje à noite de mandar a lista pros alunos", i: lembrete.criar, s: {texto: lista}}
+- {f: "lembra que a prova da 2101 foi adiada pro dia 25", i: memoria.salvar, s: {texto: adiada}}
+- {f: "anota que o rafael prefere aula às terças", i: memoria.salvar, s: {texto: terças}}
+- {f: "guarda que a senha do wifi da escola muda toda segunda", i: memoria.salvar, s: {texto: senha}}
+- {f: "o que você sabe sobre a escola aurora", i: memoria.buscar, s: {consulta: aurora}}
+- {f: "procura na memória o horário do rafael", i: memoria.buscar, s: {consulta: horário}}
+- {f: "você lembra do prazo das notas", i: memoria.buscar, s: {consulta: prazo das notas}}
+- {f: "acabou a aula do rafa ele foi bem em vetores mas ainda erra sinal", i: aula.registrar, s: {aluno: rafael_moura, resumo: vetores}}
+- {f: "terminei a aula com a bia hoje vimos leis de newton", i: aula.registrar, s: {aluno: beatriz_lima, resumo: newton}}
+- {f: "registra a aula da beatriz sobre conversão de unidades", i: aula.registrar, s: {aluno: beatriz_lima, resumo: conversão}}
+- {f: "na aula de hoje com o rafael a gente fez queda livre", i: aula.registrar, s: {aluno: rafael_moura, resumo: queda livre}}
+- {f: "a bia ainda está errando conversão de unidades", i: aula.registrar, s: {aluno: beatriz_lima, resumo: conversão}}
+- {f: "mostra a ficha do rafael", i: aluno.consultar, s: {aluno: rafael_moura}}
+- {f: "como está a bia", i: aluno.consultar, s: {aluno: beatriz_lima}}
+- {f: "qual é a dificuldade do rafael", i: aluno.consultar, s: {aluno: rafael_moura}}
+- {f: "cria uma lista de exercícios de termodinâmica", i: material.produzir}
+- {f: "prepara uma prova de física pra 2101", i: material.produzir}
+- {f: "faz um mapa mental de ondulatória", i: material.produzir}
+- {f: "monta 15 questões de cinemática nível uerj", i: material.produzir}
+- {f: "gera uma revisão pra av2 de matemática", i: material.produzir}
+- {f: "cuida disso organizar meu drive pessoal", i: jos.rotear, s: {pedido: drive}}
+- {f: "manda pro jos preparar minha semana", i: jos.rotear, s: {pedido: semana}}
+- {f: "bom dia", i: briefing.diario}
+- {f: "bom dia jarvis", i: briefing.diario}
+- {f: "me dá o briefing", i: briefing.diario}
+- {f: "como tá meu dia", i: briefing.diario}
+- {f: "o que tem pra hoje", i: briefing.diario}
+- {f: "fecha o dia", i: fechamento.diario}
+- {f: "gastei 50 reais de gasolina", i: financeiro.registrar, s: {valor: 50}}
+- {f: "recebi duzentos da aula particular", i: financeiro.registrar, s: {valor: 200}}
+- {f: "paguei 89,90 na internet", i: financeiro.registrar, s: {valor: 89.9}}
+- {f: "status do jos", i: sistema.status}
+- {f: "o sistema tá funcionando", i: sistema.status}
+- {f: "tem algum alerta no jos", i: sistema.status}
+
+# ---------------------------------------------------------------- cálculos
+- {f: "calcula a média de sete oito e nove", i: calculo.media, s: {numeros: [7, 8, 9]}}
+- {f: "média entre 6,5 e 8", i: calculo.media, s: {numeros: [6.5, 8]}}
+- {f: "tira a média das notas 5 7 e 10", i: calculo.media}
+- {f: "quanto preciso tirar pra ficar com média 6 se tirei 4 e 5", i: calculo.nota_necessaria}
+- {f: "quanto o aluno precisa tirar pra passar com 7 tendo 6 e 5 e meio", i: calculo.nota_necessaria}
+- {f: "quanto é 25 vezes 4", i: calculo.conta}
+- {f: "quanto dá mil e duzentos dividido por doze", i: calculo.conta}
+- {f: "calcula 15 por cento de 80", i: calculo.conta}
+- {f: "quanto é 2 elevado a 10", i: calculo.conta}
+
+# ---------------------------------------------------------------- escola (léxico local)
+- {f: "abre o sistema do horizonte", i: escola.abrir, s: {escola: horizonte}}
+- {f: "entra no portal da escola aurora", i: escola.abrir, s: {escola: aurora}}
+- {f: "lança a frequência da 2101 de hoje", i: escola.frequencia}
+- {f: "abre a chamada da turma 2201", i: escola.frequencia}
+- {f: "marca falta pro rafael na 2101", i: escola.frequencia}
+- {f: "lança a nota 7 e meio do rafael na av1", i: escola.notas}
+- {f: "coloca nota 8 pra bia na prova da 2201", i: escola.notas}
+- {f: "mostra as notas da 2201", i: escola.notas}
+- {f: "abre o boletim da turma 2101", i: escola.notas}
+
+# ---------------------------------------------------------------- conversa
+- {f: "oi jarvis", i: conversa.saudacao}
+- {f: "boa tarde", i: conversa.saudacao}
+- {f: "e aí tudo bem", i: conversa.saudacao}
+- {f: "valeu jarvis", i: conversa.agradecimento}
+- {f: "muito obrigado", i: conversa.agradecimento}
+- {f: "tchau", i: conversa.despedida}
+- {f: "pode dormir", i: conversa.despedida}
+- {f: "que horas são", i: conversa.hora}
+- {f: "me diz as horas", i: conversa.hora}
+- {f: "que dia é hoje", i: conversa.data}
+- {f: "qual é a data de hoje", i: conversa.data}
+- {f: "o que você sabe fazer", i: conversa.ajuda}
+- {f: "quais são os comandos", i: conversa.ajuda}
+- {f: "quem é você", i: conversa.identidade}
+- {f: "quando eu falar modo prova quero dizer abre o classroom", i: sistema.aprender}
+
+# ---------------------------------------------------------------- não-comandos
+- {f: "ontem eu fui no mercado e estava tudo caro", i: null}
+- {f: "a reunião foi bem longa né", i: null}
+- {f: "meu filho adora futebol", i: null}
+- {f: "hum hum é isso aí", i: null}
+- {f: "a tarde estava ensolarada", i: null}
+
+# ---------------------------------------------------------------- casos análogos às lacunas do conjunto cego
+- {f: "cadê a planilha de frequência", i: arquivo.procurar, s: {consulta: frequência}}
+- {f: "kd o pdf da prova", i: arquivo.procurar, s: {consulta: prova}}
+- {f: "bota na lista de pendências ligar pro dentista", i: tarefa.criar, s: {titulo: dentista}}
+- {f: "adiciona nas minhas tarefas revisar o planejamento", i: tarefa.criar, s: {titulo: revisar o planejamento}}
+- {f: "eu preciso pagar o aluguel amanhã", i: tarefa.criar, s: {titulo: aluguel}}
+- {f: "preciso levar o carro na oficina", i: tarefa.criar, s: {titulo: oficina}}
+- {f: "preciso abrir o chrome", i: app.abrir, s: {app: chrome}}
+- {f: "tenho que ver minha agenda de amanhã", i: agenda.consultar}
+- {f: "quais pendências estão abertas", i: tarefa.listar}
+- {f: "quais tarefas eu tenho pra fazer", i: tarefa.listar}
+- {f: "me atualiza jarvis", i: briefing.diario}
+- {f: "me dá um resumo do dia", i: briefing.diario}

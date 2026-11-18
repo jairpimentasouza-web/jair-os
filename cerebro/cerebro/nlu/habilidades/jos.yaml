@@ -1,0 +1,240 @@
+# Habilidades do Jair OS (orquestrador, tarefas, memória, alunos, finanças).
+# Executadas pelo conector MCP do JOS — as mesmas ferramentas jair_os_*.
+
+- id: tarefa.criar
+  descricao: Criar uma tarefa no JOS
+  risco: R2
+  padroes:
+    - "{v:criar|anotar} [{art}] [uma|nova|outra] (tarefa|pendencia|to do|todo|afazer) [nova] [{prep}|para|pra|de] [mim] [de|para|pra] {titulo}"
+    - "{v:criar|anotar} {titulo} (na|nas|para as|pra|nas minhas|na minha) (tarefas|lista de tarefas|pendencias|lista|to do)"
+    - "(tenho que|tenho de|preciso de|preciso|eu preciso|eu preciso de|eu tenho que|nao posso esquecer de|nao posso me esquecer de) {titulo}"
+    - "{v:criar|anotar} (na|nas|para as|nas minhas|na minha|em) (lista de tarefas|tarefas|lista de pendencias|pendencias|to do|lista) [{prep}|de|que] {titulo}"
+  exemplos: [cria uma tarefa de corrigir as provas da 2101, adiciona na lista ligar para o banco, anota uma tarefa para amanha revisar a lista de fisica, tenho que pagar a conta de luz sexta, cria tarefa urgente mandar o planejamento]
+  slots:
+    titulo: {tipo: texto, obrigatorio: true, pergunta: "Qual é a tarefa?"}
+    quando: {tipo: tempo, fonte: frase}
+  acao:
+    construtor: tarefa_criar
+  respostas: ["Tarefa criada: {titulo}.", "Anotei a tarefa {titulo}."]
+
+- id: tarefa.listar
+  descricao: Listar as tarefas abertas do JOS
+  risco: R0
+  padroes:
+    - "{v:mostrar|pesquisar} [{art}] [minhas|as minhas] (tarefas|pendencias|lista de tarefas|afazeres|to do|todo) [abertas|pendentes|em aberto|atrasadas|de hoje|da semana|importantes|urgentes] [{prep}] [{consulta}]"
+    - "[{qual}] [sao] [{art}] [minhas] (tarefas|pendencias) [que] [estao|eu tenho|tenho|tem] [abertas|pendentes|atrasadas|em aberto|de hoje|para hoje|da semana|para fazer]"
+    - "o que (eu tenho|tenho|falta|ainda falta|ainda tenho) (que|para|pra|de) fazer [hoje|essa semana|amanha]"
+    - "(tenho|tem) [alguma] (tarefa|pendencia|coisa) (pendente|aberta|atrasada|para fazer)"
+  exemplos: [mostra minhas tarefas, quais sao as pendencias, o que eu tenho que fazer hoje, lista as tarefas atrasadas, tem alguma tarefa pendente]
+  slots:
+    consulta: {tipo: consulta}
+  acao:
+    construtor: tarefa_listar
+  respostas: ["Consultando suas tarefas.", "Vou ver suas pendências."]
+
+- id: tarefa.concluir
+  descricao: Marcar uma tarefa como concluída
+  risco: R2
+  padroes:
+    - "{v:concluir} [{art}] (tarefa|pendencia) [{prep}] {consulta}"
+    - "(marca|marque|coloca|poe|bota) [{art}] (tarefa|pendencia) [{prep}] {consulta} como (feita|feito|concluida|concluido|resolvida|resolvido|pronta|pronto)"
+    - "(ja fiz|ja terminei|ja resolvi|ja conclui|ja mandei|ja paguei|ja liguei|ja enviei|terminei|conclui|resolvi) [a tarefa|a pendencia] [{prep}] {consulta}"
+  exemplos: [conclui a tarefa de corrigir as provas, marca a tarefa ligar para o banco como feita, ja paguei a conta de luz, terminei a tarefa do planejamento]
+  slots:
+    consulta: {tipo: consulta, obrigatorio: true, pergunta: "Qual tarefa?"}
+  acao:
+    construtor: tarefa_concluir
+  respostas: ["Procurando a tarefa {consulta}."]
+
+- id: lembrete.criar
+  descricao: Criar um lembrete (avisa na hora e registra no JOS)
+  risco: R2
+  padroes:
+    - "{v:lembrar} [{art}] [de|para|do|da|dos|das] {texto}"
+    - "{v:criar} [um|uma] [novo] (lembrete|alarme|alerta|aviso) [{prep}|para|pra|de|que] {texto}"
+    - "nao (me deixa|deixa eu|me deixe|deixe eu) esquecer [{prep}|de|que] {texto}"
+  exemplos: [me lembra de ligar para a coordenacao amanha as 3 da tarde, me avisa daqui a 20 minutos para tirar o bolo, cria um lembrete de pagar o boleto sexta, nao me deixa esquecer da reuniao de pais]
+  slots:
+    texto: {tipo: texto, obrigatorio: true, pergunta: "Lembrar de quê?"}
+    quando: {tipo: tempo, fonte: frase, obrigatorio: true, pergunta: "Quando eu te lembro?"}
+  acao:
+    construtor: lembrete_criar
+  respostas: ["Combinado, vou te lembrar de {texto} {quando.desc}.", "Lembrete criado para {quando.desc}: {texto}."]
+
+- id: memoria.salvar
+  descricao: Guardar um fato ou decisão na memória do JOS
+  risco: R2
+  padroes:
+    - "(lembra que|lembre que|guarda que|anota que|registra que|grava que|salva que|toma nota que|nao esquece que|fica sabendo que|memoriza que|decora que|saiba que|lembra disso|guarda isso) [:] {texto}"
+    - "{v:anotar} [{prep}] (memoria|minhas anotacoes|anotacoes|jos|sistema) [que|:] {texto}"
+    - "{v:anotar} [isso|ai] [:] {texto}"
+  exemplos: [lembra que a prova da 2101 foi adiada para dia 25, anota que o rafael prefere aula as tercas, guarda que a senha do wifi da escola muda toda segunda, anota ai a reuniao de pais sera online]
+  slots:
+    texto: {tipo: texto, obrigatorio: true, pergunta: "O que eu guardo?"}
+  acao:
+    construtor: memoria_salvar
+  respostas: ["Guardado na memória do JOS.", "Anotado: {texto}."]
+
+- id: memoria.buscar
+  descricao: Consultar o que o JOS sabe (memória e base de conhecimento)
+  risco: R0
+  padroes:
+    - "o que (voce sabe|eu te falei|eu disse|eu anotei|tem anotado|esta anotado|ta anotado|voce lembra|o jos sabe) (sobre|de|do|da|dos|das|a respeito de) {consulta}"
+    - "{v:pesquisar|mostrar} (na memoria|nas anotacoes|no jos|no jair os|na base|na base de conhecimento|no conhecimento|no rag) [sobre|por|o|a] {consulta}"
+    - "voce (lembra|se lembra) (de|do|da|que) {consulta}"
+  exemplos: [o que voce sabe sobre a escola aurora, procura na memoria o horario do rafael, o que eu anotei sobre a reuniao, voce lembra do prazo das notas]
+  slots:
+    consulta: {tipo: consulta, obrigatorio: true, pergunta: "Sobre o quê?"}
+  acao:
+    construtor: memoria_buscar
+  respostas: ["Consultando a memória do JOS sobre {consulta}."]
+
+- id: aula.registrar
+  descricao: Registrar uma aula dada a um aluno (pós-aula por voz)
+  risco: R2
+  padroes:
+    - "(acabou|terminou|acabei|terminei|finalizei|encerrei|dei) [a] aula [{prep}|com] [{art}] [aluno|aluna] {aluno} [hoje] [e] [:] [{resumo}]"
+    - "{v:registrar_aula|anotar} [a] aula [{prep}|com] [{art}] [aluno|aluna] {aluno} [:] [{resumo}]"
+    - "(na aula de hoje|hoje na aula|na aula) [{prep}|com] [{art}] {aluno} [:] {resumo}"
+    - "[{art}] [aluno|aluna] {aluno} (melhorou|evoluiu|ainda esta errando|ainda erra|esta errando|esta com dificuldade|teve dificuldade|foi bem|foi mal|mandou bem|entendeu|nao entendeu|aprendeu|acertou|errou|travou) {resumo:resto}"
+  exemplos: [acabou a aula do rafael, ele melhorou em vetores mas ainda erra sinal, registra a aula com a bia sobre leis de newton, na aula de hoje com o rafael vimos queda livre, a bia ainda esta errando conversao de unidades]
+  slots:
+    aluno: {tipo: aluno, obrigatorio: true, pergunta: "De qual aluno?"}
+    resumo: {tipo: texto, fonte_alternativa: frase}
+  acao:
+    construtor: aula_registrar
+  respostas: ["Aula de {aluno.nome} registrada.", "Registrei a aula de {aluno.nome}."]
+
+- id: aluno.consultar
+  descricao: Ver a ficha e a evolução de um aluno
+  risco: R0
+  padroes:
+    - "{v:mostrar|pesquisar|abrir} [{art}] [ficha|perfil|situacao|evolucao|progresso|historico|dados|informacoes|resumo|desempenho|dificuldades] [{prep}] [{art}] [aluno|aluna] {aluno}"
+    - "como (esta|ta|anda|vai|foi) [{art}] [aluno|aluna] {aluno} [nas aulas|em fisica|em matematica|na escola]"
+    - "(qual|quais) [e|sao] [{art}] (dificuldades|dificuldade|pontos fracos|evolucao|proxima aula|tarefa) [{prep}] [{art}] {aluno}"
+  exemplos: [mostra a ficha do rafael, como esta a bia, qual e a dificuldade do rafael, ve a evolucao da beatriz]
+  slots:
+    aluno: {tipo: aluno, obrigatorio: true, pergunta: "Qual aluno?"}
+  acao:
+    construtor: aluno_consultar
+  respostas: ["Abrindo a ficha de {aluno.nome}."]
+
+- id: material.produzir
+  descricao: Pedir ao JOS um material didático (lista, prova, revisão, mapa mental...)
+  risco: R2
+  padroes:
+    - "{v:criar|preparar} [{art}] [um|uma|uns|umas] [nova|novo] {material} {detalhes:resto}"
+    - "{v:criar|preparar} [{art}] {quantidade:num} (questoes|exercicios|problemas|perguntas) {detalhes:resto}"
+    - "{v:criar|preparar} [{art}] [um|uma] {material}"
+  exemplos: [cria uma lista de exercicios de leis de newton, prepara uma prova de fisica para a 2101, faz um mapa mental de termodinamica, monta 15 questoes de cinematica nivel uerj, gera uma revisao para a av2 de matematica]
+  slots:
+    material: {tipo: material}
+    quantidade: {tipo: numero}
+    detalhes: {tipo: texto}
+  acao:
+    construtor: material_produzir
+  respostas: ["Enviando o pedido ao JOS.", "Vou encaminhar para a produção didática do JOS."]
+
+- id: jos.rotear
+  descricao: Encaminhar um pedido livre ao orquestrador do JOS
+  risco: R2
+  padroes:
+    - "(cuida disso|cuide disso|resolve isso|resolva isso|cuida de|cuide de|resolve para mim|executa isso|toca isso) [:] {pedido}"
+    - "{v:enviar} [isso] (para o|ao|pro) (jos|jair os|orquestrador|sistema|cerebro) [:] [que] {pedido}"
+    - "(pede|pede para o|pede pro|fala para o|fala pro|avisa o|manda o) (jos|jair os|orquestrador) [:] [que|para|pra] {pedido}"
+    - "(jos|jair os|orquestrador) [:] {pedido}"
+  exemplos: [cuida disso organizar meu drive pessoal, manda pro jos preparar minha semana, pede pro orquestrador analisar meu email]
+  slots:
+    pedido: {tipo: texto, obrigatorio: true, pergunta: "O que eu peço ao JOS?"}
+  acao:
+    construtor: jos_rotear
+  respostas: ["Encaminhando ao orquestrador do JOS."]
+
+- id: briefing.diario
+  descricao: Resumo do dia (tarefas, prazos e alertas do JOS)
+  risco: R0
+  padroes:
+    - "(bom dia|da o briefing|briefing|briefing do dia|resumo do dia|resumo de hoje|panorama do dia|atualiza|poe a par|poe a par do dia|status do dia|como esta meu dia|como ta meu dia|o que tem para hoje|meu dia|como vai ser meu dia|o que espera hoje|o que me espera hoje|da um resumo do dia) [jarvis|jair]"
+  exemplos: [bom dia, me da o briefing, como esta meu dia, o que tem para hoje, me atualiza]
+  slots: {}
+  acao:
+    construtor: briefing
+  respostas: ["Um instante, montando seu briefing."]
+
+- id: fechamento.diario
+  descricao: Fechamento do dia no JOS
+  risco: R2
+  padroes:
+    - "(fecha o dia|fechamento do dia|fechamento diario|encerra o dia|encerrar o dia|fechar o dia|como foi o dia|como foi meu dia|resumo do fim do dia)"
+  exemplos: [fecha o dia, fechamento do dia, como foi meu dia]
+  slots: {}
+  acao:
+    construtor: fechamento
+  respostas: ["Fazendo o fechamento do dia."]
+
+- id: financeiro.registrar
+  descricao: Registrar um gasto ou receita no JOS
+  risco: R2
+  padroes:
+    - "(gastei|paguei|comprei|recebi|ganhei|entrou|saiu|transferi|fiz um pix de|mandei um pix de|depositei|cobrei) {valor:num} [reais|real|conto|contos|pila|r$] [{prep}|com|em|de|no|na|pelo|pela|para] [{descricao}]"
+    - "{v:anotar|criar} [um|uma] (gasto|despesa|receita|pagamento|entrada|saida|compra) [de] {valor:num} [reais|real] [{prep}|com|de|em|no|na] [{descricao}]"
+  exemplos: [gastei 50 reais de gasolina, recebi 200 da aula do rafael, paguei 89.90 na conta de internet, registra uma despesa de 30 reais com lanche]
+  slots:
+    valor: {tipo: numero, obrigatorio: true, pergunta: "Qual o valor?"}
+    descricao: {tipo: texto}
+  acao:
+    construtor: financeiro_registrar
+  respostas: ["Registrando {valor} reais.", "Anotado no financeiro."]
+
+- id: sistema.status
+  descricao: Saúde operacional do JOS (dispositivos, alertas, filas)
+  risco: R0
+  padroes:
+    - "(status|estado|saude|situacao) (do|da) (jos|jair os|sistema|orquestrador|cerebro|servidor)"
+    - "como (esta|ta|anda) [{art}] (jos|jair os|sistema|orquestrador)"
+    - "[{art}] (jos|jair os|sistema) (esta|ta) (funcionando|ok|online|no ar|de pe|vivo)"
+    - "(tem|ha|existe) [algum] (alerta|alertas|problema|erro) [no jos|no sistema]"
+  exemplos: [status do jos, como esta o sistema, o jos esta funcionando, tem algum alerta]
+  slots: {}
+  acao:
+    construtor: status_jos
+  respostas: ["Verificando o JOS."]
+
+- id: calculo.media
+  descricao: Calcular a média de notas ou valores
+  risco: R0
+  padroes:
+    - "{v:calcular|mostrar} [{art}] media [aritmetica|simples|ponderada] [{prep}|entre|das notas|dos valores|de] {numeros}"
+    - "media [{prep}|entre|das notas|dos valores|de] {numeros}"
+    - "{v:calcular} [{art}] media"
+  exemplos: [calcula a media de 7 8 e 9, media entre 6.5 e 8, tira a media das notas 5 7 e 10]
+  slots:
+    numeros: {tipo: numeros, fonte: frase, obrigatorio: true, pergunta: "Quais são os valores?"}
+  acao:
+    construtor: calculo_media
+  respostas: ["Calculando."]
+
+- id: calculo.nota_necessaria
+  descricao: Quanto falta tirar para atingir uma média
+  risco: R0
+  padroes:
+    - "quanto [que] [{art}] [aluno|aluna|ele|ela|eu|voce] (preciso|precisa|tem que|tenho que|deve|devo|falta|faltaria) [tirar|ter|fazer|para] {detalhe:resto}"
+    - "(qual|que) nota [{art}] [aluno|aluna|ele|ela|eu] (preciso|precisa|tem que|tenho que) [tirar] {detalhe:resto}"
+  exemplos: [quanto preciso tirar para ficar com media 6 se tirei 4 e 5, quanto o aluno precisa tirar pra passar com 7 tendo 6 e 5.5, qual nota preciso tirar para fechar com 6 tirando 4]
+  slots:
+    detalhe: {tipo: texto}
+  acao:
+    construtor: calculo_nota_necessaria
+  respostas: ["Calculando."]
+
+- id: calculo.conta
+  descricao: Fazer uma conta (soma, subtração, multiplicação, divisão, porcentagem, potência)
+  risco: R0
+  padroes:
+    - "(quanto e|quanto da|quanto fica|quanto que e|quanto que da|calcula|calcule|faz a conta|faz a conta de|qual e o resultado de|resultado de|qual o resultado de) {expressao}"
+  exemplos: [quanto e 25 vezes 4, calcula 15 por cento de 80, quanto da 1200 dividido por 12, quanto e 2 elevado a 10, faz a conta de 3.5 mais 2.25]
+  slots:
+    expressao: {tipo: texto, obrigatorio: true}
+  acao:
+    construtor: calculo_conta
+  respostas: ["Fazendo a conta."]

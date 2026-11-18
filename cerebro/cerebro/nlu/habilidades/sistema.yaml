@@ -1,0 +1,282 @@
+# Habilidades do computador (macOS via executor do JOS; Windows quando houver).
+# risco: R0 leitura/abrir · R1 mudança local reversível · R2 escrita interna no JOS
+#        R3 ação externa (exige confirmação falada) · R4 destrutiva (confirmação forte)
+
+- id: app.abrir
+  descricao: Abrir um aplicativo do computador
+  risco: R0
+  padroes:
+    - "{v:abrir|ir|ligar} [{prep}] [{art}] [app|aplicativo|programa|o app|o aplicativo|o programa] [{prep}] [{art}] {app}"
+    - "{app} [{v:abrir}]"
+  exemplos: [abre o chrome, inicia o finder, abre o word, abre o aplicativo do excel, roda o vscode, abre o zap, quero usar o canva, abre o terminal pra mim]
+  slots:
+    app: {tipo: app, obrigatorio: true, pergunta: "Qual aplicativo você quer abrir?"}
+  acao:
+    construtor: abrir_app
+  respostas: ["Abrindo {app.nome}.", "Certo, abrindo {app.nome}.", "{app.nome} já está abrindo."]
+
+- id: app.fechar
+  descricao: Fechar um aplicativo aberto
+  risco: R1
+  padroes:
+    - "{v:fechar} [{prep}] [{art}] [app|aplicativo|programa|janela] [{prep}] [{art}] {app}"
+  exemplos: [fecha o chrome, fecha ele, encerra o word, sai do zoom, fecha o whatsapp, mata o terminal]
+  slots:
+    app: {tipo: app, obrigatorio: true, pergunta: "Qual aplicativo eu fecho?"}
+  acao:
+    executor: desktop
+    passos:
+      - {action: ui_focus, payload: {app: "{app.mac_app}"}}
+      - {action: hotkey, payload: {keys: [command, q]}}
+  respostas: ["Fechando {app.nome}.", "Certo, encerrando {app.nome}."]
+
+- id: volume.definir
+  descricao: Ajustar o volume para um nível exato
+  risco: R1
+  padroes:
+    - "[{v:mudar}] [{art}] (volume|som|audio) [{prep}] [em|para|no|pro|a] {nivel:num} [%|porcento|por cento|pontos]"
+    - "{v:aumentar|diminuir} [{art}] (volume|som|audio) (para|ate|a|pro) {nivel:num} [%|porcento|por cento]"
+    - "(volume|som) [no|em|para] {nivel:num} [%|porcento|por cento]"
+  exemplos: [volume 30, coloca o volume em 50, deixa o som no 20, muda o volume pra 80 por cento, ajusta o volume para 10]
+  slots:
+    nivel: {tipo: nivel, obrigatorio: true, pergunta: "Em quanto deixo o volume, de 0 a 100?"}
+  acao:
+    executor: desktop
+    passos: [{action: system_volume, payload: {level: "{nivel}"}}]
+  respostas: ["Volume em {nivel} por cento.", "Pronto, volume em {nivel}."]
+
+- id: volume.aumentar
+  descricao: Aumentar o volume
+  risco: R1
+  padroes:
+    - "{v:aumentar} [{art}] [volume|som|audio|musica] [um pouco|um pouquinho|mais|bastante|tudo]"
+    - "(volume|som) (mais alto|mais forte|no talo|no maximo|para cima|pra cima)"
+    - "{v:aumentar} [{art}] (volume|som|audio) [em] {delta:num} [%|porcento|por cento|pontos]"
+  exemplos: [aumenta o volume, sobe o som, mais alto, aumenta um pouco, volume mais alto, aumenta o volume em 20]
+  slots:
+    delta: {tipo: numero, padrao: 10}
+  acao:
+    executor: desktop
+    passos: [{action: system_volume, payload: {delta: "{delta}"}}]
+  respostas: ["Aumentando o volume.", "Subindo o som."]
+
+- id: volume.diminuir
+  descricao: Diminuir o volume
+  risco: R1
+  padroes:
+    - "{v:diminuir} [{art}] [volume|som|audio|musica] [um pouco|um pouquinho|mais|bastante]"
+    - "(volume|som) (mais baixo|mais fraco|para baixo|pra baixo|baixinho)"
+    - "{v:diminuir} [{art}] (volume|som|audio) [em] {delta:num} [%|porcento|por cento|pontos]"
+  exemplos: [abaixa o volume, baixa o som, mais baixo, diminui um pouco, abaixa o volume em 20]
+  slots:
+    delta: {tipo: numero, padrao: 10}
+  acao:
+    construtor: volume_diminuir
+  respostas: ["Diminuindo o volume.", "Baixando o som."]
+
+- id: volume.mudo
+  descricao: Silenciar o áudio
+  risco: R1
+  padroes:
+    - "{v:silenciar} [{art}] [som|audio|volume|computador|mac|tudo]"
+    - "(tira|corta|desliga) [{art}] (som|audio)"
+    - "(deixa|coloca|poe|bota) [{prep}] (mudo|silencioso|sem som)"
+  exemplos: [muta, silencia o computador, tira o som, deixa no mudo, corta o som]
+  slots: {}
+  acao:
+    executor: desktop
+    passos: [{action: system_volume, payload: {mute: true}}]
+  respostas: ["Áudio silenciado.", "Pronto, no mudo."]
+
+- id: volume.desmutar
+  descricao: Tirar do mudo
+  risco: R1
+  padroes:
+    - "(tira|tire|sai) [{prep}] (mudo|silencioso)"
+    - "(volta|devolve|liga|ativa|religa) [{art}] (som|audio)"
+    - "(desmuta|desmutar|desmute|desmutar o som|desmuta o som)"
+  exemplos: [tira do mudo, volta o som, liga o som, desmuta]
+  slots: {}
+  acao:
+    executor: desktop
+    passos: [{action: system_volume, payload: {mute: false}}]
+  respostas: ["Som de volta.", "Tirei do mudo."]
+
+- id: ajustes.abrir
+  descricao: Abrir um painel dos Ajustes do Sistema (Wi-Fi, Bluetooth, som, tela...)
+  risco: R0
+  padroes:
+    - "{v:abrir|ir|mostrar} [{prep}] [{art}] (ajustes|ajuste|configuracoes|configuracao|preferencias|painel|opcoes) [{prep}] [{art}] {ajuste}"
+    - "{v:abrir|mudar|ligar|desligar} [{prep}] [{art}] {ajuste}"
+    - "{v:mudar} [{art}] (configuracao|configuracoes|ajuste|ajustes) [{prep}] [{art}] {ajuste}"
+  exemplos: [abre os ajustes de wifi, configura o bluetooth, abre as configuracoes de som, liga o bluetooth, abre a configuracao da tela, desliga o wifi]
+  slots:
+    ajuste: {tipo: ajuste, obrigatorio: true, pergunta: "Qual ajuste? Wi-Fi, Bluetooth, som, tela, teclado...?"}
+  acao:
+    executor: desktop
+    passos: [{action: system_settings, payload: {pane: "{ajuste.id}"}}]
+  respostas: ["Abrindo os ajustes de {ajuste.nome}.", "Certo, ajustes de {ajuste.nome}."]
+
+- id: tela.capturar
+  descricao: Tirar um print (captura de tela)
+  risco: R0
+  padroes:
+    - "{v:capturar} [{art}] [um|uma] (print|screenshot|captura|foto|imagem) [{prep}] [{art}] (tela|monitor|desktop)"
+    - "{v:capturar} [{art}] [um|uma] (print|screenshot|printscreen|print screen)"
+    - "(print|screenshot) [{prep}] [tela]"
+  exemplos: [tira um print, faz um print da tela, captura a tela, screenshot, printa a tela, tira uma foto da tela]
+  slots: {}
+  acao:
+    executor: desktop
+    passos: [{action: screenshot, payload: {}}]
+  respostas: ["Capturando a tela.", "Print feito."]
+
+- id: camera.foto
+  descricao: Tirar uma foto com a câmera do computador
+  risco: R1
+  padroes:
+    - "{v:capturar} [{art}] [uma] (foto|selfie|retrato|fotografia) [minha|de mim|com a camera|pela camera|na camera|da camera|agora]"
+    - "{v:capturar} [{art}] (foto|selfie) [{prep}] (camera|webcam)"
+  exemplos: [tira uma foto, tira uma selfie, bate uma foto minha, tira foto pela camera]
+  slots: {}
+  acao:
+    executor: desktop
+    passos: [{action: camera_photo, payload: {}}]
+  respostas: ["Abrindo a câmera. Sorria!", "Preparando a foto."]
+
+- id: sistema.recurso
+  descricao: Ver disco, memória, processador, processos ou janelas abertas
+  risco: R0
+  padroes:
+    - "{v:mostrar|pesquisar|calcular} [{prep}] [{art}] [uso|estado|situacao|status|consumo|espaco|quantidade|lista] [livre|disponivel|usado|ocupado] [{prep}] [{art}] {recurso} [{prep}] [{art}] [computador|mac|imac|pc|sistema|maquina]"
+    - "[{qual}] [e|esta|ta|sobrou|resta|tem] [{art}] [uso|estado|situacao|status|consumo|espaco|quantidade] [livre|disponivel|usado|ocupado|sobrando] [{prep}] [{art}] {recurso} [{prep}] [{art}] [computador|mac|imac|pc|sistema|maquina]"
+    - "quanto [de] (espaco|memoria) [livre|disponivel] [tem|sobrou|resta|ainda tem] [{prep}] [{art}] [{recurso}] [{prep}] [{art}] [computador|mac|imac|pc]"
+    - "(processos|janelas|programas|aplicativos|apps) (abertos|abertas|rodando|em execucao|ativos)"
+  exemplos: [qual e o espaco livre no disco, como esta a memoria, mostra os processos, quanto de espaco tem no mac, quais janelas estao abertas, como esta o uso de cpu, ve o espaco do ssd]
+  slots:
+    recurso: {tipo: recurso, padrao: disco}
+  acao:
+    construtor: recurso_sistema
+  respostas: ["Verificando {recurso.id}.", "Um instante, conferindo {recurso.id}."]
+
+- id: sistema.diagnostico
+  descricao: Diagnóstico rápido de saúde do computador
+  risco: R0
+  padroes:
+    - "{v:mostrar|criar|pesquisar} [{art}] [um|uma] (diagnostico|checkup|check up|verificacao|varredura|analise|vistoria) [rapido|rapida|completo|completa|geral] [{prep}] [{art}] [computador|mac|imac|pc|sistema|maquina|saude]"
+    - "(como|como que) (esta|ta|anda|vai) [{art}] [saude do] (computador|mac|imac|pc|maquina)"
+    - "[{art}] (computador|mac|imac|pc|maquina|sistema) (esta|ta|anda|fica) (lento|travando|pesado|devagar|esquisito|estranho|ruim)"
+  exemplos: [faz um diagnostico do computador, como esta o mac, o computador esta lento, faz um checkup rapido, verifica a saude do imac]
+  slots: {}
+  acao:
+    executor: desktop
+    passos: [{action: jair_tech_quick, payload: {}}]
+  respostas: ["Fazendo um diagnóstico rápido.", "Vou checar a saúde do computador."]
+
+- id: pasta.abrir
+  descricao: Abrir uma pasta (Downloads, Documentos, Área de Trabalho...)
+  risco: R0
+  padroes:
+    - "{v:abrir|ir|mostrar} [{prep}] [{art}] [pasta|diretorio] [{prep}] [{art}] {pasta}"
+  exemplos: [abre os downloads, abre a pasta de documentos, mostra a area de trabalho, vai na pasta imagens]
+  slots:
+    pasta: {tipo: pasta, obrigatorio: true, pergunta: "Qual pasta?"}
+  acao:
+    executor: desktop
+    passos: [{action: open_folder, payload: {path: "{pasta.caminho}"}}]
+  respostas: ["Abrindo {pasta.nome}.", "Certo, abrindo a pasta {pasta.nome}."]
+
+- id: arquivo.procurar
+  descricao: Procurar arquivos no computador
+  risco: R0
+  padroes:
+    - "{v:pesquisar} [{art}] [um|uma] (arquivo|arquivos|documento|documentos|pdf|pdfs|planilha|planilhas|apresentacao|apresentacoes|foto|fotos|imagem|imagens|word|docx) [{prep}] [{art}] [chamado|chamada|com nome|com o nome|de nome|que se chama|sobre|com] {consulta}"
+    - "{v:pesquisar} [{prep}] [{art}] (computador|mac|imac|pc|meus arquivos|arquivos) [{prep}] [por|o|a] {consulta}"
+    - "(onde|aonde|cade|kd) [(esta|ta|fica|foi parar|salvei)] [{art}] [arquivo|documento|pdf|planilha|apresentacao] {consulta}"
+  exemplos: [procura o arquivo da prova de fisica, acha o pdf do calendario, busca no computador por lista de exercicios, onde esta a planilha de notas]
+  slots:
+    consulta: {tipo: consulta, obrigatorio: true, pergunta: "Qual arquivo eu procuro?"}
+  acao:
+    construtor: procurar_arquivo
+  respostas: ["Procurando {consulta} no computador.", "Vou buscar {consulta} nos seus arquivos."]
+
+- id: arquivo.abrir
+  descricao: Abrir um arquivo pelo nome
+  risco: R0
+  padroes:
+    - "{v:abrir|mostrar} [{art}] [um|uma] (arquivo|documento|pdf|planilha|apresentacao|word|docx) [{prep}] [{art}] [chamado|chamada|com nome|de nome|que se chama|sobre] {consulta}"
+  exemplos: [abre o arquivo da prova de fisica, abre o pdf do calendario, abre a planilha de notas]
+  slots:
+    consulta: {tipo: consulta, obrigatorio: true, pergunta: "Qual arquivo eu abro?"}
+  acao:
+    construtor: abrir_arquivo
+  respostas: ["Procurando e abrindo {consulta}."]
+
+- id: clipboard.ler
+  descricao: Ler o que está na área de transferência
+  risco: R0
+  padroes:
+    - "{v:mostrar} [{art}] [o que tem|o que esta|o que ta|conteudo] [{prep}] [{art}] (area de transferencia|clipboard|copiado|que eu copiei|ctrl c|control c)"
+    - "o que (eu copiei|esta copiado|ta copiado|tem copiado)"
+  exemplos: [le a area de transferencia, o que eu copiei, mostra o clipboard]
+  slots: {}
+  acao:
+    executor: desktop
+    passos: [{action: clipboard_read, payload: {}}]
+  respostas: ["Lendo a área de transferência."]
+
+- id: tela.bloquear
+  descricao: Bloquear a tela do computador
+  risco: R1
+  padroes:
+    - "{v:bloquear} [{art}] (tela|computador|mac|imac|pc|sessao|maquina)"
+  exemplos: [bloqueia a tela, trava o computador, tranca o mac]
+  slots: {}
+  acao:
+    executor: desktop
+    passos: [{action: hotkey, payload: {keys: [control, command, q]}}]
+  respostas: ["Bloqueando a tela."]
+
+- id: midia.pausar
+  descricao: Pausar a música ou vídeo (YouTube no Chrome)
+  risco: R0
+  padroes:
+    - "{v:pausar} [{art}] (musica|video|som|youtube|reproducao|isso|clipe|playlist)"
+    - "(pausa|pause|da pause|da um pause|pausar)"
+  exemplos: [pausa a musica, para o video, pausa, da um pause]
+  slots: {}
+  acao:
+    executor: desktop
+    passos:
+      - {action: ui_focus, payload: {app: Google Chrome}}
+      - {action: hotkey, payload: {keys: [k]}}
+  respostas: ["Pausado.", "Pausando."]
+
+- id: midia.continuar
+  descricao: Continuar a música ou vídeo
+  risco: R0
+  padroes:
+    - "(continua|continue|retoma|retome|despausa|da play|play|volta a tocar|pode continuar|segue tocando|solta) [{art}] [musica|video|som|clipe]"
+  exemplos: [continua a musica, da play, volta a tocar, despausa o video]
+  slots: {}
+  acao:
+    executor: desktop
+    passos:
+      - {action: ui_focus, payload: {app: Google Chrome}}
+      - {action: hotkey, payload: {keys: [k]}}
+  respostas: ["Continuando.", "Voltando a tocar."]
+
+- id: midia.proxima
+  descricao: Pular para a próxima música ou vídeo
+  risco: R0
+  padroes:
+    - "{v:pular} [{art}] [musica|video|faixa|clipe|essa]"
+    - "(proxima|proximo|a seguinte|o seguinte) [musica|video|faixa|clipe]"
+  exemplos: [proxima musica, pula essa, passa o video, proxima]
+  slots: {}
+  acao:
+    executor: desktop
+    passos:
+      - {action: ui_focus, payload: {app: Google Chrome}}
+      - {action: hotkey, payload: {keys: [shift, n]}}
+  respostas: ["Próxima.", "Pulando."]

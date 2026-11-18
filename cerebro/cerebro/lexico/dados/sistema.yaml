@@ -1,0 +1,75 @@
+# Entidades do sistema operacional: painéis de ajustes, pastas e recursos.
+
+ajustes:
+  network:
+    nome: Rede e Wi-Fi
+    aliases: [wifi, wi fi, wi-fi, uai fai, uaifai, rede, internet, conexao, rede sem fio]
+  bluetooth:
+    nome: Bluetooth
+    aliases: [bluetooth, blutufe, blututh, blu tooth, bluetuth, bluetoothi]
+  sound:
+    nome: Som
+    aliases: [som, audio, áudio, caixa de som, alto falante, saida de som, fone, fone de ouvido]
+  display:
+    nome: Tela e monitor
+    aliases: [tela, monitor, display, brilho, resolucao, video]
+  security:
+    nome: Privacidade e segurança
+    aliases: [seguranca, privacidade, privacidade e seguranca, permissoes]
+  camera_privacy:
+    nome: Privacidade da câmera
+    aliases: [permissao da camera, privacidade da camera, acesso a camera]
+  microphone_privacy:
+    nome: Privacidade do microfone
+    aliases: [permissao do microfone, privacidade do microfone, acesso ao microfone, microfone]
+  keyboard:
+    nome: Teclado
+    aliases: [teclado, keyboard, atalhos de teclado]
+  mouse:
+    nome: Mouse
+    aliases: [mouse, maus, trackpad, cursor]
+  general:
+    nome: Ajustes gerais
+    aliases: [geral, ajustes gerais, sistema]
+
+pastas:
+  downloads:
+    caminho: ~/Downloads
+    aliases: [downloads, download, baixados, pasta de downloads, arquivos baixados, daunloads, dawnloads]
+  documentos:
+    caminho: ~/Documents
+    aliases: [documentos, documents, meus documentos, pasta de documentos]
+  desktop:
+    caminho: ~/Desktop
+    aliases: [area de trabalho, desktop, mesa, tela inicial]
+  imagens:
+    caminho: ~/Pictures
+    aliases: [imagens, fotos do mac, pictures, pasta de imagens, minhas imagens]
+  filmes:
+    caminho: ~/Movies
+    aliases: [filmes, videos, movies, pasta de videos]
+  musicas:
+    caminho: ~/Music
+    aliases: [pasta de musicas, minhas musicas]
+  jairos:
+    caminho: ~/JairOS
+    aliases: [jair os, pasta do jair os, pasta do sistema, jos, jairos]
+  aplicativos:
+    caminho: /Applications
+    aliases: [aplicativos, applications, programas instalados, apps instalados]
+
+recursos:
+  disco:
+    aliases: [disco, ssd, hd, armazenamento, espaco, espaco livre, espaco em disco, memoria de armazenamento]
+  memoria:
+    aliases: [memoria, ram, memoria ram, memoria do computador]
+  cpu:
+    aliases: [processador, cpu, uso de cpu, uso do processador, desempenho, performance, lentidao, travando]
+  bateria:
+    aliases: [bateria, carga, energia]
+  rede:
+    aliases: [rede, internet, conexao, velocidade da internet, ping]
+  processos:
+    aliases: [processos, programas abertos, programas rodando, o que esta rodando, processos rodando, tarefas em execucao]
+  janelas:
+    aliases: [janelas, janelas abertas, apps abertos, aplicativos abertos, o que esta aberto]

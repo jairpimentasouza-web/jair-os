@@ -1,0 +1,74 @@
+# Habilidades de Google Workspace: Agenda, Gmail e Classroom.
+
+- id: agenda.consultar
+  descricao: Ver a agenda de um dia ou da semana
+  risco: R0
+  padroes:
+    - "{v:mostrar|pesquisar|abrir} [{art}] (agenda|compromissos|compromisso|eventos|reunioes|programacao|calendario|horarios) [{prep}] [{quando}]"
+    - "(o que|que|quais compromissos|quais eventos|quais reunioes|quais aulas|qual compromisso) [eu] (tenho|temos|vou ter|terei|tem marcado|tenho marcado) [marcado|agendado|na agenda|no calendario] [{quando}]"
+    - "[{qual}] [e|esta|ta] [{art}] (agenda|programacao|compromissos) [{prep}] [{quando}]"
+    - "tenho [alguma coisa|algo|algum compromisso|compromisso|reuniao|alguma reuniao|aula|evento] [marcado|marcada|agendado|agendada] [{quando}]"
+  exemplos: [o que eu tenho amanha, mostra minha agenda de hoje, quais compromissos tenho sexta, como esta minha agenda essa semana, tenho reuniao amanha, o que tem na agenda segunda que vem]
+  slots:
+    quando: {tipo: tempo, fonte: frase, padrao: hoje}
+  acao:
+    construtor: agenda_consultar
+  respostas: ["Abrindo sua agenda de {quando.desc}.", "Vou conferir sua agenda de {quando.desc}."]
+
+- id: agenda.criar
+  descricao: Criar um evento na agenda (abre o formulário já preenchido para você confirmar)
+  risco: R1
+  padroes:
+    - "{v:agendar} [{art}] [um|uma] [evento|compromisso|horario] [{prep}|para|de|com] {titulo}"
+    - "{v:agendar|criar|anotar} {titulo} (na agenda|no calendario|na minha agenda)"
+    - "{v:criar} [{art}] [um|uma] (evento|compromisso) [{prep}|para|de|com] {titulo}"
+    - "{v:criar} [{art}] [uma] {titulo:resto} (na agenda|no calendario)"
+  exemplos: [marca reuniao com a coordenacao sexta as 3 da tarde, agenda consulta no dentista amanha as 9, poe na agenda aula particular segunda as 18h, cria um evento de reuniao pedagogica dia 25]
+  slots:
+    titulo: {tipo: texto, obrigatorio: true, pergunta: "Qual é o compromisso?"}
+    quando: {tipo: tempo, fonte: frase, obrigatorio: true, pergunta: "Para quando?"}
+  acao:
+    construtor: agenda_criar
+  respostas: ["Abri o evento {titulo} para {quando.desc}; é só salvar.", "Preparei {titulo} na agenda para {quando.desc}."]
+
+- id: gmail.escrever
+  descricao: Escrever um e-mail (abre o rascunho no Gmail para você revisar e enviar)
+  risco: R1
+  padroes:
+    - "{v:enviar|criar|responder} [{art}] [um|uma] (email|emails|mensagem de email|e mail) (para|a|ao) [{art}] {destinatario} [dizendo|falando|que|sobre|com o assunto|assunto|avisando|perguntando|pedindo] [{texto}]"
+    - "{v:enviar} [{art}] [um|uma] (email|e mail) [{prep}] {texto}"
+  exemplos: [manda um email para a coordenacao dizendo que vou atrasar, escreve um email pro rafael sobre a aula de amanha, envia um email para joao@exemplo.com]
+  slots:
+    destinatario: {tipo: pessoa, livre_se_falhar: true}
+    texto: {tipo: texto}
+  acao:
+    construtor: gmail_escrever
+  respostas: ["Abri um rascunho para {destinatario.nome}. Revise e envie.", "Rascunho pronto no Gmail."]
+
+- id: classroom.avisos
+  descricao: Ver os avisos recentes do mural de uma turma no Classroom
+  risco: R0
+  padroes:
+    - "{v:mostrar|pesquisar|abrir} [{art}] (avisos|aviso|mural|postagens|publicacoes|recados|comunicados) [{prep}] [{art}] [turma] [{turma}] [{prep}] [classroom]"
+    - "o que (tem|foi postado|ja postei|eu postei) [{prep}] [{art}] [mural|classroom] [{prep}] [turma] [{turma}]"
+  exemplos: [mostra os avisos da turma 2101, o que tem no mural da 2201, ve as postagens do classroom]
+  slots:
+    turma: {tipo: turma, obrigatorio: true, pergunta: "De qual turma?"}
+  acao:
+    construtor: classroom_avisos
+  respostas: ["Consultando o mural da {turma.nome}."]
+
+- id: classroom.publicar
+  descricao: Publicar um aviso no mural de uma turma (pede confirmação)
+  risco: R3
+  padroes:
+    - "{v:publicar|enviar|criar} [{art}] [um|uma] (aviso|recado|comunicado|mensagem|postagem|lembrete) [no mural] [{prep}|para|pra] [{art}] [turma] {turma} [no classroom] [dizendo|falando|que|com o texto|avisando|:] {texto}"
+    - "{v:publicar|enviar} (no|para o) (mural|classroom) [{prep}] [{art}] [turma] {turma} [dizendo|falando|que|:] {texto}"
+  exemplos: [posta um aviso na turma 2101 dizendo que a prova foi adiada, publica no mural da 2201 que amanha tem revisao, manda um recado pra turma 2101 avisando que a lista ja esta no drive]
+  slots:
+    turma: {tipo: turma, obrigatorio: true, pergunta: "Para qual turma?"}
+    texto: {tipo: texto, obrigatorio: true, pergunta: "Qual é o texto do aviso?"}
+  acao:
+    construtor: classroom_publicar
+  confirmacao: "Vou publicar na {turma.nome}: \"{texto}\". Os alunos vão ver. Confirma?"
+  respostas: ["Publicando na {turma.nome}."]

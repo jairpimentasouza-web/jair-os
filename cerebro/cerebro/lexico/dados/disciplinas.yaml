@@ -1,0 +1,248 @@
+# Disciplinas e conteúdos do trabalho do professor. Servem para (1) reconhecer
+# o assunto em pedidos de material/aula, (2) enviesar o reconhecimento de voz
+# (hotwords do Whisper) e (3) corrigir erros comuns de transcrição.
+
+disciplinas:
+  fisica:
+    nome: Física
+    aliases: [fisica, física, fis, fisica 1, fisica 2, fisica 3, fisica um, fisica dois, fisica tres]
+  matematica:
+    nome: Matemática
+    aliases: [matematica, matemática, mat, matematica 1, matematica 2, matemática basica]
+  quimica:
+    nome: Química
+    aliases: [quimica, química, quimica organica, quimica geral]
+  biologia:
+    nome: Biologia
+    aliases: [biologia, bio]
+  portugues:
+    nome: Português
+    aliases: [portugues, lingua portuguesa, gramatica, redacao]
+  ingles:
+    nome: Inglês
+    aliases: [ingles, lingua inglesa, english]
+  historia:
+    nome: História
+    aliases: [historia]
+  geografia:
+    nome: Geografia
+    aliases: [geografia, geo]
+  filosofia:
+    nome: Filosofia
+    aliases: [filosofia]
+  sociologia:
+    nome: Sociologia
+    aliases: [sociologia]
+  ciencias:
+    nome: Ciências
+    aliases: [ciencias, ciencias da natureza]
+
+topicos:
+  fisica:
+    - cinematica
+    - movimento uniforme
+    - movimento uniformemente variado
+    - mru
+    - mruv
+    - queda livre
+    - lancamento obliquo
+    - lancamento horizontal
+    - movimento circular
+    - vetores
+    - leis de newton
+    - primeira lei de newton
+    - segunda lei de newton
+    - terceira lei de newton
+    - forca de atrito
+    - plano inclinado
+    - dinamica
+    - estatica
+    - equilibrio estatico
+    - torque
+    - momento de uma forca
+    - trabalho e energia
+    - energia cinetica
+    - energia potencial
+    - conservacao de energia
+    - potencia
+    - impulso
+    - quantidade de movimento
+    - colisoes
+    - gravitacao
+    - gravitacao universal
+    - leis de kepler
+    - hidrostatica
+    - pressao
+    - empuxo
+    - principio de arquimedes
+    - principio de pascal
+    - teorema de stevin
+    - termologia
+    - termometria
+    - calorimetria
+    - dilatacao termica
+    - termodinamica
+    - gases ideais
+    - maquinas termicas
+    - ondulatoria
+    - ondas
+    - acustica
+    - som
+    - optica
+    - optica geometrica
+    - espelhos planos
+    - espelhos esfericos
+    - lentes
+    - refracao
+    - reflexao
+    - eletrostatica
+    - carga eletrica
+    - lei de coulomb
+    - campo eletrico
+    - potencial eletrico
+    - eletrodinamica
+    - corrente eletrica
+    - resistores
+    - associacao de resistores
+    - leis de ohm
+    - circuitos eletricos
+    - capacitores
+    - geradores
+    - receptores
+    - magnetismo
+    - campo magnetico
+    - inducao eletromagnetica
+    - lei de faraday
+    - lei de lenz
+    - forca magnetica
+    - aurora boreal
+    - polos magneticos
+    - fisica moderna
+    - relatividade
+    - relatividade geral
+    - efeito fotoeletrico
+    - fisica quantica
+    - radioatividade
+    - analise dimensional
+    - notacao cientifica
+    - unidades de medida
+  matematica:
+    - conjuntos
+    - conjuntos numericos
+    - funcoes
+    - funcao afim
+    - funcao do primeiro grau
+    - funcao quadratica
+    - funcao do segundo grau
+    - inequacoes
+    - inequacao do segundo grau
+    - funcao exponencial
+    - funcao logaritmica
+    - logaritmos
+    - progressao aritmetica
+    - progressao geometrica
+    - pa
+    - pg
+    - trigonometria
+    - triangulo retangulo
+    - lei dos senos
+    - lei dos cossenos
+    - ciclo trigonometrico
+    - matrizes
+    - determinantes
+    - sistemas lineares
+    - analise combinatoria
+    - permutacao
+    - arranjo
+    - combinacao
+    - probabilidade
+    - estatistica
+    - media mediana e moda
+    - geometria plana
+    - areas
+    - geometria espacial
+    - prismas
+    - piramides
+    - cilindro
+    - cone
+    - esfera
+    - geometria analitica
+    - reta
+    - circunferencia
+    - conicas
+    - numeros complexos
+    - polinomios
+    - equacoes polinomiais
+    - razao e proporcao
+    - regra de tres
+    - porcentagem
+    - juros simples
+    - juros compostos
+    - matematica financeira
+    - equacao do primeiro grau
+    - equacao do segundo grau
+    - bhaskara
+    - fracoes
+    - potenciacao
+    - radiciacao
+    - produtos notaveis
+    - fatoracao
+  quimica:
+    - modelos atomicos
+    - tabela periodica
+    - ligacoes quimicas
+    - geometria molecular
+    - polaridade
+    - funcoes inorganicas
+    - acidos e bases
+    - reacoes quimicas
+    - balanceamento
+    - estequiometria
+    - solucoes
+    - concentracao
+    - termoquimica
+    - cinetica quimica
+    - equilibrio quimico
+    - ph
+    - eletroquimica
+    - pilhas
+    - eletrolise
+    - quimica organica
+    - funcoes organicas
+    - isomeria
+    - reacoes organicas
+    - polimeros
+    - radioatividade
+
+materiais:
+  # Tipos de material didático (para pedidos de produção).
+  lista: [lista, lista de exercicios, lista de questoes, exercicios, questoes, bateria de questoes]
+  prova: [prova, avaliacao, av1, av2, av3, teste, simulado, recuperacao, prova de recuperacao]
+  revisao: [revisao, material de revisao, guia de revisao, resumo]
+  mapa_mental: [mapa mental, mapa conceitual, esquema]
+  gabarito: [gabarito, gabarito comentado, resolucao, correcao]
+  aula: [aula, plano de aula, slide de aula, apresentacao de aula, roteiro de aula]
+  material: [material, material didatico, apostila, folha, ficha]
+
+bancas:
+  - enem
+  - uerj
+  - fuvest
+  - unicamp
+  - unesp
+  - ita
+  - ime
+  - afa
+  - efomm
+  - espcex
+  - eear
+  - epcar
+  - colegio naval
+  - escola naval
+  - unifesp
+  - ufrj
+  - uff
+  - puc
+  - mackenzie
+  - vestibular
+  - concurso militar

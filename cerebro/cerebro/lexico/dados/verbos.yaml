@@ -1,0 +1,226 @@
+# Famílias de verbos do Cérebro JOS.
+# Cada família reúne verbos sinônimos; o conjugador gera todas as formas faladas
+# (abre, abra, abrir, "abri", abrindo, abriu, abriria...). Use a grafia com
+# acento/cedilha no infinitivo (ex.: "lançar"), pois ela decide a ortografia.
+# "irregulares" acrescenta formas que a regra não gera; "expressoes" são
+# locuções inteiras que valem pelo verbo ("coloca na tela").
+
+abrir:
+  verbos: [abrir, iniciar, inicializar, executar, rodar, acessar, carregar, entrar, ativar, startar, lançar, puxar, chamar, disparar]
+  irregulares: [vai, va, vamos, bora, sobe, suba, abre ai, roda ai, entra ai]
+  expressoes: [coloca na tela, bota na tela, joga na tela, poe na tela, traz pra tela, traz para a tela, deixa aberto, manda abrir, quero usar, vai para, vai pro, vai pra, vai no, vai na, me leva para, me leva pro, me leva pra, me leva no, me leva na, leva para, leva pro]
+
+fechar:
+  verbos: [fechar, encerrar, finalizar, sair, matar, terminar, minimizar, esconder, ocultar, derrubar]
+  irregulares: [sai, saia, sai do, sai da, fecha ai, mata ai, some com, tira da tela]
+  expressoes: [tira da tela, some com, para de rodar, da um kill, da kill]
+
+tocar:
+  verbos: [tocar, reproduzir, colocar, botar, ouvir, escutar, rolar, soltar, tocar, playar, dar play]
+  irregulares: [poe, ponha, pondo, bota ai, toca ai, solta ai, manda, manda ver, rola, ouve, ouca, quero ouvir, quero escutar, da play, dar play, play, coloca ai, coloca pra tocar, bota pra tocar, poe pra tocar]
+  expressoes: [coloca pra tocar, bota pra tocar, poe pra tocar, deixa tocando, manda tocar, solta o som, solta a musica]
+
+pausar:
+  verbos: [pausar, parar, segurar, congelar, interromper]
+  irregulares: [pausa, para, pause, para ai, pausa ai, da pause, dar pause, da um pause, segura ai]
+  expressoes: [da pause, da um pause, para a musica, para o video, para de tocar]
+
+continuar:
+  verbos: [continuar, retomar, despausar, prosseguir, seguir, voltar]
+  irregulares: [segue, siga, continua, volta a tocar, volta]
+  expressoes: [volta a tocar, pode continuar, segue tocando, tira do pause, despausa]
+
+pular:
+  verbos: [pular, passar, avançar, adiantar, trocar]
+  irregulares: [proxima, proximo, passa, pula, avanca]
+  expressoes: [proxima musica, proximo video, passa essa, pula essa, troca de musica, a seguinte]
+
+aumentar:
+  verbos: [aumentar, subir, levantar, elevar, ampliar, maximizar, intensificar, crescer]
+  irregulares: [sobe, suba, aumenta, aumenta ai, sobe ai, mais alto, mais forte, poe mais alto, bota mais alto, coloca mais alto]
+  expressoes: [mais alto, mais forte, no talo, no maximo, aumenta ai, sobe ai]
+
+diminuir:
+  verbos: [diminuir, baixar, abaixar, reduzir, rebaixar, minimizar, suavizar, atenuar]
+  irregulares: [abaixa, baixa, diminui, mais baixo, mais fraco, baixa ai, abaixa ai, diminui ai]
+  expressoes: [mais baixo, mais fraco, mais devagar, baixinho, bem baixinho]
+
+silenciar:
+  verbos: [silenciar, mutar, emudecer, calar]
+  irregulares: [muta, mute, silencia, cala, cala a boca, fica quieto, fica quieta, silencio]
+  expressoes: [tira o som, corta o som, sem som, deixa mudo, deixa sem som, no mudo, no silencioso, desliga o som]
+
+pesquisar:
+  verbos: [pesquisar, procurar, buscar, achar, encontrar, localizar, googlar, garimpar, caçar, levantar, rastrear, descobrir]
+  irregulares: [acha, ache, procura, busca, pesquisa, encontra, descobre, ve se acha, ve se tem, olha se tem, da um google, da uma olhada, da uma pesquisada, da uma procurada, da uma buscada, joga no google, digita no google]
+  expressoes: [da um google, da uma pesquisada, da uma procurada, da uma buscada, da uma olhada, faz uma busca, faz uma pesquisa, joga no google, ve se acha, ve se tem, olha se tem, tem algum, tem alguma]
+
+mostrar:
+  verbos: [mostrar, exibir, ver, listar, conferir, checar, verificar, consultar, olhar, dizer, falar, contar, informar, ler, apresentar, revisar, relatar, resumir, enumerar]
+  irregulares: [mostra, me mostra, mostre, ve, veja, vê, me diz, diz, diga, me fala, fala, fale, conta, me conta, le, leia, me le, confere, checa, olha, quero ver, quero saber, deixa eu ver, me passa, passa]
+  expressoes: [quero ver, quero saber, deixa eu ver, me passa, me atualiza, me da um resumo, faz um resumo, o que tem, o que que tem, como esta, como ta, como anda, como que ta]
+
+criar:
+  verbos: [criar, fazer, gerar, montar, elaborar, preparar, produzir, escrever, redigir, adicionar, cadastrar, incluir, inserir, abrir, registrar, lançar, bolar, desenvolver, compor, organizar, construir, formular, rascunhar, esboçar]
+  irregulares: [faz, faca, faço, fiz, fazendo, fazer, faria, fara, fazemos, bota, poe, coloca, cria ai, faz ai, monta ai, adiciona, acrescenta, acrescentar, inclui]
+  expressoes: [poe na lista, bota na lista, coloca na lista, adiciona na lista, joga na lista, cria ai, faz ai, monta ai]
+
+enviar:
+  verbos: [enviar, mandar, disparar, encaminhar, despachar, compartilhar, transmitir, remeter, repassar]
+  irregulares: [manda, mande, envia, envie, encaminha, manda ai, dispara]
+  expressoes: [manda pra, manda para, envia pra, envia para, passa pra, passa para, encaminha pra]
+
+agendar:
+  verbos: [agendar, marcar, reservar, programar, bloquear, colocar, botar]
+  irregulares: [marca, agenda, agende, marque, poe na agenda, bota na agenda, coloca na agenda, joga na agenda, anota na agenda]
+  expressoes: [poe na agenda, bota na agenda, coloca na agenda, joga na agenda, anota na agenda, coloca no calendario, poe no calendario, marca no calendario, cria um evento, cria evento, marca um horario]
+
+lembrar:
+  verbos: [lembrar, avisar, alertar, notificar, recordar]
+  irregulares: [lembra, lembre, me lembra, me lembre, me avisa, me avise, avisa, me alerta, me cobra, cobra]
+  expressoes: [nao me deixa esquecer, nao deixa eu esquecer, me cobra, me da um toque, me da um alo, cria um lembrete, cria lembrete, poe um lembrete, bota um lembrete, coloca um lembrete, faz um lembrete]
+
+anotar:
+  verbos: [anotar, registrar, salvar, guardar, gravar, memorizar, arquivar, documentar, armazenar]
+  irregulares: [anota, anote, anota ai, guarda, guarda ai, salva, salva ai, grava, grava ai, registra, memoriza, toma nota, escreve ai]
+  expressoes: [toma nota, escreve ai, anota ai, guarda ai, salva ai, grava ai, guarda isso, lembra disso, lembra que, decora isso, nao esquece que, nao esquece disso, fica sabendo que]
+
+lancar:
+  verbos: [lançar, registrar, colocar, botar, atribuir, inserir, digitar, preencher, dar, computar, marcar, cadastrar]
+  irregulares: [lanca, lance, lanço, poe, ponha, da, de, dei, deu, coloca, bota, marca]
+  expressoes: [poe no sistema, bota no sistema, coloca no sistema, lanca no sistema, sobe no sistema, joga no sistema]
+
+calcular:
+  verbos: [calcular, computar, somar, contar, apurar, tirar, fazer]
+  irregulares: [calcula, calcule, soma, faz a conta, faz as contas, tira a media, quanto da, quanto e, quanto fica]
+  expressoes: [faz a conta, faz as contas, tira a media, faz a media, quanto da, quanto e, quanto fica, quanto preciso, quanto precisa, quanto falta]
+
+capturar:
+  verbos: [tirar, capturar, bater, fazer, registrar, printar, fotografar]
+  irregulares: [tira, tire, bate, printa, captura, fotografa, faz um print, tira um print, da um print]
+  expressoes: [faz um print, tira um print, da um print, tira uma foto, bate uma foto, faz uma foto, tira foto, captura a tela, printa a tela]
+
+bloquear:
+  verbos: [bloquear, travar, trancar, proteger]
+  irregulares: [bloqueia, trava, tranca]
+  expressoes: [bloqueia a tela, trava a tela, tranca o computador, protege a tela]
+
+ligar:
+  verbos: [ligar, ativar, habilitar, acionar, conectar]
+  irregulares: [liga, ativa, habilita, conecta, liga ai, ativa ai]
+  expressoes: [deixa ligado, deixa ativado, poe pra funcionar]
+
+desligar:
+  verbos: [desligar, desativar, desabilitar, desconectar, cortar]
+  irregulares: [desliga, desativa, desabilita, desconecta, corta, desliga ai]
+  expressoes: [deixa desligado, deixa desativado, tira do ar]
+
+apagar:
+  verbos: [apagar, excluir, deletar, remover, eliminar, limpar, descartar, jogar fora, destruir, esvaziar]
+  irregulares: [apaga, exclui, deleta, remove, limpa, joga fora, manda pro lixo]
+  expressoes: [joga fora, manda pro lixo, manda para a lixeira, joga no lixo]
+
+mover:
+  verbos: [mover, transferir, deslocar, levar, mudar]
+  irregulares: [move, mova, leva, muda de lugar]
+  expressoes: [muda de lugar, joga para a pasta, joga pra pasta, manda pra pasta]
+
+copiar:
+  verbos: [copiar, duplicar, clonar, replicar]
+  irregulares: [copia, duplica, faz uma copia]
+  expressoes: [faz uma copia, tira uma copia]
+
+renomear:
+  verbos: [renomear, rebatizar]
+  irregulares: [renomeia, muda o nome, troca o nome]
+  expressoes: [muda o nome, troca o nome, chama de]
+
+organizar:
+  verbos: [organizar, arrumar, ordenar, classificar, separar, agrupar, catalogar, triar]
+  irregulares: [organiza, arruma, ajeita, da um jeito]
+  expressoes: [da um jeito, poe em ordem, coloca em ordem, bota em ordem]
+
+publicar:
+  verbos: [publicar, postar, divulgar, compartilhar, anunciar, avisar, mandar, comunicar]
+  irregulares: [posta, publica, poe no mural, bota no mural, joga no mural]
+  expressoes: [poe no mural, bota no mural, joga no mural, coloca no mural, manda no mural, publica no mural]
+
+responder:
+  verbos: [responder, retornar, replicar, contestar]
+  irregulares: [responde, responda, retorna]
+  expressoes: [da um retorno, manda uma resposta]
+
+concluir:
+  verbos: [concluir, finalizar, terminar, completar, encerrar, fechar, resolver, cumprir, liquidar, realizar]
+  irregulares: [conclui, termina, completa, resolve, ja fiz, ja terminei, terminei, acabei, fiz]
+  expressoes: [marca como feita, marca como feito, marca como concluida, marca como concluido, da baixa, da como feita, risca da lista, tira da lista, ja fiz, ja terminei, ja resolvi, pode fechar]
+
+cancelar:
+  verbos: [cancelar, desmarcar, anular, abortar, desfazer, revogar, suspender]
+  irregulares: [cancela, desmarca, anula, desfaz]
+  expressoes: [deixa pra la, esquece isso, esquece, nao precisa mais, pode cancelar]
+
+ajudar:
+  verbos: [ajudar, auxiliar, socorrer, orientar, explicar, ensinar]
+  irregulares: [ajuda, me ajuda, socorro, me explica, explica]
+  expressoes: [o que voce faz, o que voce sabe fazer, o que voce consegue fazer, quais comandos, quais sao os comandos, como funciona]
+
+repetir:
+  verbos: [repetir, reprisar, redizer]
+  irregulares: [repete, repita, fala de novo, diz de novo, fala outra vez, de novo, outra vez]
+  expressoes: [fala de novo, diz de novo, fala outra vez, o que voce disse, o que voce falou, nao entendi, como e que e, oi]
+
+aprender:
+  verbos: [aprender, memorizar, entender, assimilar, decorar, gravar]
+  irregulares: [aprende, aprenda, entende, decora]
+  expressoes: [quando eu falar, quando eu disser, quando eu pedir, sempre que eu falar, sempre que eu disser, se eu falar, se eu disser]
+
+mudar:
+  verbos: [mudar, trocar, alterar, ajustar, configurar, definir, setar, modificar, regular, atualizar, editar, corrigir, acertar, colocar, deixar, botar]
+  irregulares: [muda, troca, altera, ajusta, configura, define, seta, poe, coloca, deixa, bota, corrige, acerta]
+  expressoes: [deixa em, poe em, coloca em, bota em, ajusta para, ajusta pra, muda para, muda pra]
+
+ir:
+  verbos: [ir, navegar, acessar, visitar, entrar]
+  irregulares: [vai, va, vou, vamos, bora, entra, acessa, navega]
+  expressoes: [me leva para, me leva pra, me leva pro, me leva no, me leva na, vai para, vai pra, vai pro, vai no, vai na]
+
+preparar:
+  verbos: [preparar, planejar, organizar, montar, estruturar, programar, aprontar]
+  irregulares: [prepara, planeja, monta, apronta]
+  expressoes: [deixa pronto, deixa preparado, deixa engatilhado]
+
+traduzir:
+  verbos: [traduzir, verter, converter]
+  irregulares: [traduz, traduza, como se diz, como fala]
+  expressoes: [como se diz, como fala, como e em ingles, como e em espanhol]
+
+resumir:
+  verbos: [resumir, sintetizar, condensar, sumarizar, explicar]
+  irregulares: [resume, resuma, faz um resumo, me da um resumo]
+  expressoes: [faz um resumo, me da um resumo, o resumo de, em resumo]
+
+imprimir:
+  verbos: [imprimir, plotar, printar]
+  irregulares: [imprime, imprima, manda imprimir, manda pra impressora]
+  expressoes: [manda imprimir, manda pra impressora, manda para a impressora, joga na impressora]
+
+transcrever:
+  verbos: [transcrever, ditar, digitar, escrever]
+  irregulares: [transcreve, dita, digita, escreve]
+  expressoes: [escreve o que eu falar, digita o que eu disser, anota o que eu falar]
+
+atualizar:
+  verbos: [atualizar, sincronizar, recarregar, renovar, refrescar, sincronizar]
+  irregulares: [atualiza, sincroniza, recarrega, da um refresh, da f5]
+  expressoes: [da um refresh, da f5, puxa de novo, puxa os dados]
+
+registrar_aula:
+  verbos: [registrar, anotar, lançar, gravar, documentar, salvar, relatar]
+  irregulares: [acabou, terminou, acabei, terminei, dei, finalizei]
+  expressoes: [acabou a aula, terminou a aula, acabei a aula, terminei a aula, dei aula, na aula de hoje, a aula foi, pos aula, pos-aula]
+
+parar:
+  verbos: [parar, cessar, interromper, encerrar, chega]
+  irregulares: [para, pare, chega, basta, stop, para tudo, para com isso]
+  expressoes: [para tudo, para com isso, ja chega, ta bom chega, pode parar]

@@ -1,0 +1,52 @@
+# Léxico LOCAL (privado) — modelo.
+# Copie para ~/.jos-cerebro/local.yaml e preencha com dados reais. Esse arquivo
+# NUNCA deve ir para o Git: ele guarda nomes de alunos, escolas e contatos.
+# O script scripts/sincronizar_local.py gera uma versão a partir do JOS.
+# Todos os nomes abaixo são fictícios.
+
+alunos:
+  rafael_moura:
+    nome: Rafael Moura
+    aliases: [rafael, rafa, rafael moura, o rafa]
+    dados: {serie: 2º ano EM, disciplinas: [Física, Matemática], modalidade: online}
+  beatriz_lima:
+    nome: Beatriz Lima
+    aliases: [beatriz, bia, beatris, a bia]
+    dados: {serie: 3º ano EM, disciplinas: [Física]}
+
+escolas:
+  horizonte:
+    nome: Colégio Horizonte
+    aliases: [horizonte, colegio horizonte, o horizonte]
+    dados:
+      plataforma: activesoft          # activesoft | p4ed | classroom | outra
+      perfil: activesoft-horizonte     # perfil de navegador autenticado do executor
+      url: https://exemplo.activesoft.com.br/
+      # classroom_conta: <conta>       # opcional: conta das ferramentas de Classroom do JOS
+  aurora:
+    nome: Escola Aurora
+    aliases: [aurora, escola aurora]
+    dados: {plataforma: p4ed, url: https://exemplo.p4ed.com/dashboard}
+
+turmas:
+  "2101":
+    nome: Turma 2101
+    aliases: ["2101", turma 2101, primeira serie a]
+    dados: {escola: horizonte, serie: "1", classroom_id: ""}
+  "2201":
+    nome: Turma 2201
+    aliases: ["2201", turma 2201]
+    dados: {escola: horizonte, serie: "2"}
+
+pessoas:
+  coordenacao:
+    nome: Coordenação
+    aliases: [coordenacao, coordenadora, coordenador, a coordenacao]
+    dados: {email: coordenacao@exemplo.com}
+
+# Apps extras instalados só nesta máquina
+apps: {}
+
+# Correções pessoais de reconhecimento de voz (como o Whisper escreve o que você fala)
+correcoes:
+  bia lima: beatriz lima

@@ -1,0 +1,19 @@
+# Dados privados e de execução ficam fora do Git (ficam em ~/.jos-cerebro)
+local.yaml
+aprendido.yaml
+*.local.yaml
+auditoria.jsonl
+nao_entendidos.jsonl
+lembretes.json
+cache/
+modelos/
+*.onnx
+*.wav
+*.aiff
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+*.egg-info/
+build/
+dist/

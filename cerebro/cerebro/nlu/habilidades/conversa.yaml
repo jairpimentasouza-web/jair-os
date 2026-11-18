@@ -1,0 +1,103 @@
+# Conversa e meta-comandos do Jarvis (respondidos localmente).
+
+- id: conversa.saudacao
+  descricao: Cumprimentar
+  risco: R0
+  padroes:
+    - "(oi|ola|oie|opa|e ai|eai|fala|salve|boa tarde|boa noite|hello|hi|alo|tudo bem|tudo bom|como vai|como voce esta|como vai voce|beleza|firmeza|fala ai|e ai tudo bem) [tudo bem|tudo bom|como vai|como voce esta|beleza|tranquilo]"
+  exemplos: [oi, ola tudo bem, boa tarde, e ai beleza, como voce esta]
+  slots: {}
+  acao: {construtor: saudacao}
+  respostas: ["Olá! Em que posso ajudar?", "Oi! Pode falar.", "Tudo ótimo por aqui. O que vamos fazer?"]
+
+- id: conversa.agradecimento
+  descricao: Agradecer
+  risco: R0
+  padroes:
+    - "{e:agradecimento}"
+  exemplos: [obrigado, valeu, muito obrigado, mandou bem]
+  slots: {}
+  acao: {local: nada}
+  respostas: ["Por nada!", "Às ordens.", "Disponha.", "Sempre que precisar."]
+
+- id: conversa.despedida
+  descricao: Despedir-se e voltar a dormir
+  risco: R0
+  padroes:
+    - "(tchau|ate mais|ate logo|ate amanha|falou|fui|vou dormir|ate depois|flw|xau|tchauzinho|pode dormir|vai dormir|descansa|pode descansar|dorme)"
+  exemplos: [tchau, ate amanha, pode dormir, valeu ate mais]
+  slots: {}
+  acao: {local: dormir}
+  respostas: ["Até mais!", "Tchau! Estou por aqui se precisar.", "Até logo."]
+
+- id: conversa.hora
+  descricao: Dizer a hora
+  risco: R0
+  padroes:
+    - "[{qual}] [e] [a] (hora|horas) [e] [agora|certa]"
+    - "que (horas|hora) (sao|e|tem) [agora]"
+    - "(me diz|me fala|me da|diz|fala) [a] (hora|horas)"
+    - "(horas|hora) por favor"
+  exemplos: [que horas sao, me diz a hora, qual e a hora, horas]
+  slots: {}
+  acao: {local: hora}
+  respostas: ["Agora são {hora}."]
+
+- id: conversa.data
+  descricao: Dizer a data de hoje
+  risco: R0
+  padroes:
+    - "(que|qual) dia [e|da semana e|do mes e] [hoje] [e hoje]"
+    - "(qual|que) [e] [a] data [{prep}] [hoje]"
+    - "(em que|que) dia (estamos|nos estamos|a gente esta)"
+    - "hoje e (que|qual) dia [da semana]"
+  exemplos: [que dia e hoje, qual e a data de hoje, em que dia estamos, hoje e que dia da semana]
+  slots: {}
+  acao: {local: data}
+  respostas: ["Hoje é {data}."]
+
+- id: conversa.ajuda
+  descricao: Explicar o que o Jarvis sabe fazer
+  risco: R0
+  padroes:
+    - "(o que|que) [mais] voce (faz|sabe fazer|consegue fazer|pode fazer|sabe)"
+    - "(quais|que) [sao] [os] (comandos|funcoes|habilidades) [voce tem|existem|disponiveis]"
+    - "(ajuda|socorro|help|me ajuda|como (funciona|voce funciona|eu uso|te uso|uso voce))"
+  exemplos: [o que voce sabe fazer, quais sao os comandos, ajuda, como funciona]
+  slots: {}
+  acao: {local: ajuda}
+  respostas: ["Posso abrir apps e sites, tocar música, pesquisar, cuidar da agenda, tarefas, lembretes, memória do JOS, registrar aulas, calcular notas e muito mais. Experimente: \"Jarvis, me lembra amanhã às 3 de ligar para a coordenação\"."]
+
+- id: conversa.identidade
+  descricao: Quem é o Jarvis
+  risco: R0
+  padroes:
+    - "(quem e voce|quem (te|lhe) (criou|fez|programou)|qual [e] [o] seu nome|como voce se chama|voce e quem|o que voce e|quem e o jarvis)"
+  exemplos: [quem e voce, como voce se chama, quem te criou]
+  slots: {}
+  acao: {local: nada}
+  respostas: ["Sou o Jarvis, o cérebro de voz do Jair OS. Entendo o que você fala e coordeno o computador, a agenda e os agentes do JOS."]
+
+- id: sistema.aprender
+  descricao: Ensinar um apelido ("quando eu disser X, quero dizer Y")
+  risco: R1
+  padroes:
+    - "(quando|sempre que|se|toda vez que) eu (falar|disser|pedir|mandar|digo|falo) {frase} (quero dizer|e para|significa|quer dizer|e o mesmo que|e igual a|entende|entenda|faz|faca|voce faz|voce entende) [que] [{art}] {significado}"
+    - "(aprende|aprenda|grava|memoriza) [que] {frase} (significa|quer dizer|e o mesmo que|e igual a|e) {significado}"
+  exemplos: [quando eu falar abre meu email da escola quero dizer abre o gmail, aprende que modo aula significa abre o classroom]
+  slots:
+    frase: {tipo: texto, obrigatorio: true}
+    significado: {tipo: texto, obrigatorio: true}
+  acao: {local: aprender}
+  respostas: ["Aprendido: quando você disser \"{frase}\", vou entender \"{significado}\"."]
+
+- id: sistema.esquecer
+  descricao: Esquecer um apelido aprendido
+  risco: R1
+  padroes:
+    - "(esquece|esqueca|desaprende|apaga|remove) [o] (apelido|comando|atalho) {frase}"
+  exemplos: [esquece o apelido modo aula]
+  slots:
+    frase: {tipo: texto, obrigatorio: true}
+  acao: {local: esquecer}
+  respostas: ["Pronto, esqueci \"{frase}\"."]

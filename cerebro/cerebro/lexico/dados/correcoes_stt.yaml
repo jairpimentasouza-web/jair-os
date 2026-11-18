@@ -1,0 +1,191 @@
+# Correções de reconhecimento de voz (STT) em PT-BR → forma canônica.
+# Aplicadas no texto dobrado (sem acento), da expressão mais longa para a mais
+# curta, sempre respeitando fronteira de palavra. Nomes de apps e sites também
+# têm aliases próprios; aqui ficam os erros que atrapalham a frase inteira.
+
+correcoes:
+  # Assistente
+  jairo s: jair os
+  jairo es: jair os
+  jairo os: jair os
+  jair o s: jair os
+  jairois: jair os
+  jair oes: jair os
+  jairos: jair os
+  ja vis: jarvis
+  ja rvis: jarvis
+  jar vis: jarvis
+  jair vis: jarvis
+  jarves: jarvis
+  jarvez: jarvis
+  jarviz: jarvis
+  jervis: jarvis
+  djarvis: jarvis
+  dijarvis: jarvis
+  iarvis: jarvis
+  charvis: jarvis
+  xarvis: jarvis
+  jaivis: jarvis
+  # Google e cia.
+  gugou: google
+  gugol: google
+  gugle: google
+  googlee: google
+  google cromi: google chrome
+  gugou cromi: google chrome
+  google crome: google chrome
+  cromi: chrome
+  crome: chrome
+  chromi: chrome
+  draive: drive
+  draiv: drive
+  gugou draive: google drive
+  g mail: gmail
+  gimeio: gmail
+  gimeil: gmail
+  jimeil: gmail
+  djimeil: gmail
+  gemail: gmail
+  e mail: email
+  e mails: emails
+  class rum: classroom
+  class rumi: classroom
+  class room: classroom
+  clas rum: classroom
+  classe room: classroom
+  class home: classroom
+  google class: google classroom
+  you tube: youtube
+  iutubi: youtube
+  iutube: youtube
+  yutube: youtube
+  yotube: youtube
+  ioutube: youtube
+  youtub: youtube
+  whats app: whatsapp
+  uats app: whatsapp
+  uatsap: whatsapp
+  uatizap: whatsapp
+  watsap: whatsapp
+  zap zap: whatsapp
+  espotifai: spotify
+  spotifai: spotify
+  spotfy: spotify
+  power point: powerpoint
+  pauer point: powerpoint
+  pawer point: powerpoint
+  exel: excel
+  ecsel: excel
+  ecssel: excel
+  uord: word
+  uordi: word
+  vs code: vscode
+  vi es code: vscode
+  visual studio cold: visual studio code
+  supa base: supabase
+  supabeise: supabase
+  versel: vercel
+  git hub: github
+  guit rabi: github
+  chat gpt: chatgpt
+  chat gepeto: chatgpt
+  tchat gpt: chatgpt
+  clode: claude
+  jemini: gemini
+  face time: facetime
+  feice taime: facetime
+  photo booth: photobooth
+  foto booth: photobooth
+  fotobooth: photobooth
+  # Erros vistos no teste ponta a ponta (Whisper + voz sintética)
+  fashion: fecha o
+  fasha: fecha
+  # Sistema
+  wi fi: wifi
+  uai fai: wifi
+  uaifai: wifi
+  wai fai: wifi
+  blutufe: bluetooth
+  blututh: bluetooth
+  blu tooth: bluetooth
+  bluetuth: bluetooth
+  screen shot: screenshot
+  iscrinxote: screenshot
+  escrinxote: screenshot
+  printi: print
+  printe: print
+  pe de efe: pdf
+  pedeefe: pdf
+  pe de f: pdf
+  p d f: pdf
+  doc x: docx
+  # Escola e avaliação
+  a ve um: av1
+  a v um: av1
+  av um: av1
+  a v 1: av1
+  av 1: av1
+  a ve dois: av2
+  a v dois: av2
+  av dois: av2
+  a v 2: av2
+  av 2: av2
+  a ve tres: av3
+  av tres: av3
+  av 3: av3
+  e nem: enem
+  uerje: uerj
+  u e r j: uerj
+  bi mestre: bimestre
+  bimestri: bimestre
+  frequensia: frequencia
+  frequencia: frequencia
+  presenssa: presenca
+  presensa: presenca
+  chamada escolar: chamada
+  gabaritu: gabarito
+  lembreti: lembrete
+  tarefa de casa: tarefa de casa
+  dever de casa: tarefa de casa
+  pos aula: pos-aula
+  ativ soft: activesoft
+  active soft: activesoft
+  ativo soft: activesoft
+  act soft: activesoft
+  ative soft: activesoft
+  p mais: pmais
+  p quatro ed: p4ed
+  p4 ed: p4ed
+  # Automação
+  ene oito ene: n8n
+  n oito n: n8n
+  n eight n: n8n
+  # Fala coloquial
+  ce pode: voce pode
+  oce pode: voce pode
+  cê pode: voce pode
+  da pa: da pra
+  ta bom: esta bom
+  me ve: me mostra
+  me ve ai: me mostra
+
+# Frases que o Whisper "alucina" em silêncio ou ruído; o reconhecimento é descartado.
+alucinacoes:
+  - legendas pela comunidade amara org
+  - legenda adriana zanotto
+  - legendas por
+  - obrigado por assistir
+  - obrigada por assistir
+  - inscreva se no canal
+  - se inscreva no canal
+  - ative o sininho
+  - deixe seu like
+  - tchau tchau
+  - musica
+  - aplausos
+  - risos
+  - silencio
+  - legendado por
+  - transcricao por
+  - sous titres
+  - subtitles by
