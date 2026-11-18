@@ -1,0 +1,55 @@
+name: ProfGestor V5 — testes
+on:
+  pull_request:
+    paths: ['profgestor/**', '.github/workflows/profgestor-ci.yml']
+  push:
+    branches: [main]
+    paths: ['profgestor/**', '.github/workflows/profgestor-ci.yml']
+permissions:
+  contents: read
+concurrency:
+  group: profgestor-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: profgestor
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            profgestor/package-lock.json
+            profgestor/functions/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Cache dos emuladores Firebase
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ hashFiles('profgestor/package-lock.json') }}
+      - run: npm ci
+      - run: npm ci
+        working-directory: profgestor/functions
+      - name: Auditoria de dependências de produção (falha em alta/crítica)
+        run: npm audit --omit=dev --audit-level=high
+        working-directory: profgestor/functions
+      - name: Sintaxe do cliente
+        run: |
+          cp web/src/app.js "$RUNNER_TEMP/app.mjs" && node --check "$RUNNER_TEMP/app.mjs"
+          node --check web/src/v4.js && node --check web/src/v4-features.js
+      - name: Testes unitários
+        run: npm run test:unit
+      - name: Regras, migração e cobrança (emulador)
+        run: npm run test:emulator
+      - name: Navegador para E2E
+        run: npm i --no-save playwright@1 && npx playwright install --with-deps chromium
+      - name: E2E no Chromium (emuladores)
+        run: npm run test:e2e
