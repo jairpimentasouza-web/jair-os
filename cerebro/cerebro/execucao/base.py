@@ -104,7 +104,8 @@ class Executores:
                 else:
                     resultados.append(ResultadoPasso(p, False, None, "executor desconhecido: %s" % p.executor))
             except Exception as e:  # noqa: BLE001 - erro vira resposta falada
-                resultados.append(ResultadoPasso(p, False, None, "%s: %s" % (type(e).__name__, e)))
+                msg = str(e) if type(e).__name__.startswith("Erro") else "%s: %s" % (type(e).__name__, e)
+                resultados.append(ResultadoPasso(p, False, None, msg))
             if not resultados[-1].ok:
                 return resultados
         descarregar()

@@ -97,7 +97,7 @@ Todos os números abaixo vêm deste repositório (`python -m cerebro avaliar` e
 | **Voz ponta a ponta** (fala sintética Piper PT-BR → Whisper small + viés → Cérebro, 40 comandos, 3 execuções finais) | **37, 40 e 39 de 40 → média 96,7%** (faixa 92,5–100%) |
 | Comparação na mesma rodada (1 execução cada): small **com** viés · small **sem** viés · base com viés | 97,5% · 90,0% · 70,0% |
 | Latência do entendimento | mediana 0,7 ms · p95 ≈ 10 ms |
-| Testes automatizados | 76 passando em Python 3.9 e 3.13 |
+| Testes automatizados | 83 passando em Python 3.9 e 3.13 |
 
 A síntese do Piper varia a cada execução, por isso o resultado oscila. Fala sintética é mais limpa
 que a sua voz numa sala real: trate esses números como teto. O próximo passo
@@ -126,6 +126,20 @@ export JOS_MCP_URL="https://…/mcp" JOS_MCP_TOKEN="…"
 ```
 
 Sem isso, as habilidades do JOS rodam em modo simulado e dizem que o conector não está configurado.
+
+## Instalação no Windows (Asus)
+
+No PowerShell (não precisa de administrador):
+
+```powershell
+iwr -UseBasicParsing https://raw.githubusercontent.com/jairpimentasouza-web/jair-os/claude/friendly-cannon-y678ly/cerebro/scripts/instalar_windows.ps1 -OutFile $env:TEMP\instalar_jarvis.ps1; powershell -ExecutionPolicy Bypass -File $env:TEMP\instalar_jarvis.ps1
+```
+
+Cria o atalho **Jarvis** na área de trabalho. Dois cliques abrem a janela do Jarvis e deixam o
+microfone ouvindo ("Jarvis, abre o Chrome"). No Windows o Jarvis usa um executor próprio
+(`cerebro/execucao/windows.py`): mesmas ações tipadas, lista fechada, apps encontrados pelo Menu
+Iniciar, volume pelas teclas de mídia, ajustes via `ms-settings:` e voz Microsoft Maria. Lançar nota
+e frequência no navegador continua só no iMac.
 
 ## Uso
 
@@ -209,6 +223,6 @@ cerebro/
   voz/          microfone, despertar, Whisper, fala, laço do assistente
   nucleo.py     o Cérebro (diálogo completo)
   api.py        FastAPI + console web
-tests/          76 testes + conjuntos de avaliação (ouro e cego)
-scripts/        instalador do iMac, sincronizador do léxico local, teste de voz ponta a ponta
+tests/          83 testes + conjuntos de avaliação (ouro e cego)
+scripts/        instaladores (iMac e Windows), sincronizador do léxico local, teste de voz ponta a ponta
 ```

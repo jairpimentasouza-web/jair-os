@@ -5,6 +5,8 @@ o Jarvis no meio da frase dizendo "Jarvis" de novo.
 """
 from __future__ import annotations
 
+import base64
+import os
 import platform
 import re
 import shutil
@@ -35,6 +37,9 @@ def preparar(texto: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
+SEM_JANELA = 0x08000000 if os.name == "nt" else 0
+
+
 class VozBase:
     nome = "base"
 
@@ -55,7 +60,8 @@ class VozBase:
             return
         self.parar()
         with self._trava:
-            self._proc = subprocess.Popen(self._comando(texto), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            self._proc = subprocess.Popen(self._comando(texto), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                          creationflags=SEM_JANELA)
         if bloquear:
             self._proc.wait()
 
@@ -126,6 +132,30 @@ class VozPiper(VozBase):
         return [self.player, self._wav]
 
 
+class VozWindows(VozBase):
+    """Voz do próprio Windows (System.Speech) — usa a Microsoft Maria (pt-BR) se estiver instalada."""
+
+    nome = "windows"
+
+    def __init__(self, voz: str = "", velocidade: int = 1) -> None:
+        super().__init__()
+        self.voz = voz
+        self.velocidade = max(-10, min(10, int(velocidade)))
+
+    def _comando(self, texto: str):
+        b64 = base64.b64encode(texto.encode("utf-8")).decode()
+        nome = (self.voz or "").replace("'", "")
+        script = (
+            "Add-Type -AssemblyName System.Speech; $s=New-Object System.Speech.Synthesis.SpeechSynthesizer; "
+            "$vs=$s.GetInstalledVoices()|ForEach-Object{$_.VoiceInfo}; "
+            "$v=($vs|Where-Object{$_.Name -eq '%s'}|Select-Object -First 1); "
+            "if(-not $v){$v=($vs|Where-Object{$_.Culture.Name -eq 'pt-BR'}|Select-Object -First 1)}; "
+            "if($v){$s.SelectVoice($v.Name)}; $s.Rate=%d; "
+            "$s.Speak([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('%s')))" % (nome, self.velocidade, b64))
+        cod = base64.b64encode(script.encode("utf-16-le")).decode()
+        return ["powershell", "-NoProfile", "-NonInteractive", "-EncodedCommand", cod]
+
+
 class VozNula(VozBase):
     nome = "texto"
 
@@ -142,6 +172,8 @@ class VozNula(VozBase):
 def criar_voz(tipo: str = "auto", voz_say: str = "Luciana", velocidade: int = 195, modelo_piper: str = "") -> VozBase:
     tipo = (tipo or "auto").lower()
     mac = platform.system() == "Darwin" and Path("/usr/bin/say").exists()
+    if tipo == "windows" or (tipo == "auto" and os.name == "nt" and not modelo_piper):
+        return VozWindows(voz_say if voz_say and voz_say != "Luciana" else "Microsoft Maria Desktop", 1)
     if tipo == "say" or (tipo == "auto" and mac and not modelo_piper):
         return VozSay(voz_say, velocidade)
     if tipo == "piper" or (tipo == "auto" and modelo_piper and Path(modelo_piper).expanduser().exists()):

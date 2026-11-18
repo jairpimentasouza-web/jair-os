@@ -97,8 +97,63 @@ def cmd_servir(args) -> None:
     from .api import criar_app
 
     c = _cerebro(args)
-    app = criar_app(c, com_voz=not args.sem_voz)
+    app = criar_app(c, com_voz=not args.sem_voz, com_ouvido=args.ouvir)
     uvicorn.run(app, host=args.host or c.config.host, port=args.porta or c.config.porta, log_level="warning")
+
+
+def _vivo(url: str) -> bool:
+    import urllib.request
+    try:
+        with urllib.request.urlopen(url + "/v1/saude", timeout=2) as r:
+            return r.status == 200
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def cmd_janela(args) -> None:
+    """Abre o Jarvis numa janela própria; sobe o servidor (com o ouvido ligado) se preciso."""
+    import os
+    import shutil
+    import subprocess
+    import time
+    import webbrowser
+
+    from .config import Config
+
+    cfg = Config.carregar(getattr(args, "config", None))
+    url = "http://127.0.0.1:%d" % cfg.porta
+    if not _vivo(url):
+        cfg.pasta.mkdir(parents=True, exist_ok=True)
+        (cfg.pasta / "logs").mkdir(exist_ok=True)
+        py = sys.executable
+        if os.name == "nt" and py.lower().endswith("python.exe") and os.path.exists(py[:-10] + "pythonw.exe"):
+            py = py[:-10] + "pythonw.exe"
+        cmd = [py, "-m", "cerebro", "servir"] + ([] if args.sem_ouvir else ["--ouvir"])
+        saida = open(cfg.pasta / "logs" / "servidor.log", "a", encoding="utf-8")
+        extra = {}
+        if os.name == "nt":
+            extra["creationflags"] = 0x00000008 | 0x00000200 | 0x08000000  # DETACHED | NEW_GROUP | NO_WINDOW
+        else:
+            extra["start_new_session"] = True
+        subprocess.Popen(cmd, cwd=str(Path(__file__).resolve().parent.parent), stdout=saida, stderr=saida,
+                         stdin=subprocess.DEVNULL, **extra)
+        for _ in range(120):
+            if _vivo(url):
+                break
+            time.sleep(0.5)
+    navegadores = [
+        os.path.expandvars(r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"),
+        os.path.expandvars(r"%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"),
+        os.path.expandvars(r"%ProgramFiles%\Google\Chrome\Application\chrome.exe"),
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        shutil.which("google-chrome") or "", shutil.which("chromium") or "",
+    ]
+    for nav in navegadores:
+        if nav and os.path.exists(nav):
+            subprocess.Popen([nav, "--app=" + url, "--window-size=520,760",
+                              "--user-data-dir=" + str(cfg.pasta / "janela")])
+            return
+    webbrowser.open(url)
 
 
 def cmd_avaliar(args) -> None:
@@ -233,7 +288,11 @@ def main(argv=None) -> None:
     p.add_argument("--host")
     p.add_argument("--porta", type=int)
     p.add_argument("--sem-voz", action="store_true", help="não carrega o Whisper para /v1/audio")
+    p.add_argument("--ouvir", action="store_true", help="também deixa o Jarvis ouvindo o microfone")
     p.set_defaults(func=cmd_servir)
+    p = sub.add_parser("janela", help="abre o Jarvis numa janela (sobe o servidor se preciso)")
+    p.add_argument("--sem-ouvir", action="store_true", help="servidor sem microfone (só texto)")
+    p.set_defaults(func=cmd_janela)
     sub.add_parser("avaliar", help="roda os conjuntos de avaliação").set_defaults(func=cmd_avaliar)
     sub.add_parser("lexico", help="estatísticas da biblioteca de palavras").set_defaults(func=cmd_lexico)
     sub.add_parser("habilidades", help="lista as habilidades").set_defaults(func=cmd_habilidades)

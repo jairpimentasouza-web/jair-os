@@ -8,7 +8,8 @@ def test_abrir_e_anafora(cerebro):
     assert r2.intencao == "app.fechar" and "Chrome" in r2.fala
     acoes = [x["action"] for x in cerebro.desktop.chamadas]
     assert acoes == ["open_app", "ui_focus", "hotkey"]
-    assert cerebro.desktop.chamadas[0]["payload"] == {"name": "chrome"}
+    assert cerebro.desktop.chamadas[0]["payload"]["name"] == "chrome"
+    assert cerebro.desktop.chamadas[0]["payload"]["nome"] == "Google Chrome"
 
 
 def test_continuacao_de_contexto(cerebro):

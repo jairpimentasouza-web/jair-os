@@ -159,8 +159,12 @@ def abrir_app(h, hip, fala, amb):
         if res and not res[-1].ok and "não autorizado" in (res[-1].erro or ""):
             return ("O executor do iMac ainda não tem permissão para abrir %s. Adicione \"%s\" em allowed_apps "
                     "no config do always_on." % (e.nome, chave))
+        if res and not res[-1].ok and "não encontrei" in (res[-1].erro or ""):
+            return "Não encontrei o %s instalado neste computador." % e.nome
         return None
-    return Plano(h.id, [Passo("desktop", "open_app", {"name": chave}, "Abrir %s" % e.nome)], 0, _ack(h, hip, amb), resumir=resumo)
+    payload = {"name": chave, "nome": e.nome, "mac_app": e.dados.get("mac_app"), "windows": e.dados.get("windows"),
+               "aliases": list(e.aliases[:8])}
+    return Plano(h.id, [Passo("desktop", "open_app", payload, "Abrir %s" % e.nome)], 0, _ack(h, hip, amb), resumir=resumo)
 
 
 @construtor("volume_diminuir")
@@ -504,11 +508,24 @@ def lembrete_criar(h, hip, fala, amb):
             return {"ok": True, "local": False}
         item = amb.lembretes.agendar(texto, quando)
         return {"ok": True, "local": True, "id": item["id"]}
+    def registrar_jos(ex):
+        try:
+            ex.jos.chamar("jair_os_criar_tarefa", {"titulo": "Lembrete: " + texto, "prazo": quando.isoformat(timespec="minutes"),
+                                                   "status": "planned", "prioridade": 3})
+            return {"ok": True, "jos": True}
+        except Exception as e:  # noqa: BLE001 - o aviso local já está agendado
+            return {"ok": True, "jos": False, "aviso": str(e)}
+
+    def resumo(res):
+        r = res[-1].resultado if res else {}
+        base = "Combinado, vou te lembrar de %s %s." % (texto, desc)
+        if isinstance(r, dict) and r.get("jos") is False:
+            return base + " Ficou só neste computador; o JOS não está conectado."
+        return base
     passos = [Passo("funcao", "agendar_lembrete", {"texto": texto, "quando": quando.isoformat(timespec="minutes")},
                     "Agendar aviso local", agendar),
-              _acao_jos("jair_os_criar_tarefa", {"titulo": "Lembrete: " + texto, "prazo": quando.isoformat(timespec="minutes"),
-                                                 "status": "planned", "prioridade": 3}, "Registrar no JOS")]
-    return Plano(h.id, passos, 2, "Combinado, vou te lembrar de %s %s." % (texto, desc))
+              Passo("funcao", "registrar_lembrete_jos", {"titulo": "Lembrete: " + texto}, "Registrar no JOS", registrar_jos)]
+    return Plano(h.id, passos, 2, "Combinado, vou te lembrar de %s %s." % (texto, desc), resumir=resumo)
 
 
 @construtor("memoria_salvar")

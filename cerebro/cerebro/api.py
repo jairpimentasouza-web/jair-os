@@ -29,22 +29,64 @@ class PedidoTexto(BaseModel):
     executar: bool = True
 
 
-def criar_app(cerebro, com_voz: bool = True) -> FastAPI:
+def criar_app(cerebro, com_voz: bool = True, com_ouvido: bool = False, microfone=None) -> FastAPI:
     laco: Dict[str, Any] = {}
     sockets: Set[WebSocket] = set()
+    ouvido: Dict[str, Any] = {"ativo": False, "erro": None, "assistente": None}
+    estado: Dict[str, Any] = {"stt": None, "erro_stt": None}
 
-    def avisar_lembrete(item: Dict) -> None:
+    def transmitir(msg: Dict[str, Any]) -> None:
         loop = laco.get("loop")
         if loop is None:
             return
         for ws in list(sockets):
-            asyncio.run_coroutine_threadsafe(ws.send_json({"tipo": "lembrete", "texto": item["texto"], "quando": item["quando"]}), loop)
+            asyncio.run_coroutine_threadsafe(ws.send_json(msg), loop)
+
+    def avisar_lembrete(item: Dict) -> None:
+        transmitir({"tipo": "lembrete", "texto": item["texto"], "quando": item["quando"]})
+        a = ouvido.get("assistente")
+        if a is not None:
+            a.falar("Lembrete: %s" % item["texto"])
+
+    def ligar_ouvido() -> None:
+        """Carrega Whisper e microfone e deixa o Jarvis ouvindo (em segundo plano)."""
+        try:
+            from .voz.assistente import AssistenteVoz
+            from .voz.ouvido import Microfone
+            from .voz.stt import TranscritorWhisper
+            from .voz.tts import criar_voz
+            cfg = cerebro.config
+            transmitir({"tipo": "estado", "texto": "Carregando o reconhecimento de voz…"})
+            if estado["stt"] is None:
+                estado["stt"] = TranscritorWhisper(cfg.modelo_stt, computacao=cfg.computacao_stt, termos=cerebro.lexico.hotwords())
+            rapido = TranscritorWhisper(cfg.modelo_stt_despertar, computacao=cfg.computacao_stt,
+                                        termos=["Jarvis", "Jair"]) if cfg.modelo_stt_despertar else None
+            voz = criar_voz(cfg.voz_tts, cfg.voz_say, cfg.velocidade_fala, cfg.modelo_piper)
+
+            def registro(msg: str) -> None:
+                transmitir({"tipo": "voz", "texto": msg})
+
+            a = AssistenteVoz(cerebro, estado["stt"], voz, None, cfg.janela_conversa_s, sessao="voz",
+                              registro=registro, transcritor_rapido=rapido, bips=False)
+            ouvido["assistente"] = a
+            ouvido["ativo"] = True
+            transmitir({"tipo": "estado", "texto": "Ouvindo. Diga \"Jarvis…\""})
+            a.rodar(microfone or Microfone())
+        except Exception as e:  # noqa: BLE001 - sem microfone, a janela continua funcionando por texto
+            ouvido["erro"] = "%s: %s" % (type(e).__name__, e)
+            transmitir({"tipo": "estado", "texto": "Voz indisponível (%s). Use o campo de texto." % e})
+        finally:
+            ouvido["ativo"] = False
 
     @contextlib.asynccontextmanager
     async def ciclo(_app):
         laco["loop"] = asyncio.get_running_loop()
         cerebro.iniciar_lembretes(avisar_lembrete)
+        if com_ouvido:
+            threading.Thread(target=ligar_ouvido, name="jarvis-ouvido", daemon=True).start()
         yield
+        if ouvido.get("assistente") is not None:
+            ouvido["assistente"].parar()
         cerebro.lembretes.parar()
 
     app = FastAPI(title="Cérebro JOS (Jarvis)", version="1.0.0", lifespan=ciclo)
@@ -52,7 +94,6 @@ def criar_app(cerebro, com_voz: bool = True) -> FastAPI:
                        allow_methods=["GET", "POST"], allow_headers=["*"])
     token = cerebro.config.token_api
     trava = threading.Lock()
-    estado: Dict[str, Any] = {"stt": None, "erro_stt": None}
 
     def auth(request: Request) -> None:
         if not token:
@@ -80,7 +121,8 @@ def criar_app(cerebro, com_voz: bool = True) -> FastAPI:
     @app.get("/v1/saude")
     def saude(_: None = Depends(auth)) -> Dict[str, Any]:
         e = cerebro.estatisticas()
-        e["voz"] = {"carregada": estado["stt"] is not None, "erro": estado["erro_stt"], "modelo": cerebro.config.modelo_stt}
+        e["voz"] = {"carregada": estado["stt"] is not None, "erro": estado["erro_stt"] or ouvido["erro"],
+                    "modelo": cerebro.config.modelo_stt, "ouvindo": ouvido["ativo"]}
         e["lembretes_pendentes"] = len(cerebro.lembretes.pendentes())
         return e
 
@@ -157,7 +199,7 @@ input{flex:1;padding:12px;border-radius:10px;border:1px solid #3334;background:v
 button{padding:0 16px;border-radius:10px;border:0;background:var(--acento);color:#fff;font-size:16px;cursor:pointer}
 button.gravando{background:#d33}
 </style></head><body><main>
-<h1>Jarvis</h1><p class="sub">Cérebro do Jair OS · fale ou digite um comando</p><div id="log"></div></main>
+<h1>Jarvis</h1><p class="sub">Cérebro do Jair OS · <span id="estado">fale ou digite um comando</span></p><div id="log"></div></main>
 <form id="f"><button type="button" id="mic" title="Segure para falar">🎙</button><input id="t" placeholder="Ex.: me lembra amanhã às 3 de ligar para a coordenação" autocomplete="off"><button>Enviar</button></form>
 <script>
 const log=document.getElementById('log'),t=document.getElementById('t'),mic=document.getElementById('mic');
@@ -173,5 +215,13 @@ mic.onclick=async()=>{if(rec&&rec.state==='recording'){rec.stop();return}
   const fd=new FormData();fd.append('arquivo',new Blob(partes,{type:'audio/webm'}),'fala.webm');fd.append('sessao','console');
   const r=await fetch('/v1/audio',{method:'POST',body:fd});const j=await r.json();if(j.transcricao)add(j.transcricao,true,'voz · conf. '+(j.confianca||0));mostrar(j.resposta)};
  rec.start();mic.classList.add('gravando')};
-try{const ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/v1/conversa');ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.tipo==='lembrete'){add('⏰ Lembrete: '+m.texto,false);falar('Lembrete: '+m.texto)}}}catch(e){}
+const est=document.getElementById('estado');
+function conectar(){try{const ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/v1/conversa');
+ ws.onmessage=e=>{const m=JSON.parse(e.data);
+  if(m.tipo==='lembrete'){add('⏰ Lembrete: '+m.texto,false)}
+  else if(m.tipo==='estado'){est.textContent=m.texto}
+  else if(m.tipo==='voz'){const t=m.texto||'';if(t.startsWith('🎙'))add(t.replace(/^🎙\\s*/,'').replace(/\\s*\\(conf\\.[^)]*\\)\\s*$/,''),true,'voz');else if(t.startsWith('🤖'))add(t.replace(/^🤖\\s*/,''),false,'Jarvis falou');else est.textContent=t}};
+ ws.onclose=()=>setTimeout(conectar,2000)}catch(e){}}
+conectar();
+fetch('/v1/saude').then(r=>r.json()).then(s=>{if(s.voz&&s.voz.ouvindo)est.textContent='Ouvindo. Diga "Jarvis…"'}).catch(()=>{});
 </script></body></html>"""

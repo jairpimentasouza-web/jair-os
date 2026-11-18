@@ -10,8 +10,10 @@ Uso mínimo::
 from __future__ import annotations
 
 import json
+import os
 import random
 import re
+import threading
 import time
 from collections import deque
 from dataclasses import dataclass, field
@@ -103,6 +105,7 @@ class Cerebro:
         self.amb = Ambiente(self.lexico, self.motor, self.llm, self.lembretes, cfg.nome_usuario, self.rng,
                             self.relogio, ao_aprender=self._reconstruir_normalizador)
         self.sessoes: Dict[str, Sessao] = {}
+        self._trava = threading.RLock()  # voz e API podem chamar ao mesmo tempo
         self._log_nao_entendidos = cfg.arquivo_nao_entendidos
 
     @classmethod
@@ -113,6 +116,9 @@ class Cerebro:
         cfg = self.config
         if cfg.modo_desktop == "simulado":
             return DesktopSimulado()
+        if cfg.modo_desktop == "windows" or (cfg.modo_desktop == "auto" and os.name == "nt"):
+            from .execucao.windows import DesktopWindows
+            return DesktopWindows()
         ponte = PonteDesktop(cfg.ponte_desktop, cfg.python_ponte or None)
         if cfg.modo_desktop == "ponte" or ponte.disponivel:
             return ponte
@@ -122,10 +128,9 @@ class Cerebro:
         cfg = self.config
         if cfg.modo_jos == "simulado":
             return JOSSimulado()
-        cliente = ClienteJOS(cfg.jos_mcp_url, cfg.jos_mcp_token)
-        if cfg.modo_jos == "mcp" or cliente.configurado:
-            return cliente
-        return JOSSimulado()
+        # Sem conector configurado, usa o cliente real mesmo assim: ele responde
+        # "conector do JOS não configurado" em vez de fingir que a tarefa foi criada.
+        return ClienteJOS(cfg.jos_mcp_url, cfg.jos_mcp_token)
 
     def _reconstruir_normalizador(self) -> None:
         self.norm.reconstruir()
@@ -145,7 +150,8 @@ class Cerebro:
                   ao_iniciar: Optional[Callable[[str], None]] = None) -> Resposta:
         s = self.sessao(sessao)
         inicio = time.time()
-        resp = self._processar(texto, s, executar, ao_iniciar)
+        with self._trava:
+            resp = self._processar(texto, s, executar, ao_iniciar)
         if resp.fala:
             s.ultima_fala = resp.fala
             s.historico.append((texto, resp.fala))
