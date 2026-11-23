@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://telegram.org; connect-src https://zfbcvoaxgswjsgbavobp.supabase.co; style-src 'self'; img-src 'self' data:; frame-ancestors https://web.telegram.org https://*.telegram.org">
+  <title>Jair OS Escola</title>
+  <link rel="stylesheet" href="app.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span class="logo">J</span><div><strong>Jair OS</strong><small id="subtitle">Escola</small></div></div>
+    <button class="icon-btn" id="refresh" aria-label="Atualizar">⟳</button>
+  </header>
+  <main id="view" aria-live="polite"></main>
+  <nav class="tabs" id="tabs">
+    <button data-tab="home" class="on"><span>🏠</span>Início</button>
+    <button data-tab="grades"><span>📝</span>Notas</button>
+    <button data-tab="attendance"><span>✅</span>Chamada</button>
+    <button data-tab="content"><span>📖</span>Diário</button>
+    <button data-tab="queue"><span>📥</span>Fila</button>
+  </nav>
+  <div id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
