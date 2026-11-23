@@ -1,0 +1,331 @@
+/* Jair OS Escola — Mini App do Telegram.
+   Notas por ditado (teclado do celular), chamada por toque, diário e fila com conferência.
+   Toda chamada à API leva o initData assinado pelo Telegram; o servidor confere a assinatura. */
+(() => {
+  "use strict";
+  const API = "https://zfbcvoaxgswjsgbavobp.supabase.co/functions/v1/jair-os-telegram-v2";
+  const tg = window.Telegram && window.Telegram.WebApp;
+  const $view = document.getElementById("view");
+  const state = { tab: "home", data: null, sel: {}, parsed: null, absent: new Set(), roster: {}, mainHandler: null };
+
+  // ---------- utilidades ----------
+  const h = (tag, attrs = {}, ...kids) => {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else if (k === "value") el.value = v;
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+    return el;
+  };
+  const haptic = (t = "light") => { try { tg.HapticFeedback.impactOccurred(t); } catch (_) {} };
+  const notifyH = (t) => { try { tg.HapticFeedback.notificationOccurred(t); } catch (_) {} };
+  const toast = (msg) => { const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 2600); };
+  const today = () => { const d = new Date(Date.now() - new Date().getTimezoneOffset() * 60000); return d.toISOString().slice(0, 10); };
+  const fmt = (d) => { const [y, m, dd] = String(d).slice(0, 10).split("-"); return `${dd}/${m}`; };
+  const num = (v) => (v == null || v === "" ? null : Number(String(v).replace(",", ".")));
+  const ERR = {
+    importe_a_lista_da_turma_primeiro: "Importe a lista oficial da turma primeiro (Início → turma).",
+    nao_entendi_nenhuma_nota: "Não entendi nenhuma nota. Ex.: “Sofia sete e meio; Ruan 8,5”.",
+    usuario_telegram_nao_pareado: "Este Telegram não está pareado com o Jair OS.",
+    sessao_expirada_reabra_o_app: "Sessão expirada. Feche e abra o app de novo.",
+    abra_pelo_telegram: "Abra pelo botão 🏫 Escola no Telegram.",
+  };
+  async function api(op, body = {}) {
+    const r = await fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ op, initData: tg ? tg.initData : "", ...body }) });
+    const j = await r.json().catch(() => ({ ok: false, error: `http_${r.status}` }));
+    if (!r.ok || j.ok === false) {
+      const code = String(j.error || "erro").split(":")[0];
+      throw new Error(ERR[code] || String(j.error || "erro").replace(/_/g, " "));
+    }
+    return j;
+  }
+  function setMain(text, handler, enabled = true) {
+    if (!tg) return;
+    if (state.mainHandler) tg.MainButton.offClick(state.mainHandler);
+    state.mainHandler = null;
+    if (!text) { tg.MainButton.hide(); return; }
+    state.mainHandler = async () => { if (!enabled) return; try { tg.MainButton.showProgress(); await handler(); } catch (e) { notifyH("error"); toast(e.message); } finally { tg.MainButton.hideProgress(); } };
+    tg.MainButton.setParams({ text, is_active: enabled, is_visible: true });
+    tg.MainButton.onClick(state.mainHandler);
+  }
+  const confirmDialog = (msg) => new Promise((res) => (tg && tg.showConfirm ? tg.showConfirm(msg, res) : res(window.confirm(msg))));
+  const turmas = () => (state.data ? state.data.turmas : []);
+  const turma = (id) => turmas().find((t) => t.id === id);
+  const STATUS = { draft: ["Rascunho", "info"], confirmed: ["Na fila", "warn"], dispatched: ["Lançando", "warn"], verified: ["Conferido", "ok"], partial: ["Parcial", "risk"], failed: ["Falhou", "bad"] };
+  const KIND = { grade: ["📝", "Notas"], attendance: ["✅", "Chamada"], content: ["📖", "Diário"] };
+  const MATCH = { exato: ["exato", "ok"], apelido: ["apelido", "ok"], provavel: ["provável", "warn"], ambiguo: ["ambíguo", "risk"], sem_par: ["sem par", "bad"] };
+
+  function classChips(selected, onPick, opts = {}) {
+    return h("div", { class: "chips" }, turmas().map((t) => h("button", {
+      class: "chip" + (selected === t.id ? " on" : ""),
+      onclick: () => { haptic(); onPick(t.id); },
+    }, t.class_key + "ª", h("small", {}, opts.showSchool ? t.school : t.subject || ""))));
+  }
+
+  // ---------- telas ----------
+  function renderHome() {
+    const d = state.data;
+    const fila = d.fila || [];
+    const pend = fila.filter((b) => ["confirmed", "dispatched"].includes(b.status)).length;
+    const ok = fila.filter((b) => b.status === "verified").length;
+    const draft = fila.filter((b) => b.status === "draft").length;
+    setMain(null);
+    return h("div", { class: "fade" },
+      h("h2", {}, `Olá${d.nome ? ", " + d.nome : ""} 👋`),
+      h("p", { class: "muted", style: "margin:0 4px 10px" }, "Notas por ditado, chamada por toque e diário — tudo conferido no destino."),
+      h("div", { class: "stats" },
+        h("div", { class: "stat" }, h("b", {}, pend), h("span", {}, "na fila")),
+        h("div", { class: "stat" }, h("b", {}, ok), h("span", {}, "conferidos")),
+        h("div", { class: "stat" }, h("b", {}, draft), h("span", {}, "rascunhos"))),
+      h("h3", {}, "Turmas"),
+      turmas().length ? turmas().map((t) => h("div", { class: "card" },
+        h("div", { class: "row between" },
+          h("div", { class: "grow" }, h("div", { class: "name" }, t.label), h("div", { class: "muted", style: "font-size:13px" }, `${t.school.toUpperCase()} · ${t.system} · ${t.roster_count} alunos`)),
+          t.roster_count ? h("span", { class: "pill ok" }, "lista ok") : h("span", { class: "pill bad" }, "sem lista")),
+        h("button", { class: "btn ghost", onclick: () => openImport(t.id) }, t.roster_count ? "Atualizar lista da turma" : "Importar lista da turma")))
+        : h("div", { class: "empty" }, "Nenhuma turma cadastrada."),
+    );
+  }
+
+  function openImport(classId) {
+    const t = turma(classId);
+    state.tab = "import";
+    const ta = h("textarea", { placeholder: "Cole a lista do Unimestre — um aluno por linha.\nEx.:\n1 ANA LIMA PEREIRA\n2 BERNARDO SOUZA" });
+    const count = h("div", { class: "hint" }, "0 alunos");
+    ta.addEventListener("input", () => { const n = ta.value.split(/\n/).filter((s) => s.trim()).length; count.textContent = `${n} alunos`; setMain(n ? `Salvar lista (${n} alunos)` : null, save, n > 0); });
+    const save = async () => {
+      const r = await api("roster_import", { class_id: classId, names: ta.value });
+      notifyH("success"); toast(`Lista salva: ${r.alunos} alunos`); await load(); go("home");
+    };
+    $view.replaceChildren(h("div", { class: "fade" },
+      h("h2", {}, "Lista da turma"), h("p", { class: "muted", style: "margin:0 4px" }, t.label),
+      h("label", { class: "field" }, h("span", {}, "Lista oficial (copie do sistema da escola)"), ta), count,
+      h("p", { class: "hint" }, "Os nomes viram a referência para a conferência de nomes. Quem sair da lista fica inativo."),
+      h("button", { class: "btn ghost", onclick: () => go("home") }, "Voltar")));
+    if (tg) tg.BackButton.show();
+    setMain(null);
+  }
+
+  // --- Notas ---
+  function renderGrades() {
+    const s = state.sel;
+    s.class_id = s.class_id || (turmas()[0] && turmas()[0].id);
+    const t = turma(s.class_id);
+    const assess = (t && t.assessments) || [];
+    if (!s.assess || !assess.find((x) => x.key === s.assess)) s.assess = assess[0] ? assess[0].key : null;
+    const a = assess.find((x) => x.key === s.assess) || {};
+    s.date = s.date || today();
+    const ta = h("textarea", { placeholder: "Toque no 🎤 do teclado e dite:\n“Sofia dois e meio, Ruan três; Yasmin um vírgula oito”\nTambém vale número de chamada: “12 - 2,5”", value: s.text || "" });
+    ta.addEventListener("input", () => { s.text = ta.value; });
+    const wrap = h("div", { class: "fade" },
+      h("h2", {}, "Notas"),
+      classChips(s.class_id, (id) => { s.class_id = id; state.parsed = null; render(); }),
+      h("div", { class: "chips" }, assess.map((x) => h("button", { class: "chip" + (s.assess === x.key ? " on" : ""), onclick: () => { haptic(); s.assess = x.key; state.parsed = null; render(); } }, x.label, h("small", {}, `máx ${String(x.max).replace(".", ",")}`)))),
+      h("label", { class: "field" }, h("span", {}, "Data da avaliação"), h("input", { type: "date", value: s.date, onchange: (e) => { s.date = e.target.value; } })),
+      t && !t.roster_count ? h("div", { class: "card" }, "⚠️ Esta turma ainda não tem lista. ", h("a", { href: "#", onclick: (e) => { e.preventDefault(); openImport(t.id); } }, "Importar agora")) : null,
+      h("label", { class: "field" }, h("span", {}, "Ditado ou digitação"), ta),
+      h("button", { class: "btn", onclick: async () => {
+        haptic("medium");
+        try { state.parsed = await api("parse_grades", { class_id: s.class_id, text: s.text || "", max_value: a.max }); notifyH("success"); render(); }
+        catch (e) { notifyH("error"); toast(e.message); }
+      } }, "✨ Interpretar"),
+      state.parsed ? renderParsed(a) : h("p", { class: "hint" }, "Nada é lançado agora: primeiro você confere a tabela e confirma."),
+    );
+    if (!state.parsed) setMain(null);
+    return wrap;
+  }
+
+  function renderParsed(a) {
+    const p = state.parsed;
+    const rows = p.linhas.map((l) => ({ ...l, escolhido: l.oficial || null, valorEdit: l.valor }));
+    state.parsed._rows = state.parsed._rows || rows;
+    const R = state.parsed._rows;
+    const list = h("div", { class: "list" });
+    const refresh = () => {
+      const pend = R.filter((r) => !r.escolhido || (!r.ausente && (r.valorEdit == null || Number.isNaN(r.valorEdit) || (a.max != null && r.valorEdit > a.max) || r.valorEdit < 0)));
+      const dup = new Set(); let dupBad = false; R.forEach((r) => { if (r.escolhido) { if (dup.has(r.escolhido)) dupBad = true; dup.add(r.escolhido); } });
+      const n = R.filter((r) => r.escolhido).length;
+      setMain(pend.length || dupBad ? (dupBad ? "Há aluno repetido" : `Resolva ${pend.length} pendência(s)`) : `Confirmar ${n} notas`, confirmGrades, !pend.length && !dupBad && n > 0);
+    };
+    R.forEach((r) => {
+      const [label, cls] = MATCH[r.status] || [r.status, "info"];
+      const needsPick = !["exato", "apelido"].includes(r.status);
+      const sel = needsPick ? h("select", { onchange: (e) => { r.escolhido = e.target.value || null; haptic(); refresh(); } },
+        h("option", { value: "" }, "— escolher aluno —"),
+        ...(r.candidatos || []).map((c) => h("option", { value: c.oficial, selected: r.escolhido === c.oficial }, `${c.oficial} (${Math.round(c.score * 100)}%)`)),
+        h("option", { disabled: true }, "──────────"),
+        ...p.roster.map((o) => h("option", { value: o }, o))) : null;
+      const val = h("input", { class: "val", inputmode: "decimal", value: r.ausente ? "" : r.valorEdit == null ? "" : String(r.valorEdit).replace(".", ","), placeholder: r.ausente ? "falta" : "—",
+        oninput: (e) => { r.valorEdit = num(e.target.value); refresh(); } });
+      list.append(h("div", { class: "item" },
+        h("div", { class: "grow" },
+          h("div", { class: "name" }, r.escolhido || r.ditado || r.texto),
+          h("div", { class: "sub" }, `“${r.texto}”`, " ", h("span", { class: `pill ${cls}` }, label), r.ausente ? h("span", { class: "pill bad", style: "margin-left:4px" }, "ausente") : null),
+          sel),
+        val));
+    });
+    refresh();
+    return h("div", {},
+      h("h3", {}, `Conferência · ${p.resumo.exato + p.resumo.apelido} certos · ${p.resumo.provavel + p.resumo.ambiguo + p.resumo.sem_par} para olhar`),
+      list,
+      p.roster_sem_nota && p.roster_sem_nota.length ? h("div", { class: "card" }, h("b", {}, `Sem nota (${p.roster_sem_nota.length}): `), h("span", { class: "muted" }, p.roster_sem_nota.join(", "))) : null,
+      h("button", { class: "btn ghost", onclick: () => saveGrades(false) }, "Salvar como rascunho"));
+  }
+
+  function gradeEntries() {
+    return state.parsed._rows.filter((r) => r.escolhido).map((r) => ({
+      official_name: r.escolhido, spoken_name: r.ditado, value: r.ausente ? null : r.valorEdit, absent: r.ausente,
+      match_status: ["exato", "apelido"].includes(r.status) && r.escolhido === r.oficial ? r.status : "confirmado",
+    }));
+  }
+  async function saveGrades(confirm) {
+    const s = state.sel; const t = turma(s.class_id); const a = (t.assessments || []).find((x) => x.key === s.assess) || {};
+    const entries = gradeEntries();
+    if (confirm && !(await confirmDialog(`Confirmar ${entries.length} notas de ${a.label || s.assess} — ${t.label}?\nElas entram na fila para lançar e conferir no ${t.system}.`))) return;
+    const r = await api("save_batch", { kind: "grade", class_id: s.class_id, label: s.assess, max_value: a.max, occurred_on: s.date, entries, confirm });
+    notifyH("success"); toast(confirm ? "✅ Confirmado! Na fila para lançar." : "Rascunho salvo.");
+    state.parsed = null; s.text = ""; await load(); go("queue");
+    return r;
+  }
+  const confirmGrades = () => saveGrades(true);
+
+  // --- Chamada ---
+  async function renderAttendance() {
+    const s = state.sel;
+    s.class_id = s.class_id || (turmas()[0] && turmas()[0].id);
+    const t = turma(s.class_id);
+    s.date = s.date || today();
+    s.periods = s.periods || (t ? t.periods_per_lesson : 1);
+    if (!state.roster[s.class_id]) { try { state.roster[s.class_id] = (await api("roster", { class_id: s.class_id })).alunos; } catch (e) { toast(e.message); state.roster[s.class_id] = []; } }
+    const alunos = state.roster[s.class_id];
+    const per = h("b", {}, String(s.periods));
+    const list = h("div", { class: "list" });
+    const update = () => {
+      const f = state.absent.size;
+      setMain(alunos.length ? `Confirmar chamada · ${f ? f + " falta(s)" : "todos presentes"}` : null, saveAttendance, alunos.length > 0);
+    };
+    alunos.forEach((a) => {
+      const row = h("div", { class: "item student" + (state.absent.has(a.official_name) ? " absent" : ""), onclick: () => {
+        haptic(); if (state.absent.has(a.official_name)) state.absent.delete(a.official_name); else state.absent.add(a.official_name);
+        row.classList.toggle("absent"); row.querySelector(".mark").textContent = row.classList.contains("absent") ? "F" : "P"; update();
+      } }, h("span", { class: "num" }, a.number ?? ""), h("div", { class: "grow name" }, a.official_name), h("span", { class: "mark" }, state.absent.has(a.official_name) ? "F" : "P"));
+      list.append(row);
+    });
+    update();
+    return h("div", { class: "fade" },
+      h("h2", {}, "Chamada"),
+      classChips(s.class_id, (id) => { s.class_id = id; state.absent.clear(); s.periods = null; render(); }),
+      h("div", { class: "card row between" },
+        h("input", { type: "date", value: s.date, style: "max-width:170px", onchange: (e) => { s.date = e.target.value; } }),
+        h("div", { class: "stepper" }, h("span", { class: "muted" }, "tempos"),
+          h("button", { onclick: () => { s.periods = Math.max(1, s.periods - 1); per.textContent = s.periods; haptic(); } }, "−"), per,
+          h("button", { onclick: () => { s.periods = Math.min(6, s.periods + 1); per.textContent = s.periods; haptic(); } }, "+"))),
+      alunos.length ? h("div", {},
+        h("div", { class: "row between", style: "margin:6px 4px" }, h("span", { class: "hint" }, "Toque no aluno para marcar falta"),
+          h("a", { href: "#", onclick: (e) => { e.preventDefault(); state.absent.clear(); render(); haptic(); } }, "Todos presentes")),
+        list)
+        : h("div", { class: "card" }, "⚠️ Esta turma ainda não tem lista. ", h("a", { href: "#", onclick: (e) => { e.preventDefault(); openImport(s.class_id); } }, "Importar agora")));
+  }
+  async function saveAttendance() {
+    const s = state.sel; const t = turma(s.class_id); const alunos = state.roster[s.class_id] || [];
+    const f = state.absent.size;
+    if (!(await confirmDialog(`Chamada de ${fmt(s.date)} — ${t.label}\n${alunos.length - f} presentes, ${f} falta(s), ${s.periods} tempo(s). Confirmar?`))) return;
+    await api("save_batch", { kind: "attendance", class_id: s.class_id, occurred_on: s.date, periods: s.periods, confirm: true,
+      entries: alunos.map((a) => ({ official_name: a.official_name, present: !state.absent.has(a.official_name) })) });
+    notifyH("success"); toast("✅ Chamada confirmada."); state.absent.clear(); await load(); go("queue");
+  }
+
+  // --- Diário ---
+  function renderContent() {
+    const s = state.sel;
+    s.class_id = s.class_id || (turmas()[0] && turmas()[0].id);
+    s.date = s.date || today();
+    s.allClasses = s.allClasses ?? false;
+    const ta = h("textarea", { placeholder: "Conteúdo da aula (dite pelo 🎤 do teclado).\nEx.: Revisão de MRUV e lançamento oblíquo; resolução de exercícios do capítulo 4.", value: s.content || "" });
+    const upd = () => setMain(ta.value.trim() ? (s.allClasses ? `Registrar nas ${turmas().length} turmas` : "Registrar conteúdo") : null, saveContent, Boolean(ta.value.trim()));
+    ta.addEventListener("input", () => { s.content = ta.value; upd(); });
+    upd();
+    return h("div", { class: "fade" },
+      h("h2", {}, "Diário de classe"),
+      classChips(s.class_id, (id) => { s.class_id = id; render(); }),
+      h("label", { class: "row", style: "margin:6px 4px" }, h("input", { type: "checkbox", style: "width:auto", checked: s.allClasses, onchange: (e) => { s.allClasses = e.target.checked; upd(); } }), "Mesmo conteúdo em todas as turmas"),
+      h("label", { class: "field" }, h("span", {}, "Data da aula"), h("input", { type: "date", value: s.date, onchange: (e) => { s.date = e.target.value; } })),
+      h("label", { class: "field" }, h("span", {}, "Conteúdo"), ta));
+  }
+  async function saveContent() {
+    const s = state.sel; const ids = s.allClasses ? turmas().map((t) => t.id) : [s.class_id];
+    if (!(await confirmDialog(`Registrar o conteúdo de ${fmt(s.date)} em ${ids.length} turma(s)?`))) return;
+    for (const id of ids) await api("save_batch", { kind: "content", class_id: id, occurred_on: s.date, content_text: s.content, confirm: true });
+    notifyH("success"); toast("✅ Conteúdo registrado."); s.content = ""; await load(); go("queue");
+  }
+
+  // --- Fila ---
+  function renderQueue() {
+    setMain(null);
+    const fila = state.data.fila || [];
+    return h("div", { class: "fade" },
+      h("h2", {}, "Fila"),
+      h("p", { class: "muted", style: "margin:0 4px 8px" }, "Tudo o que você confirmou. O aviso de conferência chega aqui e no chat."),
+      fila.length ? h("div", { class: "list" }, fila.map((b) => {
+        const [st, cls] = STATUS[b.status] || [b.status, "info"]; const [ic, kl] = KIND[b.kind] || ["•", b.kind];
+        return h("div", { class: "item", onclick: () => openBatch(b.id) },
+          h("span", { style: "font-size:22px" }, ic),
+          h("div", { class: "grow" }, h("div", { class: "name" }, `${kl}${b.label ? " · " + b.label : ""} — ${b.turma}`),
+            h("div", { class: "sub" }, `${fmt(b.occurred_on)} · ${b.kind === "attendance" ? `${b.total} alunos, ${b.faltas} falta(s)` : b.kind === "grade" ? `${b.total} notas` : "conteúdo"}${b.verified_count != null ? ` · ${b.verified_count} conferidos` : ""}`)),
+          h("span", { class: `pill ${cls}` }, st));
+      })) : h("div", { class: "empty" }, "Nada na fila ainda. Comece pelas Notas ou pela Chamada."));
+  }
+  async function openBatch(id) {
+    haptic();
+    state.tab = "batch";
+    $view.replaceChildren(h("div", { class: "skeleton" }));
+    if (tg) tg.BackButton.show();
+    try {
+      const d = await api("batch", { batch_id: id }); const b = d.lote;
+      const [st, cls] = STATUS[b.status] || [b.status, "info"]; const [ic, kl] = KIND[b.kind] || ["•", b.kind];
+      const items = b.kind === "content" ? h("div", { class: "card" }, b.content_text) : h("div", { class: "list" }, d.itens.map((e) => h("div", { class: "item" },
+        h("div", { class: "grow name" }, e.official_name),
+        b.kind === "grade" ? h("b", {}, e.value == null ? (e.note || "—") : String(e.value).replace(".", ",")) : h("span", { class: `pill ${e.present === false ? "bad" : "ok"}` }, e.present === false ? "falta" : "presente"))));
+      $view.replaceChildren(h("div", { class: "fade" },
+        h("h2", {}, `${ic} ${kl}${b.label ? " · " + b.label : ""}`),
+        h("div", { class: "row", style: "margin:0 4px 6px;gap:8px" }, h("span", { class: "muted" }, `${b.turma} · ${fmt(b.occurred_on)}`), h("span", { class: `pill ${cls}` }, st)),
+        b.readback && b.readback.note ? h("div", { class: "card" }, b.readback.note) : null,
+        items,
+        b.status === "draft" ? h("button", { class: "btn", onclick: async () => { await api("confirm_batch", { batch_id: id }); notifyH("success"); toast("Confirmado."); await load(); go("queue"); } }, "Confirmar e enviar para a fila") : null,
+        h("button", { class: "btn ghost", onclick: async () => { try { await api("send_csv", { batch_id: id }); notifyH("success"); toast("📄 Planilha enviada no chat."); } catch (e) { toast(e.message); } } }, "📄 Enviar planilha no chat"),
+        ["draft", "confirmed"].includes(b.status) ? h("button", { class: "btn danger", onclick: async () => { if (!(await confirmDialog("Cancelar este lote?"))) return; await api("cancel_batch", { batch_id: id }); toast("Cancelado."); await load(); go("queue"); } }, "Cancelar lote") : null));
+      setMain(null);
+    } catch (e) { toast(e.message); go("queue"); }
+  }
+
+  // ---------- navegação ----------
+  async function render() {
+    document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === state.tab));
+    if (tg) (["home", "grades", "attendance", "content", "queue"].includes(state.tab) ? tg.BackButton.hide() : tg.BackButton.show());
+    if (!state.data) return;
+    const v = state.tab === "home" ? renderHome() : state.tab === "grades" ? renderGrades() : state.tab === "attendance" ? await renderAttendance() : state.tab === "content" ? renderContent() : renderQueue();
+    $view.replaceChildren(v);
+  }
+  function go(tab) { state.tab = tab; window.scrollTo(0, 0); render(); }
+  async function load() { state.data = await api("bootstrap"); }
+
+  document.getElementById("tabs").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; haptic(); go(b.dataset.tab); });
+  document.getElementById("refresh").addEventListener("click", async () => { haptic(); state.roster = {}; try { await load(); render(); toast("Atualizado"); } catch (e) { toast(e.message); } });
+
+  (async function start() {
+    if (!tg || !tg.initData) {
+      $view.replaceChildren(h("div", { class: "empty" }, h("h2", {}, "Abra pelo Telegram"), h("p", {}, "Este app funciona dentro do bot do Jair OS: toque no botão 🏫 Escola no chat.")));
+      return;
+    }
+    tg.ready(); tg.expand();
+    try { tg.setHeaderColor("secondary_bg_color"); } catch (_) {}
+    tg.BackButton.onClick(() => go(state.tab === "batch" ? "queue" : "home"));
+    $view.replaceChildren(h("div", { class: "skeleton" }), h("div", { class: "skeleton" }), h("div", { class: "skeleton" }));
+    try { await load(); document.getElementById("subtitle").textContent = "Escola · v" + state.data.version; render(); }
+    catch (e) { $view.replaceChildren(h("div", { class: "empty" }, h("h2", {}, "Não consegui abrir"), h("p", {}, e.message))); }
+  })();
+})();
