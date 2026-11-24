@@ -20,6 +20,11 @@ body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); min-height: 100
 .logo { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; color: #fff; font-weight: 800;
   background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 45%, #9b5cff)); box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent); }
 .icon-btn { border: 0; background: var(--card); color: var(--text); width: 36px; height: 36px; border-radius: 12px; font-size: 18px; }
+.schoolbar { position: sticky; top: 60px; z-index: 4; display: flex; gap: 4px; margin: 0 16px 6px; padding: 4px; border-radius: 14px; background: var(--card); box-shadow: 0 1px 0 var(--sep); max-width: 688px; }
+@media (min-width: 720px) { .schoolbar { margin: 0 auto 6px; } }
+.schoolbar[hidden] { display: none; }
+.schoolbar button { flex: 1; border: 0; border-radius: 10px; padding: 9px 10px; font: inherit; font-weight: 600; font-size: 14px; background: transparent; color: var(--hint); transition: background .18s, color .18s; }
+.schoolbar button.on { background: var(--accent); color: var(--accent-text); box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent); }
 main { padding: 4px 16px 16px; max-width: 720px; margin: 0 auto; }
 h2 { font-size: 22px; margin: 8px 2px 4px; letter-spacing: -.01em; }
 h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--hint); margin: 18px 4px 8px; font-weight: 600; }
