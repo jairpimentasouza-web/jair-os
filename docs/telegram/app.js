@@ -6,7 +6,8 @@
   const API = "https://zfbcvoaxgswjsgbavobp.supabase.co/functions/v1/jair-os-telegram-v2";
   const tg = window.Telegram && window.Telegram.WebApp;
   const $view = document.getElementById("view");
-  const state = { tab: "home", data: null, sel: {}, parsed: null, absent: new Set(), roster: {}, mainHandler: null };
+  const state = { tab: "home", data: null, sel: {}, parsed: null, absent: new Set(), roster: {}, mainHandler: null, school: null };
+  const store = { get: (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} } };
 
   // ---------- utilidades ----------
   const h = (tag, attrs = {}, ...kids) => {
@@ -53,26 +54,50 @@
     tg.MainButton.onClick(state.mainHandler);
   }
   const confirmDialog = (msg) => new Promise((res) => (tg && tg.showConfirm ? tg.showConfirm(msg, res) : res(window.confirm(msg))));
-  const turmas = () => (state.data ? state.data.turmas : []);
-  const turma = (id) => turmas().find((t) => t.id === id);
+  const allTurmas = () => (state.data ? state.data.turmas : []);
+  const turmas = () => allTurmas().filter((t) => !state.school || t.school === state.school);
+  const turma = (id) => allTurmas().find((t) => t.id === id);
+  const md = (t) => (t && t.metadata) || {};
+  const chipOf = (t) => md(t).chip || (/^\d$/.test(t.class_key) ? t.class_key + "ª" : t.class_key);
+  const SCHOOL_NAMES = { mater: "Mater", legacy: "Legacy", ceja: "CEJA" };
+  const schoolName = (k) => { const t = allTurmas().find((x) => x.school === k); return md(t).school_label || SCHOOL_NAMES[k] || k; };
+  const schools = () => [...new Set(allTurmas().map((t) => t.school))];
+  const fila = () => ((state.data && state.data.fila) || []).filter((b) => !state.school || !b.school || b.school === state.school);
+  function pickSchool(k, quiet) {
+    if (!k || k === state.school) return;
+    state.school = k; store.set("jos_escola", k);
+    for (const k of Object.keys(state.sel)) if (!["date", "text", "content"].includes(k)) delete state.sel[k];
+    state.parsed = null; state.absent.clear();
+    document.getElementById("subtitle").textContent = "Escola · " + schoolName(k);
+    document.documentElement.dataset.school = k;
+    if (!quiet) { haptic("medium"); toast(`🏫 ${schoolName(k)}`); }
+  }
+  function renderSchoolBar() {
+    const bar = document.getElementById("schoolbar");
+    if (!bar) return;
+    const list = schools();
+    bar.hidden = list.length < 2;
+    bar.replaceChildren(...list.map((k) => h("button", { class: state.school === k ? "on" : "", onclick: () => { pickSchool(k); render(); } }, schoolName(k))));
+  }
   const STATUS = { draft: ["Rascunho", "info"], confirmed: ["Na fila", "warn"], dispatched: ["Lançando", "warn"], verified: ["Conferido", "ok"], partial: ["Parcial", "risk"], failed: ["Falhou", "bad"] };
   const KIND = { grade: ["📝", "Notas"], attendance: ["✅", "Chamada"], content: ["📖", "Diário"] };
+  const SYSTEM = { unimestre: "Unimestre", activesoft: "ActiveSoft", planilha: "planilha", manual: "manual" };
   const MATCH = { exato: ["exato", "ok"], apelido: ["apelido", "ok"], provavel: ["provável", "warn"], ambiguo: ["ambíguo", "risk"], sem_par: ["sem par", "bad"] };
 
   function classChips(selected, onPick, opts = {}) {
     return h("div", { class: "chips" }, turmas().map((t) => h("button", {
       class: "chip" + (selected === t.id ? " on" : ""),
       onclick: () => { haptic(); onPick(t.id); },
-    }, t.class_key + "ª", h("small", {}, opts.showSchool ? t.school : t.subject || ""))));
+    }, chipOf(t), h("small", {}, opts.showSchool ? t.school : t.subject || ""))));
   }
 
   // ---------- telas ----------
   function renderHome() {
     const d = state.data;
-    const fila = d.fila || [];
-    const pend = fila.filter((b) => ["confirmed", "dispatched"].includes(b.status)).length;
-    const ok = fila.filter((b) => b.status === "verified").length;
-    const draft = fila.filter((b) => b.status === "draft").length;
+    const lst = fila();
+    const pend = lst.filter((b) => ["confirmed", "dispatched"].includes(b.status)).length;
+    const ok = lst.filter((b) => b.status === "verified").length;
+    const draft = lst.filter((b) => b.status === "draft").length;
     setMain(null);
     return h("div", { class: "fade" },
       h("h2", {}, `Olá${d.nome ? ", " + d.nome : ""} 👋`),
@@ -81,10 +106,10 @@
         h("div", { class: "stat" }, h("b", {}, pend), h("span", {}, "na fila")),
         h("div", { class: "stat" }, h("b", {}, ok), h("span", {}, "conferidos")),
         h("div", { class: "stat" }, h("b", {}, draft), h("span", {}, "rascunhos"))),
-      h("h3", {}, "Turmas"),
+      h("h3", {}, `Turmas · ${schoolName(state.school)}`),
       turmas().length ? turmas().map((t) => h("div", { class: "card" },
         h("div", { class: "row between" },
-          h("div", { class: "grow" }, h("div", { class: "name" }, t.label), h("div", { class: "muted", style: "font-size:13px" }, `${t.school.toUpperCase()} · ${t.system} · ${t.roster_count} alunos`)),
+          h("div", { class: "grow" }, h("div", { class: "name" }, t.label), h("div", { class: "muted", style: "font-size:13px" }, `${t.subject || ""} · ${SYSTEM[t.system] || t.system} · ${t.roster_count} alunos`)),
           t.roster_count ? h("span", { class: "pill ok" }, "lista ok") : h("span", { class: "pill bad" }, "sem lista")),
         h("button", { class: "btn ghost", onclick: () => openImport(t.id) }, t.roster_count ? "Atualizar lista da turma" : "Importar lista da turma")))
         : h("div", { class: "empty" }, "Nenhuma turma cadastrada."),
@@ -94,7 +119,7 @@
   function openImport(classId) {
     const t = turma(classId);
     state.tab = "import";
-    const ta = h("textarea", { placeholder: "Cole a lista do Unimestre — um aluno por linha.\nEx.:\n1 ANA LIMA PEREIRA\n2 BERNARDO SOUZA" });
+    const ta = h("textarea", { placeholder: `Cole a lista do ${SYSTEM[t.system] || "sistema da escola"} — um aluno por linha.\nEx.:\n1 ANA LIMA PEREIRA\n2 BERNARDO SOUZA` });
     const count = h("div", { class: "hint" }, "0 alunos");
     ta.addEventListener("input", () => { const n = ta.value.split(/\n/).filter((s) => s.trim()).length; count.textContent = `${n} alunos`; setMain(n ? `Salvar lista (${n} alunos)` : null, save, n > 0); });
     const save = async () => {
@@ -113,13 +138,13 @@
   // --- Notas ---
   function renderGrades() {
     const s = state.sel;
-    s.class_id = s.class_id || (turmas()[0] && turmas()[0].id);
+    if (!turmas().some((x) => x.id === s.class_id)) s.class_id = turmas()[0] && turmas()[0].id;
     const t = turma(s.class_id);
     const assess = (t && t.assessments) || [];
     if (!s.assess || !assess.find((x) => x.key === s.assess)) s.assess = assess[0] ? assess[0].key : null;
     const a = assess.find((x) => x.key === s.assess) || {};
     s.date = s.date || today();
-    const ta = h("textarea", { placeholder: "Toque no 🎤 do teclado e dite:\n“Sofia dois e meio, Ruan três; Yasmin um vírgula oito”\nTambém vale número de chamada: “12 - 2,5”", value: s.text || "" });
+    const ta = h("textarea", { placeholder: `Toque no 🎤 do teclado e dite:\n“${t && t.school === "legacy" ? "AV1, Amir seis e meio, Sara cinco; Jean faltou" : "Sofia dois e meio, Ruan três; Yasmin um vírgula oito"}”\nTambém vale número de chamada: “12 - 2,5”`, value: s.text || "" });
     ta.addEventListener("input", () => { s.text = ta.value; });
     const wrap = h("div", { class: "fade" },
       h("h2", {}, "Notas"),
@@ -139,6 +164,7 @@
         try { state.parsed = await api("parse_grades", { class_id: s.class_id, text: s.text || "", max_value: a2.max }); notifyH("success"); render(); }
         catch (e) { notifyH("error"); toast(e.message); }
       } }, "✨ Interpretar"),
+      t && md(t).segunda_chamada_codigo != null ? h("p", { class: "hint" }, `Quem faltou vai como ${md(t).segunda_chamada_codigo} (segunda chamada) no ${SYSTEM[t.system] || t.system}.`) : null,
       state.parsed ? renderParsed(a) : h("p", { class: "hint" }, "Nada é lançado agora: primeiro você confere a tabela e confirma."),
     );
     if (!state.parsed) setMain(null);
@@ -146,16 +172,22 @@
   }
 
   // "Terceira série, prova, Sofia cinco e meio..." → seleciona turma/avaliação e remove o cabeçalho do ditado
-  const ORD = { primeira: "1", "1a": "1", "1ª": "1", segunda: "2", "2a": "2", "2ª": "2", terceira: "3", "3a": "3", "3ª": "3" };
+  const ORD = { primeira: 1, "1a": 1, "1ª": 1, segunda: 2, "2a": 2, "2ª": 2, terceira: 3, "3a": 3, "3ª": 3 };
+  const NUMW = { um: "1", uma: "1", dois: "2", duas: "2", tres: "3" };
+  const assessKey = (x) => plainTxt(x).replace(/\b(um|uma|dois|duas|tres)\b/g, (w) => NUMW[w]).replace(/[^a-z0-9]/g, "");
   const plainTxt = (x) => String(x || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
   function applyHeader(text) {
     const s = state.sel; const segs = String(text || "").split(/\s*(?:\n|;|,(?!\d))\s*/);
     let i = 0;
     for (; i < Math.min(segs.length, 4); i++) {
       const p = plainTxt(segs[i]);
+      const esc = schools().find((k) => plainTxt(schoolName(k)) === p || k === p);
+      if (esc) { pickSchool(esc, true); continue; }
       const serie = p.match(/^(primeira|segunda|terceira|[123]a|[123]ª)\s+serie\b/);
-      const aval = turmas().length && turma(s.class_id) ? (turma(s.class_id).assessments || []).find((x) => plainTxt(x.key) === p || plainTxt(x.label) === p) : null;
-      if (serie) { const t = turmas().find((x) => x.class_key === ORD[serie[1]]); if (t) s.class_id = t.id; continue; }
+      const code = p.match(/^(?:turma\s+)?(\d{3,4})$/);
+      const aval = turmas().length && turma(s.class_id) ? (turma(s.class_id).assessments || []).find((x) => assessKey(x.key) === assessKey(p) || assessKey(x.label) === assessKey(p)) : null;
+      if (serie) { const t = turmas().find((x) => Number(md(x).serie || x.class_key) === ORD[serie[1]]); if (t) s.class_id = t.id; continue; }
+      if (code) { const t = allTurmas().find((x) => x.class_key === code[1]); if (t) { pickSchool(t.school, true); s.class_id = t.id; continue; } }
       if (aval) { s.assess = aval.key; continue; }
       if (/^(notas?|turma|bimestre|avaliacao)\b/.test(p) && !/\d/.test(p)) continue;
       break;
@@ -221,7 +253,7 @@
   // --- Chamada ---
   async function renderAttendance() {
     const s = state.sel;
-    s.class_id = s.class_id || (turmas()[0] && turmas()[0].id);
+    if (!turmas().some((x) => x.id === s.class_id)) s.class_id = turmas()[0] && turmas()[0].id;
     const t = turma(s.class_id);
     s.date = s.date || today();
     s.periods = s.periods || (t ? t.periods_per_lesson : 1);
@@ -267,7 +299,7 @@
   // --- Diário ---
   function renderContent() {
     const s = state.sel;
-    s.class_id = s.class_id || (turmas()[0] && turmas()[0].id);
+    if (!turmas().some((x) => x.id === s.class_id)) s.class_id = turmas()[0] && turmas()[0].id;
     s.date = s.date || today();
     s.allClasses = s.allClasses ?? false;
     const ta = h("textarea", { placeholder: "Conteúdo da aula (dite pelo 🎤 do teclado).\nEx.: Revisão de MRUV e lançamento oblíquo; resolução de exercícios do capítulo 4.", value: s.content || "" });
@@ -291,11 +323,11 @@
   // --- Fila ---
   function renderQueue() {
     setMain(null);
-    const fila = state.data.fila || [];
+    const lst = fila();
     return h("div", { class: "fade" },
-      h("h2", {}, "Fila"),
+      h("h2", {}, `Fila · ${schoolName(state.school)}`),
       h("p", { class: "muted", style: "margin:0 4px 8px" }, "Tudo o que você confirmou. O aviso de conferência chega aqui e no chat."),
-      fila.length ? h("div", { class: "list" }, fila.map((b) => {
+      lst.length ? h("div", { class: "list" }, lst.map((b) => {
         const [st, cls] = STATUS[b.status] || [b.status, "info"]; const [ic, kl] = KIND[b.kind] || ["•", b.kind];
         return h("div", { class: "item", onclick: () => openBatch(b.id) },
           h("span", { style: "font-size:22px" }, ic),
@@ -332,6 +364,7 @@
     document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === state.tab));
     if (tg) (["home", "grades", "attendance", "content", "queue"].includes(state.tab) ? tg.BackButton.hide() : tg.BackButton.show());
     if (!state.data) return;
+    renderSchoolBar();
     const v = state.tab === "home" ? renderHome() : state.tab === "grades" ? renderGrades() : state.tab === "attendance" ? await renderAttendance() : state.tab === "content" ? renderContent() : renderQueue();
     $view.replaceChildren(v);
   }
@@ -343,14 +376,21 @@
 
   (async function start() {
     if (!tg || !tg.initData) {
-      $view.replaceChildren(h("div", { class: "empty" }, h("h2", {}, "Abra pelo Telegram"), h("p", {}, "Este app funciona dentro do bot do Jair OS: toque no botão 🏫 Escola no chat.")));
+      $view.replaceChildren(h("div", { class: "empty" }, h("h2", {}, "Abra pelo Telegram"), h("p", {}, "Este app funciona dentro do bot do Jair OS: toque no botão 🏫 Escola no chat (Mater e Legacy no mesmo app).")));
       return;
     }
     tg.ready(); tg.expand();
     try { tg.setHeaderColor("secondary_bg_color"); } catch (_) {}
     tg.BackButton.onClick(() => go(state.tab === "batch" ? "queue" : "home"));
     $view.replaceChildren(h("div", { class: "skeleton" }), h("div", { class: "skeleton" }), h("div", { class: "skeleton" }));
-    try { await load(); document.getElementById("subtitle").textContent = "Escola · v" + state.data.version; render(); }
+    try {
+      await load();
+      const list = schools();
+      const asked = (new URLSearchParams(location.search).get("escola") || (tg.initDataUnsafe && tg.initDataUnsafe.start_param) || "").toLowerCase();
+      const saved = store.get("jos_escola");
+      pickSchool([asked, saved, list[0]].find((k) => k && list.includes(k)) || null, true);
+      render();
+    }
     catch (e) { $view.replaceChildren(h("div", { class: "empty" }, h("h2", {}, "Não consegui abrir"), h("p", {}, e.message))); }
   })();
 })();
