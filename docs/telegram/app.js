@@ -1,12 +1,12 @@
-/* Jair OS Escola — Mini App do Telegram.
-   Notas por ditado (teclado do celular), chamada por toque, diário e fila com conferência.
+/* Jair OS — Mini App do Telegram: Escola (notas, chamada, diário com lançamento ao vivo), Finanças, Tarefas e Listas.
+   Notas por ditado (teclado do celular), chamada por toque, diário; lançamento no sistema da escola acompanhado em tempo real.
    Toda chamada à API leva o initData assinado pelo Telegram; o servidor confere a assinatura. */
 (() => {
   "use strict";
   const API = "https://zfbcvoaxgswjsgbavobp.supabase.co/functions/v1/jair-os-telegram-v2";
   const tg = window.Telegram && window.Telegram.WebApp;
   const $view = document.getElementById("view");
-  const state = { tab: "home", data: null, sel: {}, parsed: null, absent: new Set(), roster: {}, mainHandler: null, school: null };
+  const state = { tab: "home", data: null, sel: {}, parsed: null, absent: new Set(), roster: {}, mainHandler: null, school: null, module: "escola", live: null };
   const store = { get: (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} } };
 
   // ---------- utilidades ----------
@@ -80,7 +80,7 @@
     bar.hidden = list.length < 2;
     bar.replaceChildren(...list.map((k) => h("button", { class: state.school === k ? "on" : "", onclick: () => { pickSchool(k); render(); } }, schoolName(k))));
   }
-  const STATUS = { draft: ["Rascunho", "info"], confirmed: ["Na fila", "warn"], dispatched: ["Lançando", "warn"], verified: ["Conferido", "ok"], partial: ["Parcial", "risk"], failed: ["Falhou", "bad"] };
+  const STATUS = { draft: ["Rascunho", "info"], confirmed: ["Aguardando", "warn"], dispatched: ["Lançando", "warn"], verified: ["Conferido", "ok"], partial: ["Parcial", "risk"], failed: ["Falhou", "bad"] };
   const KIND = { grade: ["📝", "Notas"], attendance: ["✅", "Chamada"], content: ["📖", "Diário"] };
   const SYSTEM = { unimestre: "Unimestre", activesoft: "ActiveSoft", planilha: "planilha", manual: "manual" };
   const MATCH = { exato: ["exato", "ok"], apelido: ["apelido", "ok"], provavel: ["provável", "warn"], ambiguo: ["ambíguo", "risk"], sem_par: ["sem par", "bad"] };
@@ -91,6 +91,8 @@
       onclick: () => { haptic(); onPick(t.id); },
     }, chipOf(t), h("small", {}, opts.showSchool ? t.school : t.subject || ""))));
   }
+
+  window.JOS = { h, api, toast, haptic, notifyH, setMain, confirmDialog, today, fmt, num, state, store, tg, rerender: () => render() };
 
   // ---------- telas ----------
   function renderHome() {
@@ -207,7 +209,7 @@
       const pend = R.filter((r) => !r.escolhido || (!r.ausente && (r.valorEdit == null || Number.isNaN(r.valorEdit) || (a.max != null && r.valorEdit > a.max) || r.valorEdit < 0)));
       const dup = new Set(); let dupBad = false; R.forEach((r) => { if (r.escolhido) { if (dup.has(r.escolhido)) dupBad = true; dup.add(r.escolhido); } });
       const n = R.filter((r) => r.escolhido).length;
-      setMain(pend.length || dupBad ? (dupBad ? "Há aluno repetido" : `Resolva ${pend.length} pendência(s)`) : `Confirmar ${n} notas`, confirmGrades, !pend.length && !dupBad && n > 0);
+      setMain(pend.length || dupBad ? (dupBad ? "Há aluno repetido" : `Resolva ${pend.length} pendência(s)`) : `⚡ Lançar ${n} notas agora`, confirmGrades, !pend.length && !dupBad && n > 0);
     };
     R.forEach((r) => {
       const [label, cls] = MATCH[r.status] || [r.status, "info"];
@@ -243,10 +245,12 @@
   async function saveGrades(confirm) {
     const s = state.sel; const t = turma(s.class_id); const a = (t.assessments || []).find((x) => x.key === s.assess) || {};
     const entries = gradeEntries();
-    if (confirm && !(await confirmDialog(`Confirmar ${entries.length} notas de ${a.label || s.assess} — ${t.label}?\nElas entram na fila para lançar e conferir no ${SYSTEM[t.system] || t.system}.`))) return;
+    if (confirm && !(await confirmDialog(`Lançar agora ${entries.length} notas de ${a.label || s.assess} — ${t.label} no ${SYSTEM[t.system] || t.system}?\nO iMac lança e confere relendo; você acompanha aqui.`))) return;
     const r = await api("save_batch", { kind: "grade", class_id: s.class_id, label: s.assess, max_value: a.max, occurred_on: s.date, entries, confirm });
-    notifyH("success"); toast(confirm ? "✅ Confirmado! Na fila para lançar." : "Rascunho salvo.");
-    state.parsed = null; s.text = ""; await load(); go("queue");
+    notifyH("success");
+    state.parsed = null; s.text = "";
+    if (confirm) { showLive([r.batch_id], `${a.label || s.assess} · ${t.label}`); load().catch(() => {}); }
+    else { toast("Rascunho salvo."); await load(); go("queue"); }
     return r;
   }
   const confirmGrades = () => saveGrades(true);
@@ -264,7 +268,7 @@
     const list = h("div", { class: "list" });
     const update = () => {
       const f = state.absent.size;
-      setMain(alunos.length ? `Confirmar chamada · ${f ? f + " falta(s)" : "todos presentes"}` : null, saveAttendance, alunos.length > 0);
+      setMain(alunos.length ? `⚡ Lançar chamada · ${f ? f + " falta(s)" : "todos presentes"}` : null, saveAttendance, alunos.length > 0);
     };
     alunos.forEach((a) => {
       const row = h("div", { class: "item student" + (state.absent.has(a.official_name) ? " absent" : ""), onclick: () => {
@@ -292,9 +296,9 @@
     const s = state.sel; const t = turma(s.class_id); const alunos = state.roster[s.class_id] || [];
     const f = state.absent.size;
     if (!(await confirmDialog(`Chamada de ${fmt(s.date)} — ${t.label}\n${alunos.length - f} presentes, ${f} falta(s), ${s.periods} tempo(s). Confirmar?`))) return;
-    await api("save_batch", { kind: "attendance", class_id: s.class_id, occurred_on: s.date, periods: s.periods, confirm: true,
+    const r = await api("save_batch", { kind: "attendance", class_id: s.class_id, occurred_on: s.date, periods: s.periods, confirm: true,
       entries: alunos.map((a) => ({ official_name: a.official_name, present: !state.absent.has(a.official_name) })) });
-    notifyH("success"); toast("✅ Chamada confirmada."); state.absent.clear(); await load(); go("queue");
+    notifyH("success"); state.absent.clear(); showLive([r.batch_id], `Chamada · ${t.label}`); load().catch(() => {});
   }
 
   // --- Diário ---
@@ -317,8 +321,9 @@
   async function saveContent() {
     const s = state.sel; const ids = s.allClasses ? turmas().map((t) => t.id) : [s.class_id];
     if (!(await confirmDialog(`Registrar o conteúdo de ${fmt(s.date)} em ${ids.length} turma(s)?`))) return;
-    for (const id of ids) await api("save_batch", { kind: "content", class_id: id, occurred_on: s.date, content_text: s.content, confirm: true });
-    notifyH("success"); toast("✅ Conteúdo registrado."); s.content = ""; await load(); go("queue");
+    const bids = [];
+    for (const id of ids) bids.push((await api("save_batch", { kind: "content", class_id: id, occurred_on: s.date, content_text: s.content, confirm: true })).batch_id);
+    notifyH("success"); s.content = ""; showLive(bids, `Diário de ${fmt(s.date)}`); load().catch(() => {});
   }
 
   // --- Fila ---
@@ -353,15 +358,85 @@
         h("div", { class: "row", style: "margin:0 4px 6px;gap:8px" }, h("span", { class: "muted" }, `${b.turma} · ${fmt(b.occurred_on)}`), h("span", { class: `pill ${cls}` }, st)),
         b.readback && b.readback.note ? h("div", { class: "card" }, b.readback.note) : null,
         items,
-        b.status === "draft" ? h("button", { class: "btn", onclick: async () => { await api("confirm_batch", { batch_id: id }); notifyH("success"); toast("Confirmado."); await load(); go("queue"); } }, "Confirmar e enviar para a fila") : null,
+        b.status === "draft" ? h("button", { class: "btn", onclick: async () => { await api("confirm_batch", { batch_id: id }); notifyH("success"); showLive([id], `${kl} · ${b.turma}`); load().catch(() => {}); } }, "⚡ Lançar agora") : null,
+        ["confirmed", "dispatched"].includes(b.status) ? h("button", { class: "btn ghost", onclick: () => showLive([id], `${kl} · ${b.turma}`) }, "Acompanhar ao vivo") : null,
         h("button", { class: "btn ghost", onclick: async () => { try { await api("send_csv", { batch_id: id }); notifyH("success"); toast("📄 Planilha enviada no chat."); } catch (e) { toast(e.message); } } }, "📄 Enviar planilha no chat"),
         ["draft", "confirmed"].includes(b.status) ? h("button", { class: "btn danger", onclick: async () => { if (!(await confirmDialog("Cancelar este lote?"))) return; await api("cancel_batch", { batch_id: id }); toast("Cancelado."); await load(); go("queue"); } }, "Cancelar lote") : null));
       setMain(null);
     } catch (e) { toast(e.message); go("queue"); }
   }
 
+  // --- Lançamento ao vivo (sem fila: confirma e acompanha aqui) ---
+  const FASE = { preparando: ["⏳", "Preparando…"], conectando: ["🔌", "Conectando ao sistema da escola…"], lancando: ["✍️", "Lançando e conferindo…"],
+    processando: ["⚙️", "Processando…"], verified: ["✅", "Conferido no sistema"], partial: ["🟡", "Parcial — veja o que faltou"], failed: ["❌", "Não deu para lançar"],
+    bloqueado: ["⏸️", "Bloqueado pela escola — guardado"], tentando_de_novo: ["🔁", "Falha técnica — tentando de novo sozinho"] };
+  function showLive(ids, title) {
+    state.tab = "live"; setMain(null); window.scrollTo(0, 0);
+    if (tg) tg.BackButton.show();
+    document.querySelectorAll(".tabs button").forEach((b) => b.classList.remove("on"));
+    const token = {}; state.live = token;
+    const cards = ids.map((id) => ({ id, el: h("div", { class: "card live" }, h("div", { class: "live-head" }, h("span", { class: "spin" }), h("b", {}, "Preparando…"))) }));
+    $view.replaceChildren(h("div", { class: "fade" }, h("h2", {}, "Lançando agora"), h("p", { class: "muted", style: "margin:0 4px 8px" }, title || ""), ...cards.map((c) => c.el),
+      h("button", { class: "btn ghost", onclick: () => go("queue") }, "Ver todos os lançamentos")));
+    const t0 = Date.now();
+    const tick = async () => {
+      if (state.live !== token) return;
+      let pending = 0;
+      for (const c of cards) {
+        if (c.done) continue;
+        try {
+          const d = await api("batch_live", { batch_id: c.id });
+          const [ic, label] = FASE[d.fase] || ["•", d.fase];
+          const final = ["verified", "partial", "failed", "bloqueado"].includes(d.fase);
+          const secs = Math.round((Date.now() - t0) / 1000);
+          const kids = [h("div", { class: "live-head" }, final ? h("span", { class: "big" }, ic) : h("span", { class: "spin" }), h("div", { class: "grow" },
+            h("b", {}, label), h("div", { class: "sub" }, `${d.turma || ""} · ${SYSTEM[d.sistema] || d.sistema || ""}${final ? ` · ${secs}s` : ` · ${secs}s`}`)),
+            d.total ? h("span", { class: `pill ${d.fase === "verified" ? "ok" : final ? "risk" : "info"}` }, `${d.conferidos_n ?? 0}/${d.total}`) : null)];
+          if (d.nota && final) kids.push(h("div", { class: "hint" }, d.nota));
+          if (d.conferidos && d.conferidos.length) kids.push(h("div", { class: "list mini" }, d.conferidos.map((x) => h("div", { class: "item" },
+            h("div", { class: "grow name" }, x.aluno), h("span", { class: "muted" }, x.antes != null && String(x.antes).trim() !== "" && String(x.antes) !== String(x.valor) ? `${x.antes} → ` : ""), h("b", {}, x.valor == null ? "—" : String(x.valor))))));
+          const prob = [...(d.divergentes || []), ...(d.problemas || []), ...(d.em_branco || [])];
+          if (prob.length) kids.push(h("div", { class: "card warnbox" }, h("b", {}, "Para conferir: "), prob.map((x) => `${x.aluno || ""} (${x.motivo || ("lido " + (x.lido ?? "—"))})`).join(" · ")));
+          c.el.replaceChildren(...kids);
+          if (final) { c.done = true; notifyH(d.fase === "verified" ? "success" : d.fase === "failed" ? "error" : "warning"); }
+          else pending++;
+        } catch (e) { pending++; }
+      }
+      if (pending && Date.now() - t0 < 180000) setTimeout(tick, 1500);
+      else if (pending) cards.filter((c) => !c.done).forEach((c) => c.el.append(h("div", { class: "hint" }, "Ainda processando. O resultado chega no chat e na aba Fila.")));
+    };
+    tick();
+  }
+
+  // ---------- módulos (Escola, Finanças, Tarefas, Listas) ----------
+  const MODULES = [["escola", "🏫", "Escola"], ["financas", "💰", "Finanças"], ["tarefas", "✅", "Tarefas"], ["listas", "📝", "Listas"]];
+  function renderModBar() {
+    const bar = document.getElementById("modbar");
+    if (!bar) return;
+    bar.replaceChildren(...MODULES.map(([k, ic, nm]) => h("button", { class: state.module === k ? "on" : "", onclick: () => pickModule(k) }, h("span", {}, ic), nm)));
+  }
+  function pickModule(k) {
+    if (k === state.module) return;
+    haptic(); state.module = k; store.set("jos_modulo", k); state.live = null; setMain(null);
+    if (k === "escola") state.tab = "home";
+    window.scrollTo(0, 0); render();
+  }
+
   // ---------- navegação ----------
   async function render() {
+    renderModBar();
+    const esc = state.module === "escola";
+    document.getElementById("tabs").hidden = !esc;
+    document.body.classList.toggle("notabs", !esc);
+    if (!esc) {
+      document.getElementById("schoolbar").hidden = true;
+      document.getElementById("subtitle").textContent = (MODULES.find((m) => m[0] === state.module) || [])[2] || "";
+      if (tg) tg.BackButton.hide();
+      if (!state.data) return;
+      if (window.JOSHub) $view.replaceChildren(await window.JOSHub.render(state.module));
+      return;
+    }
+    if (state.school) document.getElementById("subtitle").textContent = "Escola · " + schoolName(state.school);
     document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === state.tab));
     if (tg) (["home", "grades", "attendance", "content", "queue"].includes(state.tab) ? tg.BackButton.hide() : tg.BackButton.show());
     if (!state.data) return;
@@ -369,7 +444,7 @@
     const v = state.tab === "home" ? renderHome() : state.tab === "grades" ? renderGrades() : state.tab === "attendance" ? await renderAttendance() : state.tab === "content" ? renderContent() : renderQueue();
     $view.replaceChildren(v);
   }
-  function go(tab) { state.tab = tab; window.scrollTo(0, 0); render(); }
+  function go(tab) { state.tab = tab; state.live = null; window.scrollTo(0, 0); render(); }
   async function load() { state.data = await api("bootstrap"); }
 
   document.getElementById("tabs").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; haptic(); go(b.dataset.tab); });
@@ -377,12 +452,12 @@
 
   (async function start() {
     if (!tg || !tg.initData) {
-      $view.replaceChildren(h("div", { class: "empty" }, h("h2", {}, "Abra pelo Telegram"), h("p", {}, "Este app funciona dentro do bot do Jair OS: toque no botão 🏫 Escola no chat (Mater e Legacy no mesmo app).")));
+      $view.replaceChildren(h("div", { class: "empty" }, h("h2", {}, "Abra pelo Telegram"), h("p", {}, "Este app funciona dentro do bot do Jair OS: toque no botão 🏫 Escola no chat (Escola, Finanças, Tarefas e Listas no mesmo app).")));
       return;
     }
     tg.ready(); tg.expand();
     try { tg.setHeaderColor("secondary_bg_color"); } catch (_) {}
-    tg.BackButton.onClick(() => go(state.tab === "batch" ? "queue" : "home"));
+    tg.BackButton.onClick(() => go(state.tab === "batch" || state.tab === "live" ? "queue" : "home"));
     $view.replaceChildren(h("div", { class: "skeleton" }), h("div", { class: "skeleton" }), h("div", { class: "skeleton" }));
     try {
       await load();
@@ -390,6 +465,9 @@
       const asked = (new URLSearchParams(location.search).get("escola") || (tg.initDataUnsafe && tg.initDataUnsafe.start_param) || "").toLowerCase();
       const saved = store.get("jos_escola");
       pickSchool([asked, saved, list[0]].find((k) => k && list.includes(k)) || null, true);
+      const mq = (new URLSearchParams(location.search).get("m") || "").toLowerCase();
+      const ms = store.get("jos_modulo");
+      state.module = [mq, ms, "escola"].find((k) => k && MODULES.some((m) => m[0] === k));
       render();
     }
     catch (e) { $view.replaceChildren(h("div", { class: "empty" }, h("h2", {}, "Não consegui abrir"), h("p", {}, e.message))); }

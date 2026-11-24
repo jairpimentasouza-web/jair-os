@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://telegram.org; connect-src https://zfbcvoaxgswjsgbavobp.supabase.co; style-src 'self'; img-src 'self' data:">
-  <title>Jair OS Escola</title>
+  <title>Jair OS</title>
   <link rel="stylesheet" href="app.css">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -14,6 +14,7 @@
     <div class="brand"><span class="logo">J</span><div><strong>Jair OS</strong><small id="subtitle">Escola</small></div></div>
     <button class="icon-btn" id="refresh" aria-label="Atualizar">⟳</button>
   </header>
+  <nav class="modbar" id="modbar" aria-label="Módulos"></nav>
   <nav class="schoolbar" id="schoolbar" hidden aria-label="Escola"></nav>
   <main id="view" aria-live="polite"></main>
   <nav class="tabs" id="tabs">
@@ -25,5 +26,6 @@
   </nav>
   <div id="toast" role="status"></div>
   <script src="app.js"></script>
+  <script src="hub.js"></script>
 </body>
 </html>
