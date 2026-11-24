@@ -127,16 +127,41 @@
       h("div", { class: "chips" }, assess.map((x) => h("button", { class: "chip" + (s.assess === x.key ? " on" : ""), onclick: () => { haptic(); s.assess = x.key; state.parsed = null; render(); } }, x.label, h("small", {}, `máx ${String(x.max).replace(".", ",")}`)))),
       h("label", { class: "field" }, h("span", {}, "Data da avaliação"), h("input", { type: "date", value: s.date, onchange: (e) => { s.date = e.target.value; } })),
       t && !t.roster_count ? h("div", { class: "card" }, "⚠️ Esta turma ainda não tem lista. ", h("a", { href: "#", onclick: (e) => { e.preventDefault(); openImport(t.id); } }, "Importar agora")) : null,
+      state.data.ultimo_audio ? h("button", { class: "btn ghost", onclick: () => {
+        haptic(); s.text = applyHeader(state.data.ultimo_audio.texto); state.parsed = null; render(); toast("🎙️ Áudio do Telegram carregado");
+      } }, `🎙️ Usar último áudio (${new Date(state.data.ultimo_audio.em).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })})`) : null,
       h("label", { class: "field" }, h("span", {}, "Ditado ou digitação"), ta),
+      h("p", { class: "hint" }, "Dica: mande um áudio no chat do bot (transcrito no iMac, sem custo) e toque em “Usar último áudio”."),
       h("button", { class: "btn", onclick: async () => {
         haptic("medium");
-        try { state.parsed = await api("parse_grades", { class_id: s.class_id, text: s.text || "", max_value: a.max }); notifyH("success"); render(); }
+        s.text = applyHeader(s.text || "");
+        const t2 = turma(s.class_id); const a2 = ((t2 && t2.assessments) || []).find((x) => x.key === s.assess) || {};
+        try { state.parsed = await api("parse_grades", { class_id: s.class_id, text: s.text || "", max_value: a2.max }); notifyH("success"); render(); }
         catch (e) { notifyH("error"); toast(e.message); }
       } }, "✨ Interpretar"),
       state.parsed ? renderParsed(a) : h("p", { class: "hint" }, "Nada é lançado agora: primeiro você confere a tabela e confirma."),
     );
     if (!state.parsed) setMain(null);
     return wrap;
+  }
+
+  // "Terceira série, prova, Sofia cinco e meio..." → seleciona turma/avaliação e remove o cabeçalho do ditado
+  const ORD = { primeira: "1", "1a": "1", "1ª": "1", segunda: "2", "2a": "2", "2ª": "2", terceira: "3", "3a": "3", "3ª": "3" };
+  const plainTxt = (x) => String(x || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+  function applyHeader(text) {
+    const s = state.sel; const segs = String(text || "").split(/\s*(?:\n|;|,(?!\d))\s*/);
+    let i = 0;
+    for (; i < Math.min(segs.length, 4); i++) {
+      const p = plainTxt(segs[i]);
+      const serie = p.match(/^(primeira|segunda|terceira|[123]a|[123]ª)\s+serie\b/);
+      const aval = turmas().length && turma(s.class_id) ? (turma(s.class_id).assessments || []).find((x) => plainTxt(x.key) === p || plainTxt(x.label) === p) : null;
+      if (serie) { const t = turmas().find((x) => x.class_key === ORD[serie[1]]); if (t) s.class_id = t.id; continue; }
+      if (aval) { s.assess = aval.key; continue; }
+      if (/^(notas?|turma|bimestre|avaliacao)\b/.test(p) && !/\d/.test(p)) continue;
+      break;
+    }
+    if (i > 0) toast("Turma/avaliação ajustadas pelo ditado");
+    return segs.slice(i).join(", ");
   }
 
   function renderParsed(a) {
