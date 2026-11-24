@@ -17,6 +17,7 @@
       if (k === "class") el.className = v;
       else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
       else if (k === "value") el.value = v;
+      else if (k === "style") el.style.cssText = v; // via CSSOM: permitido pela CSP (style-src 'self'), ao contrário do atributo
       else el.setAttribute(k, v === true ? "" : v);
     }
     for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
@@ -242,7 +243,7 @@
   async function saveGrades(confirm) {
     const s = state.sel; const t = turma(s.class_id); const a = (t.assessments || []).find((x) => x.key === s.assess) || {};
     const entries = gradeEntries();
-    if (confirm && !(await confirmDialog(`Confirmar ${entries.length} notas de ${a.label || s.assess} — ${t.label}?\nElas entram na fila para lançar e conferir no ${t.system}.`))) return;
+    if (confirm && !(await confirmDialog(`Confirmar ${entries.length} notas de ${a.label || s.assess} — ${t.label}?\nElas entram na fila para lançar e conferir no ${SYSTEM[t.system] || t.system}.`))) return;
     const r = await api("save_batch", { kind: "grade", class_id: s.class_id, label: s.assess, max_value: a.max, occurred_on: s.date, entries, confirm });
     notifyH("success"); toast(confirm ? "✅ Confirmado! Na fila para lançar." : "Rascunho salvo.");
     state.parsed = null; s.text = ""; await load(); go("queue");
