@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://zfbcvoaxgswjsgbavobp.supabase.co; base-uri 'none'; form-action 'none'">
+  <title>Autorizar acesso — Jair OS</title>
+  <link rel="stylesheet" href="consent.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="brand">
+      <span class="logo" aria-hidden="true">J</span>
+      <div><strong>Jair OS</strong><small>Autorização de acesso</small></div>
+    </header>
+
+    <section class="card" id="view-loading" aria-live="polite">
+      <p class="muted" id="loading-text">Carregando o pedido de autorização…</p>
+    </section>
+
+    <section class="card" id="view-login" hidden>
+      <h1>Entrar no Jair OS</h1>
+      <p class="muted">Um aplicativo pediu acesso à sua conta. Entre para revisar o pedido antes de decidir.</p>
+      <form id="login-form" novalidate>
+        <label for="email">E-mail</label>
+        <input id="email" type="email" autocomplete="username" inputmode="email" required>
+        <label for="password">Senha</label>
+        <input id="password" type="password" autocomplete="current-password" required>
+        <button type="submit" class="primary" id="btn-login">Entrar</button>
+      </form>
+      <button type="button" class="link" id="btn-magic">Prefiro receber um link de acesso por e-mail</button>
+      <p class="msg" id="login-msg" role="status"></p>
+    </section>
+
+    <section class="card" id="view-consent" hidden>
+      <h1>Autorizar <span id="client-name">aplicativo</span>?</h1>
+      <p class="trust" id="trust"></p>
+      <dl class="facts">
+        <dt>Conta</dt><dd id="user-email">—</dd>
+        <dt>Aplicativo</dt><dd id="client-detail">—</dd>
+        <dt>Retorno para</dt><dd id="redirect-uri" class="mono">—</dd>
+        <dt>Permissões pedidas</dt><dd id="scopes">—</dd>
+      </dl>
+      <div class="grant">
+        <strong>O que muda ao aprovar</strong>
+        <ul>
+          <li>O aplicativo poderá usar as ferramentas do Jair OS (<code>jair_os_*</code>) em seu nome, com as mesmas permissões do conector do Claude.</li>
+          <li>Publicar no Google Classroom e finalizar execuções de risco alto continuam exigindo o código de 6 dígitos enviado ao seu Telegram.</li>
+          <li>Você pode revogar depois desativando o cliente no Jair OS (<code>jair_os.mcp_clients</code>).</li>
+        </ul>
+      </div>
+      <div class="actions">
+        <button type="button" class="secondary" id="btn-deny">Negar</button>
+        <button type="button" class="primary" id="btn-approve">Aprovar acesso</button>
+      </div>
+      <p class="msg" id="consent-msg" role="status"></p>
+      <button type="button" class="link" id="btn-switch">Não é você? Sair e entrar com outra conta</button>
+    </section>
+
+    <section class="card" id="view-done" hidden>
+      <h1 id="done-title">Pronto</h1>
+      <p class="muted" id="done-text">Voltando ao aplicativo…</p>
+    </section>
+
+    <section class="card" id="view-error" hidden>
+      <h1>Não foi possível continuar</h1>
+      <p id="error-text"></p>
+      <p class="muted">Volte ao aplicativo (por exemplo, o ChatGPT) e inicie a conexão de novo.</p>
+    </section>
+
+    <footer class="foot muted">OAuth 2.1 com PKCE via Supabase Auth. Sua senha vai direto para o Supabase Auth; a sessão fica só nesta aba.</footer>
+  </main>
+  <script src="consent.js"></script>
+</body>
+</html>
